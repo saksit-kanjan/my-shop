@@ -1,7 +1,36 @@
-node_modules
-dist
-.nx
-.data
-coverage
-.DS_Store
+# Dependencies and build output
+node_modules/
+dist/
+out-tsc/
+coverage/
+*.tsbuildinfo
+
+# Nx and Vite caches
+.nx/
+.vite/
+.angular/
+
+# Local data: embedded database, backups, uploads
+.data/
+*.dump
+*.tar.gz
+
+# Secrets and machine-specific settings. Copy .env.example to .env
 .env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Test artifacts
+test-results/
+playwright-report/
