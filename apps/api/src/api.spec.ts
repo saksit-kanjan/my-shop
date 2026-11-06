@@ -4,12 +4,12 @@ import { NestFactory } from '@nestjs/core';
 import type { CartLine, Catalog, Payment, PricedCart } from '@my-shop/contracts';
 import { priceCart } from '@my-shop/domain';
 import { demoCatalog } from '@my-shop/seed';
-import { createServices, type Services } from './app';
-import type { Db } from './db/db';
-import { openTestDb } from './test-db';
-import { AppModule } from './modules';
-import { seedDemo } from './seed';
-import { LOCK_SECONDS, MAX_FAILS } from './services/auth.service';
+import { createServices, type Services } from './testing/services';
+import type { Db } from './shared/database/database';
+import { openTestDb } from './shared/database/test-db';
+import { AppModule } from './app.module';
+import { seedDemo } from './bootstrap/seed';
+import { LOCK_SECONDS, MAX_FAILS } from './modules/identity/domain/login-attempt.policy';
 
 let now = new Date('2026-11-06T03:00:00Z'); // 10:00 in Bangkok
 let db: Db;
@@ -20,7 +20,7 @@ beforeEach(async () => {
   now = new Date('2026-11-06T03:00:00Z');
   ({ db, drop } = await openTestDb());
   s = await createServices(db, { secret: 'test-secret', clock: () => now });
-  await seedDemo(db, s.auth);
+  await seedDemo(db, s.codes, s.passwords);
 });
 afterEach(() => drop());
 
@@ -114,7 +114,7 @@ describe('closeSale', () => {
     await s.sales.closeSale(shift.id, { employeeId: employee.id, cart, payments: [cash(cart.net)], change: 0 });
     const milk = await db.query<{ qty: number }>(`SELECT SUM(qty)::int AS qty FROM stock_movements WHERE product_id='milk'`);
     expect(milk[0]?.qty).toBe(49); // 50 opening, 1 gifted
-    const catalog = await s.catalog.getCatalog();
+    const catalog = await s.posCatalog.get();
     expect(catalog.premiums.find((p) => p.id === 'brush')?.stock).toBe(119);
   });
 

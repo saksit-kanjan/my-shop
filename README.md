@@ -5,7 +5,7 @@ Nx monorepo for the shop's on-prem POS.
 | Path | What |
 | --- | --- |
 | `apps/pos` | POS for cashiers (React + Vite + daisyUI) |
-| `apps/api` | NestJS API: login, shifts, sales, stock ledger (PostgreSQL, or embedded PGlite for dev) |
+| `apps/api` | NestJS API in bounded contexts (identity, catalog, membership, inventory, sales, reporting...) on PostgreSQL, or embedded PGlite for dev |
 | `apps/backoffice` | Back office at `/admin/`: catalog, promotions, receiving, stock count, day close, reports, users |
 | `apps/customer-display` | Customer-facing second screen, served under `/display/` |
 | `libs/shared/contracts` | Shared types and the display channel messages |
@@ -23,5 +23,5 @@ npx nx serve customer-display   # then open http://localhost:4200/display/ on th
 npx nx run-many -t test
 ```
 
-Demo till codes: 100123 (สมชาย, cashier), 200456 (วิภา, cashier), 300789 (ปรีชา, supervisor). Back-office demo accounts are in `apps/api/src/seed.ts` (local only).
+Demo till codes: 100123 (สมชาย, cashier), 200456 (วิภา, cashier), 300789 (ปรีชา, supervisor). Back-office demo accounts are in `apps/api/src/bootstrap/seed.ts` (local only).
 Build the POS with `VITE_API_URL=local` to run it on browser-only demo data without the API.

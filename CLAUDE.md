@@ -10,15 +10,7 @@ Read `design/README.md` first. The full written spec is `design/spec.md` (Thai).
 - `apps/pos`: React + Vite POS. Data goes through `src/api/pos-api.ts` (`PosApi`). `src/api/index.ts` picks the
   implementation: `http-pos-api.ts` (the server at `/api`, default) or `local-pos-api.ts` (browser-only demo,
   build with `VITE_API_URL=local`).
-- `apps/api`: NestJS 11. Modules in `src/modules.ts` (`CoreModule` global: database, clock, secrets, settings, permissions;
-  `AuthModule`; `ShopModule`; `BackOfficeModule`; `TillModule`; `AppModule.forRoot(options)` ties them together). Business
-  rules live in `@Injectable()` providers in `src/services`; controllers in `src/http` stay thin and the `AuthGuard` checks
-  `@Requires(permission)` on each route. Every constructor parameter has an explicit `@Inject(...)` because tests and `tsx`
-  run through esbuild, which does not emit decorator metadata: keep doing that for new providers.
-  `db/` has one `Db` interface over `pg` (set `DATABASE_URL` + `CODE_SECRET` in `.env`) and embedded PGlite (default, stored
-  in `.data/pglite`, also used by tests). `createServices(db, config)` in `src/app.ts` boots the real module graph without
-  HTTP, for tests. The server also serves the built POS at `/`, the display at `/display/` and the back office at `/admin/`.
-  Call `setGlobalPrefix` before `init()` in `main.ts`.
+- `apps/api`: NestJS 11, organised as bounded contexts with clean / DDD layers. See "API architecture" below.
 - `apps/customer-display`: second screen, served at `/display/`, shows state only, no buttons.
 - `libs/shared/contracts`: shared types and the customer-display channel messages.
 - `libs/shared/domain`: money, VAT and the promotion engine. Must stay free of React and browser APIs.
@@ -71,7 +63,42 @@ Demo employee codes: 100123, 200456, 300789.
    device config; the sale flow must work with none of them (browser print, manual approval code).
 10. UI copy: plain Thai, sentence case, name things the way the cashier says them, errors say what to do.
 
-## What the API does now (`apps/api`)
+## API architecture (`apps/api/src`)
+
+```
+app.module.ts          composition root: AppModule.forRoot({ db, secret, clock, ... })
+main.ts                boots Nest, serves the built apps, seeds on first run
+shared/                kernel (DomainError, clock, dates, Session), database (Db port, pg and PGlite adapters, schema, UnitOfWork),
+                       audit log, document numbers, http (error filter, auth decorators), SharedModule (global)
+modules/<context>/     one Nest module per bounded context
+  domain/              pure TypeScript: entities, value objects, policies, and the repository PORTS (abstract classes)
+  application/         use cases: @Injectable services that orchestrate domain + ports in a UnitOfWork transaction
+  infrastructure/      adapters: Pg*Repository (all SQL lives here), crypto, anti-corruption adapters to other contexts
+  presentation/        controllers (thin: parse, call one use case, return)
+  <context>.module.ts  providers, and exports ONLY application services
+jobs/                  scheduler (backup + points expiry), only on the real server
+bootstrap/             demo seed and first-run owner (not part of the app graph)
+testing/               createServices(): boots the real module graph without HTTP, for tests
+```
+
+Contexts: **identity** (sign-in, approvals, staff, permission matrix), **administration** (settings, backup), **catalog**
+(products, promotions, free gifts), **membership** (members, points ledger), **inventory** (stock ledger, receiving, counts),
+**sales** (shifts, bills, credit notes, documents, day close; the only context that orchestrates others) and **reporting**
+(read side). Dependencies point one way: sales -> catalog, inventory, membership, identity, administration; inventory -> catalog;
+identity -> administration; reporting -> sales, inventory. `src/architecture.spec.ts` enforces the rules: domain has no Nest or
+SQL, application never imports infrastructure or presentation, SQL stays in infrastructure (reporting's query side excepted), a
+context reaches another only through its `application/` services, the shared kernel imports no context, and there are no cycles.
+
+How to add things:
+- A rule -> `domain/` as a pure function with a test; the use case calls it. A table -> a method on that context's repository port,
+  implemented in `infrastructure/pg-*.repository.ts` (repositories take the open `Tx` as their first argument).
+- A new use case -> an `@Injectable()` in `application/`, injecting ports and other contexts' services; run writes in
+  `UnitOfWork.run`, call `AuditLog.record(tx, ...)` and `DocumentNumbers.format(tx, series)` inside the same transaction.
+- Every constructor parameter needs an explicit `@Inject(...)`: tests and `tsx` run through esbuild, which emits no decorator metadata.
+- Call `setGlobalPrefix` before `init()` in `main.ts`; routes are registered at init.
+- Products and stock are different contexts, so the back-office screens join `/bo/products` with `/bo/stock`, and `/bo/promotions` with `/bo/premiums/stock`.
+
+## What the API does now
 
 Login (till code, back-office username + password), shifts, cash moves, no-sale drawer, **approvals** (a supervisor types
 their own code at the till, wrong codes are counted and lock the terminal), close-sale with server-side re-pricing,
@@ -82,11 +109,11 @@ with average cost, stock ledger, adjustments, stock counts (snapshot, approve), 
 products, gross profit, cash, credits, stock value, monthly tax, members and promos), users and the permission matrix
 with owner overrides, settings, audit log, daily backup (kept 30 days). Closed documents are append-only through database triggers.
 
-Settings that answer the spec's open questions are in `SETTING_DEFAULTS` (`services/settings.service.ts`) and editable in the
+Settings that answer the spec's open questions are in `SETTING_DEFAULTS` (`modules/administration/domain/settings.ts`) and editable in the
 back office: negative stock allowed, refund window 7 days, points 25 baht = 1 point and 100 points = 10 baht, no expiry,
 cash variance limit 100 baht, business-day cutoff hour 0. **They are the spec's suggestions, not decisions the owner made.**
 
-Demo accounts (local only, `src/seed.ts`): back office `owner` and `manager`; production creates the owner from
+Demo accounts (local only, `src/bootstrap/seed.ts`): back office `owner` and `manager`; production creates the owner from
 `OWNER_USERNAME`, `OWNER_PASSWORD`, `OWNER_CODE` and never seeds demo data (`SEED_DEMO=0`).
 
 ## Not built yet
@@ -104,7 +131,7 @@ Demo accounts (local only, `src/seed.ts`): back office `owner` and `manager`; pr
 
 ## Testing
 
-Set `TEST_DATABASE_URL=postgres://postgres@localhost:5432/postgres` to run the same API suite on a real PostgreSQL (each test gets a throwaway database, dropped after); the default is in-memory PGlite. All 49 pass on both.
-The API is covered by `apps/api/src/*.spec.ts` (47+ cases on in-memory PGlite: rules, rollbacks, approvals, refunds, reports, permissions over HTTP).
+Set `TEST_DATABASE_URL=postgres://postgres@localhost:5432/postgres` to run the same API suite on a real PostgreSQL (each test gets a throwaway database, dropped after); the default is in-memory PGlite. All pass on both.
+The API is covered by `apps/api/src/*.spec.ts` (56 cases: rules, rollbacks, approvals, refunds, reports, permissions over HTTP, and the architecture rules).
 Pricing is covered in `libs/shared/domain/src/lib/pricing.spec.ts` (all three promo kinds, set vs all, gifts,
 premiums, bill threshold, member). Add a test there before changing pricing behaviour.

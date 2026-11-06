@@ -6,10 +6,10 @@ import type { CartLine, Catalog, Employee, Payment, PricedCart } from '@my-shop/
 import { summarizeShift } from '@my-shop/domain';
 import { demoCatalog } from '@my-shop/seed';
 import { priceCart } from '@my-shop/domain';
-import { createServices, type Services } from './app';
-import type { Db } from './db/db';
-import { openTestDb } from './test-db';
-import { seedDemo } from './seed';
+import { createServices, type Services } from './testing/services';
+import type { Db } from './shared/database/database';
+import { openTestDb } from './shared/database/test-db';
+import { seedDemo } from './bootstrap/seed';
 
 let now: Date;
 let db: Db;
@@ -21,7 +21,7 @@ beforeEach(async () => {
   now = new Date('2026-11-06T03:00:00Z'); // 10:00 Bangkok, business date 2026-11-06
   ({ db, drop } = await openTestDb());
   s = await createServices(db, { secret: 'test-secret', clock: () => now, backupDir: await mkdtemp(join(tmpdir(), 'myshop-bk-')) });
-  await seedDemo(db, s.auth);
+  await seedDemo(db, s.codes, s.passwords);
 });
 afterEach(() => drop());
 
@@ -49,11 +49,11 @@ describe('approvals', () => {
     const { employee, shift } = await start();
     const sale = await sell(shift.id, employee, [{ productId: 'water', qty: 2 }]);
     const base = { saleDocNo: sale.docNo, reason: 'ลูกค้าเปลี่ยนใจ' };
-    await expect(s.documents.credit(shift.id, 'void', base, employee, 'T01')).rejects.toMatchObject({ code: 'forbidden', details: { needsApproval: 'void' } });
-    await expect(s.documents.credit(shift.id, 'void', { ...base, approverCode: '999999' }, employee, 'T01')).rejects.toMatchObject({ code: 'forbidden', message: 'รหัสอนุมัติไม่ถูกต้อง' });
+    await expect(s.creditNotes.credit(shift.id, 'void', base, employee, 'T01')).rejects.toMatchObject({ code: 'forbidden', details: { needsApproval: 'void' } });
+    await expect(s.creditNotes.credit(shift.id, 'void', { ...base, approverCode: '999999' }, employee, 'T01')).rejects.toMatchObject({ code: 'forbidden', message: 'รหัสอนุมัติไม่ถูกต้อง' });
     // Another cashier's code is a real code but has no void right.
-    await expect(s.documents.credit(shift.id, 'void', { ...base, approverCode: '200456' }, employee, 'T01')).rejects.toMatchObject({ code: 'forbidden' });
-    const cn = await s.documents.credit(shift.id, 'void', { ...base, approverCode: SUPERVISOR }, employee, 'T01');
+    await expect(s.creditNotes.credit(shift.id, 'void', { ...base, approverCode: '200456' }, employee, 'T01')).rejects.toMatchObject({ code: 'forbidden' });
+    const cn = await s.creditNotes.credit(shift.id, 'void', { ...base, approverCode: SUPERVISOR }, employee, 'T01');
     expect(cn).toMatchObject({ type: 'void', saleDocNo: sale.docNo, approvedBy: 'E003', employeeId: employee.id });
     const actions = (await db.query<{ action: string; approver: string | null }>(`SELECT action, approver FROM audit_log WHERE action='sale.void'`));
     expect(actions[0].approver).toBe('E003');
@@ -62,14 +62,14 @@ describe('approvals', () => {
   it('locks approvals on a terminal after 5 wrong codes', async () => {
     const { employee, shift } = await start();
     const sale = await sell(shift.id, employee, [{ productId: 'water', qty: 1 }]);
-    for (let i = 0; i < 5; i++) await expect(s.documents.credit(shift.id, 'void', { saleDocNo: sale.docNo, reason: 'x', approverCode: '111111' }, employee, 'T01')).rejects.toBeTruthy();
-    await expect(s.documents.credit(shift.id, 'void', { saleDocNo: sale.docNo, reason: 'x', approverCode: SUPERVISOR }, employee, 'T01')).rejects.toMatchObject({ code: 'locked' });
+    for (let i = 0; i < 5; i++) await expect(s.creditNotes.credit(shift.id, 'void', { saleDocNo: sale.docNo, reason: 'x', approverCode: '111111' }, employee, 'T01')).rejects.toBeTruthy();
+    await expect(s.creditNotes.credit(shift.id, 'void', { saleDocNo: sale.docNo, reason: 'x', approverCode: SUPERVISOR }, employee, 'T01')).rejects.toMatchObject({ code: 'locked' });
   });
 
   it('lets a supervisor act without a second code', async () => {
     const { employee, shift } = await start(SUPERVISOR);
     const sale = await sell(shift.id, employee, [{ productId: 'water', qty: 1 }]);
-    await expect(s.documents.credit(shift.id, 'void', { saleDocNo: sale.docNo, reason: 'คีย์ผิด' }, employee, 'T01')).resolves.toMatchObject({ approvedBy: employee.id });
+    await expect(s.creditNotes.credit(shift.id, 'void', { saleDocNo: sale.docNo, reason: 'คีย์ผิด' }, employee, 'T01')).resolves.toMatchObject({ approvedBy: employee.id });
   });
 });
 
@@ -78,18 +78,18 @@ describe('void', () => {
     const { employee, shift } = await start();
     const sale = await sell(shift.id, employee, [{ productId: 'chips', qty: 2 }, { productId: 'paste', qty: 1 }]);
     expect(await stockOf('chips')).toBe(48);
-    const cn = await s.documents.credit(shift.id, 'void', { saleDocNo: sale.docNo, reason: 'คีย์ผิด', approverCode: SUPERVISOR }, employee, 'T01');
+    const cn = await s.creditNotes.credit(shift.id, 'void', { saleDocNo: sale.docNo, reason: 'คีย์ผิด', approverCode: SUPERVISOR }, employee, 'T01');
     expect(cn.docNo).toBe(`${sale.docNo}-V`);
     expect(cn.amount).toBe(sale.cart.net);
     expect(cn.payments).toEqual([{ method: 'cash', amount: sale.cart.net }]);
     expect(await stockOf('chips')).toBe(50);
-    const brush = (await s.catalog.getCatalog()).premiums[0].stock;
+    const brush = (await s.posCatalog.get()).premiums[0].stock;
     expect(brush).toBe(120);
     const after = (await s.shifts.getShift(shift.id))!;
     expect(after.sales[0].voided).toBe(true);
     const sum = summarizeShift(after);
     expect(sum).toMatchObject({ bills: 0, net: 0, refunds: sale.cart.net, cashRefunds: sale.cart.net, expectedCash: 200000 });
-    await expect(s.documents.credit(shift.id, 'void', { saleDocNo: sale.docNo, reason: 'again', approverCode: SUPERVISOR }, employee, 'T01')).rejects.toMatchObject({ code: 'conflict' });
+    await expect(s.creditNotes.credit(shift.id, 'void', { saleDocNo: sale.docNo, reason: 'again', approverCode: SUPERVISOR }, employee, 'T01')).rejects.toMatchObject({ code: 'conflict' });
   });
 
   it('refuses to void a bill from another shift', async () => {
@@ -98,7 +98,7 @@ describe('void', () => {
     await s.shifts.closeShift(shift.id, 200000 + sale.cart.net);
     advance(3_600_000);
     const next = await s.shifts.openShift('T01', employee.id, 100000);
-    await expect(s.documents.credit(next.id, 'void', { saleDocNo: sale.docNo, reason: 'x', approverCode: SUPERVISOR }, employee, 'T01')).rejects.toMatchObject({ code: 'conflict' });
+    await expect(s.creditNotes.credit(next.id, 'void', { saleDocNo: sale.docNo, reason: 'x', approverCode: SUPERVISOR }, employee, 'T01')).rejects.toMatchObject({ code: 'conflict' });
   });
 });
 
@@ -108,13 +108,13 @@ describe('refund', () => {
     // 3 chips: 2 at the promo price of 15, the third at 20 = 50.
     const sale = await sell(shift.id, employee, [{ productId: 'chips', qty: 3 }]);
     expect(sale.cart.net).toBe(5000);
-    const one = await s.documents.credit(shift.id, 'refund', { saleDocNo: sale.docNo, lines: [{ productId: 'chips', qty: 1 }], reason: 'ชำรุด', approverCode: SUPERVISOR }, employee, 'T01');
+    const one = await s.creditNotes.credit(shift.id, 'refund', { saleDocNo: sale.docNo, lines: [{ productId: 'chips', qty: 1 }], reason: 'ชำรุด', approverCode: SUPERVISOR }, employee, 'T01');
     expect(one.docNo).toMatch(/^CN-6911-000001$/);
     expect(one.amount).toBe(2000); // 50 - 2 chips still on the promo (30)
-    const two = await s.documents.credit(shift.id, 'refund', { saleDocNo: sale.docNo, lines: [{ productId: 'chips', qty: 2 }], reason: 'ชำรุด', approverCode: SUPERVISOR }, employee, 'T01');
+    const two = await s.creditNotes.credit(shift.id, 'refund', { saleDocNo: sale.docNo, lines: [{ productId: 'chips', qty: 2 }], reason: 'ชำรุด', approverCode: SUPERVISOR }, employee, 'T01');
     expect(two.amount).toBe(3000);
     expect(one.amount + two.amount).toBe(sale.cart.net);
-    await expect(s.documents.credit(shift.id, 'refund', { saleDocNo: sale.docNo, lines: [{ productId: 'chips', qty: 1 }], reason: 'x', approverCode: SUPERVISOR }, employee, 'T01')).rejects.toMatchObject({ code: 'invalid' });
+    await expect(s.creditNotes.credit(shift.id, 'refund', { saleDocNo: sale.docNo, lines: [{ productId: 'chips', qty: 1 }], reason: 'x', approverCode: SUPERVISOR }, employee, 'T01')).rejects.toMatchObject({ code: 'invalid' });
     expect(await stockOf('chips')).toBe(50);
   });
 
@@ -122,14 +122,14 @@ describe('refund', () => {
     const { employee, shift } = await start();
     const sale = await sell(shift.id, employee, [{ productId: 'bread', qty: 1 }, { productId: 'milk', qty: 1 }]);
     expect(sale.cart.net).toBe(4500); // milk is free
-    const cn = await s.documents.credit(shift.id, 'refund', { saleDocNo: sale.docNo, lines: [{ productId: 'bread', qty: 1 }], reason: 'คืน', approverCode: SUPERVISOR }, employee, 'T01');
+    const cn = await s.creditNotes.credit(shift.id, 'refund', { saleDocNo: sale.docNo, lines: [{ productId: 'bread', qty: 1 }], reason: 'คืน', approverCode: SUPERVISOR }, employee, 'T01');
     expect(cn.amount).toBe(4500 - 1400); // the customer keeps the milk, so it is charged at its shelf price
   });
 
   it('can write returned goods off instead of restocking them', async () => {
     const { employee, shift } = await start();
     const sale = await sell(shift.id, employee, [{ productId: 'water', qty: 1 }, { productId: 'coffee', qty: 1 }]);
-    await s.documents.credit(shift.id, 'refund', { saleDocNo: sale.docNo, lines: [{ productId: 'coffee', qty: 1 }], reason: 'หมดอายุ', restock: false, approverCode: SUPERVISOR }, employee, 'T01');
+    await s.creditNotes.credit(shift.id, 'refund', { saleDocNo: sale.docNo, lines: [{ productId: 'coffee', qty: 1 }], reason: 'หมดอายุ', restock: false, approverCode: SUPERVISOR }, employee, 'T01');
     expect(await stockOf('coffee')).toBe(49);
     const kinds = await db.query<{ kind: string }>(`SELECT kind FROM stock_movements WHERE product_id='coffee' ORDER BY id`);
     expect(kinds.map((k) => k.kind)).toEqual(['opening', 'sale', 'refund', 'waste']);
@@ -139,7 +139,7 @@ describe('refund', () => {
     const { employee, shift } = await start();
     const cart = cartOf([{ productId: 'tissue', qty: 2 }]); // 178
     const sale = await s.sales.closeSale(shift.id, { employeeId: employee.id, cart, change: 0, payments: [cash(10000), { method: 'promptpay', amount: cart.net - 10000 }] });
-    const cn = await s.documents.credit(shift.id, 'refund', { saleDocNo: sale.docNo, lines: [{ productId: 'tissue', qty: 1 }], reason: 'คืน', approverCode: SUPERVISOR }, employee, 'T01');
+    const cn = await s.creditNotes.credit(shift.id, 'refund', { saleDocNo: sale.docNo, lines: [{ productId: 'tissue', qty: 1 }], reason: 'คืน', approverCode: SUPERVISOR }, employee, 'T01');
     expect(cn.amount).toBe(8900);
     expect(cn.payments.reduce((a, p) => a + p.amount, 0)).toBe(8900);
     expect(cn.payments.map((p) => p.method).sort()).toEqual(['cash', 'promptpay']);
@@ -154,8 +154,8 @@ describe('refund', () => {
     advance(8 * 86_400_000);
     const next = await s.shifts.openShift('T01', employee.id, 100000);
     const input = { saleDocNo: sale.docNo, lines: [{ productId: 'water', qty: 1 }], reason: 'คืน' };
-    await expect(s.documents.credit(next.id, 'refund', { ...input, approverCode: SUPERVISOR }, employee, 'T01')).rejects.toMatchObject({ code: 'forbidden', details: { needsApproval: 'refund.late' } });
-    await expect(s.documents.credit(next.id, 'refund', { ...input, approverCode: MANAGER }, employee, 'T01')).resolves.toMatchObject({ approvedBy: 'E004' });
+    await expect(s.creditNotes.credit(next.id, 'refund', { ...input, approverCode: SUPERVISOR }, employee, 'T01')).rejects.toMatchObject({ code: 'forbidden', details: { needsApproval: 'refund.late' } });
+    await expect(s.creditNotes.credit(next.id, 'refund', { ...input, approverCode: MANAGER }, employee, 'T01')).resolves.toMatchObject({ approvedBy: 'E004' });
   });
 });
 
@@ -169,7 +169,7 @@ describe('members and points', () => {
     expect(sale.cart.net).toBe(17000);
     expect(sale.pointsEarned).toBe(6);
     expect((await s.members.findByPhone('0811111111'))?.points).toBe(6);
-    await s.documents.credit(shift.id, 'refund', { saleDocNo: sale.docNo, lines: [{ productId: 'tissue', qty: 2 }], reason: 'คืน', approverCode: SUPERVISOR }, employee, 'T01');
+    await s.creditNotes.credit(shift.id, 'refund', { saleDocNo: sale.docNo, lines: [{ productId: 'tissue', qty: 2 }], reason: 'คืน', approverCode: SUPERVISOR }, employee, 'T01');
     expect((await s.members.findByPhone('0811111111'))?.points).toBe(0);
   });
 
@@ -184,7 +184,7 @@ describe('members and points', () => {
     expect(sale.payments[0].amount).toBe(8500 - 100);
     await expect(sell(shift.id, employee, [{ productId: 'pen', qty: 1 }], { memberPhone: '0822222222', pointsRedeemed: 9999 })).rejects.toMatchObject({ code: 'invalid' });
     const mid = (await s.members.findByPhone('0822222222'))!.points;
-    await s.documents.credit(shift.id, 'void', { saleDocNo: sale.docNo, reason: 'คีย์ผิด', approverCode: SUPERVISOR }, employee, 'T01');
+    await s.creditNotes.credit(shift.id, 'void', { saleDocNo: sale.docNo, reason: 'คีย์ผิด', approverCode: SUPERVISOR }, employee, 'T01');
     expect((await s.members.findByPhone('0822222222'))!.points).toBe(mid + 10 - (sale.pointsEarned ?? 0));
   });
 
@@ -256,35 +256,35 @@ describe('stock and receiving', () => {
   it('receives goods through the ledger and moves the average cost', async () => {
     const owner = await who(OWNER);
     const [{ cost }] = await db.query<{ cost: number }>(`SELECT cost FROM products WHERE id='water'`); // 650, 50 on hand
-    await s.backoffice.receive({ supplierId: 'SUP1', ref: 'INV-1', lines: [{ productId: 'water', qty: 50, unitCost: cost + 200 }] }, owner, true);
+    await s.receiving.receive({ supplierId: 'SUP1', ref: 'INV-1', lines: [{ productId: 'water', qty: 50, unitCost: cost + 200 }] }, owner, true);
     expect(await stockOf('water')).toBe(100);
     const [after] = await db.query<{ cost: number }>(`SELECT cost FROM products WHERE id='water'`);
     expect(after.cost).toBe(cost + 100);
-    await expect(s.backoffice.receive({ supplierId: 'NOPE', lines: [{ productId: 'water', qty: 1, unitCost: 1 }] }, owner, true)).rejects.toMatchObject({ code: 'invalid' });
-    expect((await s.backoffice.listReceipts())[0]).toMatchObject({ supplier: 'ผู้ขายตัวอย่าง', qty: 50 });
+    await expect(s.receiving.receive({ supplierId: 'NOPE', lines: [{ productId: 'water', qty: 1, unitCost: 1 }] }, owner, true)).rejects.toMatchObject({ code: 'invalid' });
+    expect((await s.receiving.receipts())[0]).toMatchObject({ supplier: 'ผู้ขายตัวอย่าง', qty: 50 });
   });
 
   it('adjusts waste with a reason and flags low stock', async () => {
     const manager = await who(MANAGER);
-    await s.backoffice.adjust({ productId: 'milk', qty: -45, reason: 'expired' }, manager);
+    await s.stock.adjust({ productId: 'milk', qty: -45, reason: 'expired' }, manager);
     expect(await stockOf('milk')).toBe(5);
-    const low = await s.backoffice.stock({ lowOnly: true });
+    const low = await s.stock.levels({ lowOnly: true });
     expect(low.map((r) => r.productId)).toContain('milk');
-    await expect(s.backoffice.adjust({ productId: 'milk', qty: 0, reason: 'waste' }, manager)).rejects.toMatchObject({ code: 'invalid' });
+    await expect(s.stock.adjust({ productId: 'milk', qty: 0, reason: 'waste' }, manager)).rejects.toMatchObject({ code: 'invalid' });
   });
 
   it('counts stock against a snapshot and adjusts for sales made while counting', async () => {
     const manager = await who(MANAGER);
     const { employee, shift } = await start();
-    const { id } = await s.backoffice.startCount({ categoryId: 'drink' }, manager);
-    await expect(s.backoffice.startCount({}, manager)).rejects.toMatchObject({ code: 'conflict' });
+    const { id } = await s.stocktake.start({ categoryId: 'drink' }, manager);
+    await expect(s.stocktake.start({}, manager)).rejects.toMatchObject({ code: 'conflict' });
     await sell(shift.id, employee, [{ productId: 'water', qty: 2 }]); // sold while counting: the shelf now holds 48
-    await s.backoffice.saveCounted(id, [{ productId: 'water', qty: 47 }, { productId: 'coffee', qty: 50 }]);
-    const view = await s.backoffice.getCount(id);
+    await s.stocktake.saveCounted(id, [{ productId: 'water', qty: 47 }, { productId: 'coffee', qty: 50 }]);
+    const view = await s.stocktake.get(id);
     expect(view.lines.find((l) => l.productId === 'water')).toMatchObject({ snapshot: 50, soldSince: -2, counted: 47, diff: -1 });
-    expect(await s.backoffice.approveCount(id, manager)).toEqual({ adjusted: 1 });
+    expect(await s.stocktake.approve(id, manager)).toEqual({ adjusted: 1 });
     expect(await stockOf('water')).toBe(47);
-    await expect(s.backoffice.approveCount(id, manager)).rejects.toMatchObject({ code: 'conflict' });
+    await expect(s.stocktake.approve(id, manager)).rejects.toMatchObject({ code: 'conflict' });
   });
 });
 
@@ -293,23 +293,23 @@ describe('catalog admin', () => {
     const manager = await who(MANAGER);
     const owner = await who(OWNER);
     const input = { sku: 'NEW-1', name: 'สินค้าใหม่', categoryId: 'drink', price: 2500, memberPrice: 2300, cost: 1500, barcodes: ['8859999999990'] };
-    const asManager = await s.backoffice.saveProduct(null, input, manager, false);
+    const asManager = await s.catalogAdmin.saveProduct(null, input, manager, false);
     expect(asManager.cost).toBe(0); // a manager can't set or see cost
-    const asOwner = await s.backoffice.saveProduct(asManager.id, { ...input, cost: 1500, price: 2600 }, owner, true);
+    const asOwner = await s.catalogAdmin.saveProduct(asManager.id, { ...input, cost: 1500, price: 2600 }, owner, true);
     expect(asOwner).toMatchObject({ cost: 1500, price: 2600 });
     const hist = await db.query(`SELECT 1 FROM price_history WHERE product_id=$1`, [asManager.id]);
     expect(hist.length).toBe(2);
-    await expect(s.backoffice.saveProduct(null, { ...input, sku: 'NEW-2' }, owner, true)).rejects.toMatchObject({ code: 'conflict' }); // barcode in use
-    await expect(s.backoffice.saveProduct(null, { ...input, sku: 'NEW-3', price: 100, barcodes: [] }, owner, true)).rejects.toMatchObject({ code: 'invalid' }); // member price > price
+    await expect(s.catalogAdmin.saveProduct(null, { ...input, sku: 'NEW-2' }, owner, true)).rejects.toMatchObject({ code: 'conflict' }); // barcode in use
+    await expect(s.catalogAdmin.saveProduct(null, { ...input, sku: 'NEW-3', price: 100, barcodes: [] }, owner, true)).rejects.toMatchObject({ code: 'invalid' }); // member price > price
   });
 
   it('validates promotions and lets the till pick them up', async () => {
     const manager = await who(MANAGER);
-    await expect(s.backoffice.savePromotion({ kind: 'qty', id: 'p-x', name: 'x', productId: 'ghost', minQty: 2, unitPrice: 100, countMode: 'set' }, true, manager)).rejects.toMatchObject({ code: 'invalid' });
-    await s.backoffice.savePromotion({ kind: 'bogo', id: 'p-pen', name: 'ปากกา 1 แถม 1', productId: 'pen', buyQty: 1, freeQty: 1 }, true, manager);
-    expect((await s.catalog.getCatalog()).promotions.some((p) => p.id === 'p-pen')).toBe(true);
-    await s.backoffice.savePromotion({ kind: 'bogo', id: 'p-pen', name: 'ปากกา 1 แถม 1', productId: 'pen', buyQty: 1, freeQty: 1 }, false, manager);
-    expect((await s.catalog.getCatalog()).promotions.some((p) => p.id === 'p-pen')).toBe(false);
+    await expect(s.catalogAdmin.savePromotion({ kind: 'qty', id: 'p-x', name: 'x', productId: 'ghost', minQty: 2, unitPrice: 100, countMode: 'set' }, true, manager)).rejects.toMatchObject({ code: 'invalid' });
+    await s.catalogAdmin.savePromotion({ kind: 'bogo', id: 'p-pen', name: 'ปากกา 1 แถม 1', productId: 'pen', buyQty: 1, freeQty: 1 }, true, manager);
+    expect((await s.posCatalog.get()).promotions.some((p) => p.id === 'p-pen')).toBe(true);
+    await s.catalogAdmin.savePromotion({ kind: 'bogo', id: 'p-pen', name: 'ปากกา 1 แถม 1', productId: 'pen', buyQty: 1, freeQty: 1 }, false, manager);
+    expect((await s.posCatalog.get()).promotions.some((p) => p.id === 'p-pen')).toBe(false);
   });
 });
 
@@ -318,12 +318,12 @@ describe('day close and reports', () => {
     const manager = await who(MANAGER);
     const { employee, shift } = await start();
     const sale = await sell(shift.id, employee, [{ productId: 'water', qty: 2 }]);
-    await expect(s.backoffice.closeDay('2026-11-06', manager)).rejects.toMatchObject({ code: 'conflict' });
+    await expect(s.dayClose.closeDay('2026-11-06', manager)).rejects.toMatchObject({ code: 'conflict' });
     await s.shifts.closeShift(shift.id, 200000 + sale.cart.net);
-    expect(await s.backoffice.closeDay('2026-11-06', manager)).toMatchObject({ bills: 1, net: sale.cart.net });
-    await expect(s.backoffice.closeDay('2026-11-06', manager)).rejects.toMatchObject({ code: 'conflict' });
+    expect(await s.dayClose.closeDay('2026-11-06', manager)).toMatchObject({ bills: 1, net: sale.cart.net });
+    await expect(s.dayClose.closeDay('2026-11-06', manager)).rejects.toMatchObject({ code: 'conflict' });
     await expect(s.shifts.openShift('T01', employee.id, 0)).rejects.toMatchObject({ code: 'conflict' });
-    const day = await s.backoffice.dayShifts('2026-11-06');
+    const day = await s.dayClose.dayShifts('2026-11-06');
     expect(day.closed).toBeTruthy();
     expect(day.shifts[0]).toMatchObject({ variance: 0, bills: 1 });
   });
@@ -332,7 +332,7 @@ describe('day close and reports', () => {
     const { employee, shift } = await start();
     const a = await sell(shift.id, employee, [{ productId: 'tissue', qty: 2 }]); // 178
     await sell(shift.id, employee, [{ productId: 'water', qty: 1 }]); // 10
-    await s.documents.credit(shift.id, 'refund', { saleDocNo: a.docNo, lines: [{ productId: 'tissue', qty: 1 }], reason: 'คืน', approverCode: SUPERVISOR }, employee, 'T01');
+    await s.creditNotes.credit(shift.id, 'refund', { saleDocNo: a.docNo, lines: [{ productId: 'tissue', qty: 1 }], reason: 'คืน', approverCode: SUPERVISOR }, employee, 'T01');
     const r = await s.reports.salesSummary({ from: '2026-11-06', to: '2026-11-06' });
     expect(r.total).toMatchObject({ gross: 18800, refunds: 8900, net: 18800 - 8900, bills: 2 });
     expect(r.byMethod.cash).toBe(18800 - 8900);
@@ -400,7 +400,7 @@ describe('users and permissions', () => {
     const cfg = await s.settings.getAll();
     expect(cfg).toMatchObject({ refundDays: 14, allowNegativeStock: false });
     const { employee, shift } = await start();
-    await s.backoffice.adjust({ productId: 'pen', qty: -50, reason: 'lost' }, await who(MANAGER));
+    await s.stock.adjust({ productId: 'pen', qty: -50, reason: 'lost' }, await who(MANAGER));
     await expect(sell(shift.id, employee, [{ productId: 'pen', qty: 1 }])).rejects.toMatchObject({ code: 'conflict' });
   });
 });
@@ -424,7 +424,7 @@ describe('HTTP permissions', () => {
   let base: string;
   beforeEach(async () => {
     const { NestFactory } = await import('@nestjs/core');
-    const { AppModule } = await import('./modules');
+    const { AppModule } = await import('./app.module');
     app = await NestFactory.create(AppModule.forRoot(s.options), { logger: false });
     app.setGlobalPrefix('api');
     await app.listen(0);

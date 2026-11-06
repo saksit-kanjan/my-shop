@@ -3,12 +3,12 @@ import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
-import { createPgDb } from './db/pg-db';
-import { createPgliteDb } from './db/pglite-db';
-import { AppModule } from './modules';
-import { AuthService } from './services/auth.service';
-import { SettingsService } from './services/settings.service';
-import { bootstrapOwner, seedDemo } from './seed';
+import { AppModule } from './app.module';
+import { bootstrapOwner, seedDemo } from './bootstrap/seed';
+import { CodeHasher, PasswordHasher } from './modules/identity/domain/credential-hasher';
+import { SettingsService } from './modules/administration/application/settings.service';
+import { createPgDb } from './shared/database/pg-db';
+import { createPgliteDb } from './shared/database/pglite-db';
 
 async function bootstrap() {
   // DATABASE_URL = PostgreSQL in production. Without it the API runs on embedded Postgres kept under
@@ -46,10 +46,11 @@ async function bootstrap() {
   }
 
   await app.init(); // runs the migrations before anything below touches the tables
-  const auth = app.get(AuthService);
-  if (process.env['SEED_DEMO'] !== '0' && (await seedDemo(db, auth))) console.log('Seeded demo catalog and employees.');
-  if (await bootstrapOwner(db, auth, process.env)) console.log('Created the owner account from OWNER_* settings.');
-  if (process.env['BUSINESS_DAY_CUTOFF_HOUR']) await db.transaction((tx) => app.get(SettingsService).update(tx, { cutoffHour: Number(process.env['BUSINESS_DAY_CUTOFF_HOUR']) }));
+  const codes = app.get(CodeHasher, { strict: false });
+  const passwords = app.get(PasswordHasher, { strict: false });
+  if (process.env['SEED_DEMO'] !== '0' && (await seedDemo(db, codes, passwords))) console.log('Seeded demo catalog and employees.');
+  if (await bootstrapOwner(db, codes, passwords, process.env)) console.log('Created the owner account from OWNER_* settings.');
+  if (process.env['BUSINESS_DAY_CUTOFF_HOUR']) await db.transaction((tx) => app.get(SettingsService, { strict: false }).update(tx, { cutoffHour: Number(process.env['BUSINESS_DAY_CUTOFF_HOUR']) }));
 
   const port = Number(process.env['PORT'] ?? 3000);
   await app.listen(port);

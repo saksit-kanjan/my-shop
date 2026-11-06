@@ -144,11 +144,21 @@ export const api = {
   logout: () => call<null>('/logout', { method: 'POST', body: {} }),
   me: () => call<{ employee: { id: string; name: string; initials: string; role: Role }; permissions: Permission[]; settings: Settings }>('/me'),
   dashboard: () => call<Dashboard>('/bo/dashboard'),
-  products: () => call<ProductRow[]>('/bo/products'),
+  /** Products come from the catalog context and stock from inventory, so the screen joins them. */
+  products: async () => {
+    const [products, stock] = await Promise.all([call<Omit<ProductRow, 'stock'>[]>('/bo/products'), call<{ productId: string; stock: number }[]>('/bo/stock')]);
+    const onHand = new Map(stock.map((r) => [r.productId, r.stock]));
+    return products.map((p): ProductRow => ({ ...p, stock: onHand.get(p.id) ?? 0 }));
+  },
   categories: () => call<{ id: string; name: string }[]>('/bo/categories'),
   saveCategory: (id: string | null, name: string) => call<{ id: string; name: string }>(id ? `/bo/categories/${id}` : '/bo/categories', { method: id ? 'PUT' : 'POST', body: { name } }),
   saveProduct: (id: string | null, p: Partial<ProductInput>) => call<ProductRow>(id ? `/bo/products/${id}` : '/bo/products', { method: id ? 'PUT' : 'POST', body: p }),
-  promotions: () => call<{ promotions: (Promotion & { active: boolean })[]; premiums: Catalog['premiums'] }>('/bo/promotions'),
+  /** Promotions and gift names come from the catalog, how many gifts are left from inventory. */
+  promotions: async () => {
+    const [list, levels] = await Promise.all([call<{ promotions: (Promotion & { active: boolean })[]; premiums: { id: string; name: string }[] }>('/bo/promotions'), call<{ id: string; stock: number }[]>('/bo/premiums/stock').catch(() => [])]);
+    const left = new Map(levels.map((r) => [r.id, r.stock]));
+    return { promotions: list.promotions, premiums: list.premiums.map((p): Catalog['premiums'][number] => ({ ...p, stock: left.get(p.id) ?? 0 })) };
+  },
   savePromotion: (promotion: Promotion, active: boolean, isNew: boolean) => call<null>(isNew ? '/bo/promotions' : `/bo/promotions/${promotion.id}`, { method: isNew ? 'POST' : 'PUT', body: { promotion, active } }),
   premiumStock: (id: string, qty: number) => call<null>(`/bo/premiums/${id}/stock`, { body: { qty } }),
   savePremium: (name: string) => call<{ id: string; name: string }>('/bo/premiums', { body: { name } }),
