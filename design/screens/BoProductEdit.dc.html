@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>หลังบ้าน แก้ไขสินค้า</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/37d9b3ad37cec22200d6cae5a6c509c8">
+<script src="/_blob/dc764973e8003d6d5b097b4eb3f523fd"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+[data-theme=myshop]{color-scheme:light;--color-base-100:#ffffff;--color-base-200:#f4f5f2;--color-base-300:#e3e6e0;--color-base-content:#18201c;--color-primary:#0e6b58;--color-primary-content:#ffffff;--color-secondary:#e3f1ec;--color-secondary-content:#0a4a3d;--color-accent:#e3f1ec;--color-accent-content:#0a4a3d;--color-neutral:#18201c;--color-neutral-content:#ffffff;--color-info:#1d4ed8;--color-info-content:#ffffff;--color-success:#0e6b58;--color-success-content:#ffffff;--color-warning:#b54708;--color-warning-content:#ffffff;--color-error:#b42318;--color-error-content:#ffffff;--radius-selector:2rem;--radius-field:.75rem;--radius-box:1rem;--size-selector:.25rem;--size-field:.25rem;--border:1px;--depth:0;--noise:0}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes pop{0%{opacity:0;transform:scale(.6)}60%{opacity:1;transform:scale(1.06)}100%{transform:scale(1)}}
+@keyframes draw{to{stroke-dashoffset:0}}
+.anim-in{animation:fadeUp .4s ease-out both}
+.anim-in-2{animation:fadeUp .4s .08s ease-out both}
+.anim-in-3{animation:fadeUp .4s .16s ease-out both}
+.anim-pop{animation:pop .5s cubic-bezier(.2,.8,.2,1) both}
+.check-path{stroke-dasharray:40;stroke-dashoffset:40;animation:draw .45s .3s ease-out forwards}
+.lift{transition:transform .15s ease,box-shadow .15s ease}.lift:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(24,32,28,.08)}.lift:active{transform:scale(.97)}
+@media (prefers-reduced-motion:reduce){.anim-in,.anim-in-2,.anim-in-3,.anim-pop{animation:none}.check-path{animation:none;stroke-dashoffset:0}.lift{transition:none}}
+</style>
+</helmet>
+<div data-theme="myshop" class="min-h-[900px] flex flex-wrap bg-base-200 text-base-content" style="font-family: 'IBM Plex Sans Thai', 'IBM Plex Sans', sans-serif; font-variant-numeric: tabular-nums">
+<aside class="bg-base-100 border-r border-base-300 p-3 flex flex-col gap-2" style="flex: 1 1 220px; max-width: 250px">
+<div class="px-3 py-2 flex flex-col"><span class="text-lg font-semibold">My Shop</span><span class="text-xs opacity-70">หลังบ้าน · สาขา [ชื่อสาขา]</span></div>
+<ul class="menu w-full gap-0.5 p-0">
+<li><a href="Backoffice.dc.html">Dashboard</a></li>
+<li><a href="BoProducts.dc.html" aria-current="page" class="menu-active">สินค้าและราคา</a></li>
+<li><a href="BoPromos.dc.html">โปรโมชัน</a></li>
+<li class="menu-title pt-3">สต็อก</li>
+<li><a href="BoReceive.dc.html">รับสินค้า</a></li>
+<li><a href="BoCount.dc.html">ตรวจนับสต็อก</a></li>
+<li class="menu-title pt-3">การขาย</li>
+<li><a href="BoDayClose.dc.html">กะและปิดวัน</a></li>
+<li><a href="#">เอกสารการขาย</a></li>
+<li><a href="BoReport.dc.html">รายงาน</a></li>
+<li class="menu-title pt-3">ระบบ</li>
+<li><a href="BoUsers.dc.html">ผู้ใช้และสิทธิ์</a></li>
+<li><a href="#">ตั้งค่าร้าน</a></li>
+<li><a href="#">Audit log</a></li>
+</ul>
+<div class="mt-auto px-3 py-2 flex items-center gap-2 text-sm"><span class="bg-neutral text-neutral-content w-8 h-8 rounded-full grid place-items-center text-xs">ผจ</span><span class="flex flex-col"><span>ผู้จัดการ</span><span class="text-xs opacity-70">เจ้าของร้าน</span></span></div>
+</aside>
+<main class="flex flex-col gap-4 p-8" style="flex: 999 1 560px; min-width: 0">
+<div class="breadcrumbs text-sm p-0 anim-in"><ul><li><a href="BoProducts.dc.html">สินค้าและราคา</a></li><li>กาแฟกระป๋อง</li></ul></div>
+<div class="flex flex-wrap justify-between items-center gap-3 anim-in">
+<h1 class="text-2xl font-semibold m-0">กาแฟกระป๋อง <span class="text-base font-normal opacity-70">DR-0002</span></h1>
+<label class="flex items-center gap-2 cursor-pointer"><span class="text-sm">ขายอยู่</span><input type="checkbox" checked="checked" class="toggle toggle-primary"></label>
+</div>
+
+<div class="flex flex-wrap gap-4 items-start">
+<div class="flex flex-col gap-4" style="flex: 999 1 520px; min-width: 0">
+<section class="card bg-base-100 border border-base-300 anim-in-2">
+<div class="card-body gap-3">
+<h2 class="font-semibold m-0">ข้อมูลทั่วไป</h2>
+<div class="grid gap-3" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr))">
+<label class="flex flex-col gap-1"><span class="text-sm">ชื่อสินค้า</span><input type="text" value="กาแฟกระป๋อง" class="input w-full"></label>
+<label class="flex flex-col gap-1"><span class="text-sm">หมวด</span><select class="select w-full"><option>เครื่องดื่ม</option><option>ขนมและอาหาร</option><option>ของใช้</option></select></label>
+<label class="flex flex-col gap-1"><span class="text-sm">ยี่ห้อ</span><input type="text" placeholder="ไม่บังคับ" class="input w-full"></label>
+<fieldset class="flex flex-col gap-1"><legend class="text-sm mb-1">ภาษี</legend>
+<div class="flex gap-4 h-10 items-center">
+<label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="tax" checked="checked" class="radio radio-primary radio-sm"><span>VAT 7%</span></label>
+<label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="tax" class="radio radio-primary radio-sm"><span>ยกเว้น VAT</span></label>
+</div></fieldset>
+</div>
+</div>
+</section>
+
+<section class="card bg-base-100 border border-base-300 anim-in-2">
+<div class="card-body gap-3">
+<h2 class="font-semibold m-0">ราคา</h2>
+<div class="grid gap-3" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr))">
+<label class="flex flex-col gap-1"><span class="text-sm">ราคาขาย (รวม VAT)</span><input type="text" value="18.00" class="input w-full text-right"></label>
+<label class="flex flex-col gap-1"><span class="text-sm">ราคาสมาชิก</span><input type="text" value="17.00" class="input w-full text-right"></label>
+<label class="flex flex-col gap-1"><span class="text-sm">เริ่มมีผล</span><input type="date" value="2026-11-06" class="input w-full"></label>
+</div>
+<label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="checkbox checkbox-sm"><span class="text-sm">ให้แคชเชียร์แก้ราคาหน้าร้านได้ (ราคาเปิด)</span></label>
+</div>
+</section>
+
+<section class="card bg-base-100 border border-base-300 anim-in-3">
+<div class="card-body gap-3">
+<div class="flex justify-between items-center"><h2 class="font-semibold m-0">บาร์โค้ดและหน่วยขาย</h2><button type="button" class="btn btn-sm">+ เพิ่มหน่วย</button></div>
+<div class="overflow-x-auto"><table class="table">
+<thead><tr><th>บาร์โค้ด</th><th>หน่วย</th><th class="text-right">เท่ากับ (ชิ้น)</th><th class="text-right">ราคา</th></tr></thead>
+<tbody>
+<tr><td>[บาร์โค้ดชิ้น]</td><td>ชิ้น</td><td class="text-right">1</td><td class="text-right">฿18.00</td></tr>
+<tr><td>[บาร์โค้ดแพ็ก]</td><td>แพ็ก 6</td><td class="text-right">6</td><td class="text-right">฿99.00</td></tr>
+</tbody></table></div>
+</div>
+</section>
+</div>
+
+<aside class="flex flex-col gap-4" style="flex: 1 1 300px; min-width: 0">
+<section class="card bg-base-100 border border-base-300 anim-in-2">
+<div class="card-body gap-2">
+<h2 class="font-semibold m-0">สต็อก</h2>
+<div class="flex justify-between"><span class="opacity-70">คงเหลือ</span><span class="font-semibold text-warning">9 ชิ้น</span></div>
+<div class="flex justify-between"><span class="opacity-70">ต้นทุนเฉลี่ย</span><span>฿12.40</span></div>
+<label class="flex flex-col gap-1 mt-1"><span class="text-sm">จุดสั่งซื้อซ้ำ</span><input type="text" value="24" class="input w-full text-right"></label>
+<label class="flex items-center gap-2 cursor-pointer mt-1"><input type="checkbox" class="toggle toggle-sm"><span class="text-sm">ติดตามวันหมดอายุ</span></label>
+</div>
+</section>
+<section class="card bg-base-100 border border-base-300 anim-in-3">
+<div class="card-body gap-2">
+<h2 class="font-semibold m-0">ประวัติราคา</h2>
+<ul class="timeline timeline-vertical timeline-compact -ml-2">
+<li><div class="timeline-middle"><span class="block w-2.5 h-2.5 rounded-full bg-primary"></span></div><div class="timeline-end py-2"><span class="font-medium">฿18.00</span><span class="block text-xs opacity-70">1 ส.ค. 2569 · ผู้จัดการ</span></div><hr></li>
+<li><hr><div class="timeline-middle"><span class="block w-2.5 h-2.5 rounded-full bg-base-300"></span></div><div class="timeline-end py-2"><span class="font-medium">฿17.00</span><span class="block text-xs opacity-70">10 ม.ค. 2569 · ผู้จัดการ</span></div></li>
+</ul>
+</div>
+</section>
+</aside>
+</div>
+
+<div class="flex justify-end gap-2 pt-2 border-t border-base-300">
+<a href="BoProducts.dc.html" class="btn btn-ghost">ยกเลิก</a>
+<a href="BoProducts.dc.html" class="btn btn-primary">บันทึก</a>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

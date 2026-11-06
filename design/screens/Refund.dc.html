@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>คืนสินค้าและยกเลิกบิล</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/37d9b3ad37cec22200d6cae5a6c509c8">
+<script src="/_blob/dc764973e8003d6d5b097b4eb3f523fd"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+[data-theme=myshop]{color-scheme:light;--color-base-100:#ffffff;--color-base-200:#f4f5f2;--color-base-300:#e3e6e0;--color-base-content:#18201c;--color-primary:#0e6b58;--color-primary-content:#ffffff;--color-secondary:#e3f1ec;--color-secondary-content:#0a4a3d;--color-accent:#e3f1ec;--color-accent-content:#0a4a3d;--color-neutral:#18201c;--color-neutral-content:#ffffff;--color-info:#1d4ed8;--color-info-content:#ffffff;--color-success:#0e6b58;--color-success-content:#ffffff;--color-warning:#b54708;--color-warning-content:#ffffff;--color-error:#b42318;--color-error-content:#ffffff;--radius-selector:2rem;--radius-field:.75rem;--radius-box:1rem;--size-selector:.25rem;--size-field:.25rem;--border:1px;--depth:0;--noise:0}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes pop{0%{opacity:0;transform:scale(.6)}60%{opacity:1;transform:scale(1.06)}100%{transform:scale(1)}}
+@keyframes draw{to{stroke-dashoffset:0}}
+.anim-in{animation:fadeUp .4s ease-out both}
+.anim-in-2{animation:fadeUp .4s .08s ease-out both}
+.anim-in-3{animation:fadeUp .4s .16s ease-out both}
+.anim-pop{animation:pop .5s cubic-bezier(.2,.8,.2,1) both}
+.check-path{stroke-dasharray:40;stroke-dashoffset:40;animation:draw .45s .3s ease-out forwards}
+.lift{transition:transform .15s ease,box-shadow .15s ease}.lift:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(24,32,28,.08)}.lift:active{transform:scale(.97)}
+@media (prefers-reduced-motion:reduce){.anim-in,.anim-in-2,.anim-in-3,.anim-pop{animation:none}.check-path{animation:none;stroke-dashoffset:0}.lift{transition:none}}
+</style>
+</helmet>
+<div data-theme="myshop" class="min-h-[800px] flex flex-col bg-base-200 text-base-content" style="font-family: 'IBM Plex Sans Thai', 'IBM Plex Sans', sans-serif; font-variant-numeric: tabular-nums">
+<header class="navbar min-h-0 bg-base-100 border-b border-base-300 px-4 py-2 gap-2 flex-wrap">
+<div class="flex-1 flex items-center gap-3 flex-wrap">
+<a href="Sale.dc.html" class="text-lg font-semibold no-underline text-base-content">My Shop</a>
+<span class="badge badge-ghost">T01</span>
+<span class="badge badge-soft badge-success gap-1"><span class="w-2 h-2 rounded-full bg-primary"></span>กะเปิด 08:00</span>
+</div>
+<nav aria-label="เมนู POS" class="flex flex-wrap items-center gap-1">
+<a href="Sale.dc.html" class="btn btn-ghost">หน้าขาย</a>
+<a href="Held.dc.html" class="btn btn-ghost">บิลที่พัก <span class="badge badge-sm badge-primary">2</span></a>
+<a href="Refund.dc.html" class="btn btn-ghost">คืนสินค้า</a>
+<a href="CashMove.dc.html" class="btn btn-ghost">เงินเข้า/ออก</a>
+<a href="CloseShift.dc.html" class="btn btn-ghost">ปิดกะ</a>
+<span class="flex items-center gap-2 pl-2 ml-1 border-l border-base-300"><span class="bg-neutral text-neutral-content w-9 h-9 rounded-full grid place-items-center text-sm">สช</span><span class="text-sm">สมชาย</span></span>
+</nav>
+</header>
+<main class="flex-1 flex flex-wrap gap-4 p-4 items-start">
+
+<section class="card bg-base-100 border border-base-300 anim-in" style="flex: 999 1 520px; min-width: 0">
+<div class="card-body gap-4">
+<div role="tablist" class="tabs tabs-box self-start">
+<button type="button" role="tab" aria-selected="true" class="tab tab-active font-semibold">คืนสินค้า</button>
+<button type="button" role="tab" aria-selected="false" class="tab">ยกเลิกทั้งบิล</button>
+</div>
+<label class="input input-lg w-full">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+<input type="search" aria-label="ค้นหาบิล" value="T01-2611-000124" class="grow">
+</label>
+<div class="flex flex-wrap justify-between gap-2 text-sm">
+<span><span class="font-semibold">T01-2611-000124</span> · 06/11/69 10:24 · สมชาย</span>
+<span class="badge badge-soft badge-success">ชำระด้วยเงินสด ฿130.00</span>
+</div>
+<div class="overflow-x-auto">
+<table class="table">
+<thead><tr><th class="w-10"><span class="sr-only">เลือก</span></th><th>สินค้า</th><th class="text-right">ขาย</th><th class="text-center">คืน</th><th class="text-right">ยอดคืน</th></tr></thead>
+<tbody>
+<tr><td><input type="checkbox" aria-label="เลือก น้ำดื่ม" class="checkbox"></td><td>น้ำดื่ม 600 ml</td><td class="text-right">3</td><td class="text-center opacity-50">0</td><td class="text-right">฿0.00</td></tr>
+<tr><td><input type="checkbox" aria-label="เลือก ขนมปัง" class="checkbox"></td><td>ขนมปังโฮลวีท</td><td class="text-right">1</td><td class="text-center opacity-50">0</td><td class="text-right">฿0.00</td></tr>
+<tr><td><input type="checkbox" aria-label="เลือก กาแฟ" class="checkbox"></td><td>กาแฟกระป๋อง <span class="text-xs text-warning">มีโปร</span></td><td class="text-right">2</td><td class="text-center opacity-50">0</td><td class="text-right">฿0.00</td></tr>
+<tr class="bg-secondary/60"><td><input type="checkbox" checked="checked" aria-label="เลือก สบู่" class="checkbox checkbox-primary"></td><td class="font-medium">สบู่ก้อน</td><td class="text-right">1</td><td class="text-center font-semibold">1</td><td class="text-right font-semibold">฿25.00</td></tr>
+</tbody>
+</table>
+</div>
+<label class="flex flex-col gap-1">
+<span class="text-sm">เหตุผล</span>
+<select class="select w-full"><option>สินค้าชำรุด</option><option>ลูกค้าเปลี่ยนใจ</option><option>แคชเชียร์คิดเงินผิด</option><option>อื่น ๆ</option></select>
+</label>
+<label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked="checked" class="checkbox checkbox-sm"><span class="text-sm">คืนสินค้าเข้าสต็อก (ไม่ใช่ของเสีย)</span></label>
+</div>
+</section>
+
+<aside class="flex flex-col gap-4 anim-in-2" style="flex: 1 1 340px; max-width: 420px; min-width: 0">
+<div class="card bg-base-100 border border-base-300">
+<div class="card-body gap-2">
+<span class="text-sm opacity-70">ยอดคืนเงิน</span>
+<span class="text-4xl font-semibold">฿25.00</span>
+<span class="text-sm opacity-70">คืนเป็นเงินสด ตามช่องทางเดิม · ออกใบลดหนี้อ้างอิงบิลเดิม</span>
+</div>
+</div>
+<div class="card bg-base-100 border border-warning/40">
+<div class="card-body gap-3">
+<div class="flex items-center gap-2">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#b54708" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>
+<span class="font-semibold">ต้องให้หัวหน้ากะอนุมัติ</span>
+</div>
+<label class="flex flex-col gap-1"><span class="text-sm">ผู้อนุมัติ</span><select class="select w-full"><option>ปรีชา (หัวหน้ากะ)</option><option>ผู้จัดการ</option></select></label>
+<label class="flex flex-col gap-1"><span class="text-sm">PIN</span><input type="password" value="1234" class="input input-lg w-full tracking-[0.5em]"></label>
+</div>
+</div>
+<a href="Sale.dc.html" class="btn btn-primary btn-lg h-14">อนุมัติและคืนเงิน ฿25.00</a>
+<a href="Sale.dc.html" class="btn btn-ghost">ยกเลิก</a>
+</aside>
+
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":800}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

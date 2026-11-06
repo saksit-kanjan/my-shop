@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>หลังบ้าน รายงาน</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/37d9b3ad37cec22200d6cae5a6c509c8">
+<script src="/_blob/dc764973e8003d6d5b097b4eb3f523fd"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+[data-theme=myshop]{color-scheme:light;--color-base-100:#ffffff;--color-base-200:#f4f5f2;--color-base-300:#e3e6e0;--color-base-content:#18201c;--color-primary:#0e6b58;--color-primary-content:#ffffff;--color-secondary:#e3f1ec;--color-secondary-content:#0a4a3d;--color-accent:#e3f1ec;--color-accent-content:#0a4a3d;--color-neutral:#18201c;--color-neutral-content:#ffffff;--color-info:#1d4ed8;--color-info-content:#ffffff;--color-success:#0e6b58;--color-success-content:#ffffff;--color-warning:#b54708;--color-warning-content:#ffffff;--color-error:#b42318;--color-error-content:#ffffff;--radius-selector:2rem;--radius-field:.75rem;--radius-box:1rem;--size-selector:.25rem;--size-field:.25rem;--border:1px;--depth:0;--noise:0}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes pop{0%{opacity:0;transform:scale(.6)}60%{opacity:1;transform:scale(1.06)}100%{transform:scale(1)}}
+@keyframes draw{to{stroke-dashoffset:0}}
+.anim-in{animation:fadeUp .4s ease-out both}
+.anim-in-2{animation:fadeUp .4s .08s ease-out both}
+.anim-in-3{animation:fadeUp .4s .16s ease-out both}
+.anim-pop{animation:pop .5s cubic-bezier(.2,.8,.2,1) both}
+.check-path{stroke-dasharray:40;stroke-dashoffset:40;animation:draw .45s .3s ease-out forwards}
+.lift{transition:transform .15s ease,box-shadow .15s ease}.lift:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(24,32,28,.08)}.lift:active{transform:scale(.97)}
+@media (prefers-reduced-motion:reduce){.anim-in,.anim-in-2,.anim-in-3,.anim-pop{animation:none}.check-path{animation:none;stroke-dashoffset:0}.lift{transition:none}}
+</style>
+</helmet>
+<div data-theme="myshop" class="min-h-[900px] flex flex-wrap bg-base-200 text-base-content" style="font-family: 'IBM Plex Sans Thai', 'IBM Plex Sans', sans-serif; font-variant-numeric: tabular-nums">
+<aside class="bg-base-100 border-r border-base-300 p-3 flex flex-col gap-2" style="flex: 1 1 220px; max-width: 250px">
+<div class="px-3 py-2 flex flex-col"><span class="text-lg font-semibold">My Shop</span><span class="text-xs opacity-70">หลังบ้าน · สาขา [ชื่อสาขา]</span></div>
+<ul class="menu w-full gap-0.5 p-0">
+<li><a href="Backoffice.dc.html">Dashboard</a></li>
+<li><a href="BoProducts.dc.html">สินค้าและราคา</a></li>
+<li><a href="BoPromos.dc.html">โปรโมชัน</a></li>
+<li class="menu-title pt-3">สต็อก</li>
+<li><a href="BoReceive.dc.html">รับสินค้า</a></li>
+<li><a href="BoCount.dc.html">ตรวจนับสต็อก</a></li>
+<li class="menu-title pt-3">การขาย</li>
+<li><a href="BoDayClose.dc.html">กะและปิดวัน</a></li>
+<li><a href="#">เอกสารการขาย</a></li>
+<li><a href="BoReport.dc.html" aria-current="page" class="menu-active">รายงาน</a></li>
+<li class="menu-title pt-3">ระบบ</li>
+<li><a href="BoUsers.dc.html">ผู้ใช้และสิทธิ์</a></li>
+<li><a href="#">ตั้งค่าร้าน</a></li>
+<li><a href="#">Audit log</a></li>
+</ul>
+<div class="mt-auto px-3 py-2 flex items-center gap-2 text-sm"><span class="bg-neutral text-neutral-content w-8 h-8 rounded-full grid place-items-center text-xs">ผจ</span><span class="flex flex-col"><span>ผู้จัดการ</span><span class="text-xs opacity-70">เจ้าของร้าน</span></span></div>
+</aside>
+<main class="flex flex-col gap-4 p-8" style="flex: 999 1 560px; min-width: 0">
+<div class="flex flex-wrap justify-between items-end gap-3 anim-in">
+<h1 class="text-2xl font-semibold m-0">รายงาน</h1>
+<div class="flex flex-wrap gap-2">
+<input type="date" aria-label="ตั้งแต่" value="2026-10-31" class="input w-auto">
+<input type="date" aria-label="ถึง" value="2026-11-06" class="input w-auto">
+<button type="button" class="btn">Excel</button>
+<button type="button" class="btn">PDF</button>
+</div>
+</div>
+
+<div role="tablist" class="tabs tabs-box self-start anim-in-2">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="4">
+<button type="button" role="tab" aria-selected="{{t.on}}" onClick="{{t.pick}}" class="{{t.cls}}">{{t.label}}</button>
+</sc-for>
+</div>
+
+<section class="card bg-base-100 border border-base-300 anim-in-3">
+<div class="card-body gap-3">
+<sc-if value="{{isDaily}}" hint-placeholder-val="{{ true }}">
+<div class="overflow-x-auto anim-in"><table class="table">
+<thead><tr><th>วันที่</th><th class="text-right">บิล</th><th class="text-right">ยอดขายสุทธิ</th><th class="text-right">VAT</th><th class="w-1/3"><span class="sr-only">สัดส่วน</span></th></tr></thead>
+<tbody>
+<sc-for list="{{daily}}" as="d" hint-placeholder-count="7">
+<tr><td>{{d.date}}</td><td class="text-right">{{d.bills}}</td><td class="text-right font-semibold">{{d.net}}</td><td class="text-right opacity-70">{{d.vat}}</td>
+<td><progress class="progress progress-primary w-full" value="{{d.raw}}" max="{{maxDaily}}"></progress></td></tr>
+</sc-for>
+</tbody></table></div>
+</sc-if>
+<sc-if value="{{isTop}}" hint-placeholder-val="{{ false }}">
+<div class="overflow-x-auto anim-in"><table class="table">
+<thead><tr><th>#</th><th>สินค้า</th><th class="text-right">จำนวนขาย</th><th class="text-right">ยอดขาย</th></tr></thead>
+<tbody>
+<sc-for list="{{top}}" as="p" hint-placeholder-count="5">
+<tr><td class="opacity-70">{{p.rank}}</td><td class="font-medium">{{p.name}}</td><td class="text-right">{{p.qty}}</td><td class="text-right font-semibold">{{p.sales}}</td></tr>
+</sc-for>
+</tbody></table></div>
+</sc-if>
+<sc-if value="{{isStock}}" hint-placeholder-val="{{ false }}">
+<div class="overflow-x-auto anim-in"><table class="table">
+<thead><tr><th>สินค้า</th><th class="text-right">คงเหลือ</th><th class="text-right">ต้นทุนเฉลี่ย</th><th class="text-right">มูลค่า</th></tr></thead>
+<tbody>
+<sc-for list="{{stock}}" as="s" hint-placeholder-count="5">
+<tr><td class="font-medium">{{s.name}}</td><td class="text-right">{{s.qty}}</td><td class="text-right opacity-70">{{s.cost}}</td><td class="text-right font-semibold">{{s.value}}</td></tr>
+</sc-for>
+</tbody></table></div>
+</sc-if>
+<sc-if value="{{isTax}}" hint-placeholder-val="{{ false }}">
+<div class="flex flex-col gap-3 anim-in">
+<span class="text-sm opacity-70">สรุปสำหรับยื่น ภ.พ.30 · รอบเดือนพฤศจิกายน 2569 (ถึงวันที่ 6)</span>
+<div class="stats stats-vertical md:stats-horizontal border border-base-300">
+<div class="stat"><div class="stat-title">ยอดขายรวม VAT</div><div class="stat-value text-2xl">{{taxGross}}</div></div>
+<div class="stat"><div class="stat-title">มูลค่าก่อน VAT</div><div class="stat-value text-2xl">{{taxBase}}</div></div>
+<div class="stat"><div class="stat-title">ภาษีขาย</div><div class="stat-value text-2xl">{{taxVat}}</div></div>
+</div>
+<span class="text-sm opacity-70">ใบกำกับภาษีอย่างย่อ 1,030 ใบ · เต็มรูป 6 ใบ · ใบลดหนี้ 9 ใบ</span>
+</div>
+</sc-if>
+</div>
+</section>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { tab: 'daily' }; }
+  renderVals() {
+    var self = this, tab = this.state.tab;
+    var fmt = function (n) { return '฿' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
+    var days = [['ศ. 6 พ.ย.', 186, 24580], ['พฤ. 5 พ.ย.', 171, 22140], ['พ. 4 พ.ย.', 158, 20915], ['อ. 3 พ.ย.', 149, 19870], ['จ. 2 พ.ย.', 162, 21330], ['อา. 1 พ.ย.', 204, 27960], ['ส. 31 ต.ค.', 213, 29405]];
+    var max = 0; days.forEach(function (d) { if (d[2] > max) { max = d[2]; } });
+    var nov = 0; days.slice(0, 6).forEach(function (d) { nov += d[2]; });
+    var defs = [['daily', 'ยอดขายรายวัน'], ['top', 'สินค้าขายดี'], ['stock', 'สต็อกคงเหลือ'], ['tax', 'ภาษีขาย']];
+    return {
+      tabs: defs.map(function (d) { var on = d[0] === tab; return { label: d[1], on: String(on), cls: on ? 'tab tab-active font-semibold' : 'tab', pick: function () { self.setState({ tab: d[0] }); } }; }),
+      isDaily: tab === 'daily', isTop: tab === 'top', isStock: tab === 'stock', isTax: tab === 'tax',
+      maxDaily: max,
+      daily: days.map(function (d) { return { date: d[0], bills: d[1], net: fmt(d[2]), vat: fmt(d[2] * 7 / 107), raw: d[2] }; }),
+      top: [['น้ำดื่ม 600 ml', 642, 6420], ['กาแฟกระป๋อง', 318, 5724], ['ชาเขียวขวด', 255, 5100], ['ขนมปังโฮลวีท', 96, 4320], ['ทิชชู่ 6 ม้วน', 41, 3649]].map(function (p, i) { return { rank: i + 1, name: p[0], qty: p[1], sales: fmt(p[2]) }; }),
+      stock: [['น้ำดื่ม 600 ml', 114, 6.5], ['กาแฟกระป๋อง', 57, 12.4], ['ชาเขียวขวด', 35, 13], ['ทิชชู่ 6 ม้วน', 15, 62], ['ถ่าน AA 2 ก้อน', 28, 24]].map(function (s) { return { name: s[0], qty: s[1], cost: fmt(s[2]), value: fmt(s[1] * s[2]) }; }),
+      taxGross: fmt(nov), taxBase: fmt(nov * 100 / 107), taxVat: fmt(nov * 7 / 107)
+    };
+  }
+}
+</script>
+</body>
+</html>

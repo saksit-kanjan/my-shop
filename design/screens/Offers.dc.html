@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>ตรวจโปรโมชัน</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/37d9b3ad37cec22200d6cae5a6c509c8">
+<script src="/_blob/dc764973e8003d6d5b097b4eb3f523fd"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+[data-theme=myshop]{color-scheme:light;--color-base-100:#ffffff;--color-base-200:#f4f5f2;--color-base-300:#e3e6e0;--color-base-content:#18201c;--color-primary:#0e6b58;--color-primary-content:#ffffff;--color-secondary:#e3f1ec;--color-secondary-content:#0a4a3d;--color-accent:#e3f1ec;--color-accent-content:#0a4a3d;--color-neutral:#18201c;--color-neutral-content:#ffffff;--color-info:#1d4ed8;--color-info-content:#ffffff;--color-success:#0e6b58;--color-success-content:#ffffff;--color-warning:#b54708;--color-warning-content:#ffffff;--color-error:#b42318;--color-error-content:#ffffff;--radius-selector:2rem;--radius-field:.75rem;--radius-box:1rem;--size-selector:.25rem;--size-field:.25rem;--border:1px;--depth:0;--noise:0}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes pop{0%{opacity:0;transform:scale(.6)}60%{opacity:1;transform:scale(1.06)}100%{transform:scale(1)}}
+@keyframes draw{to{stroke-dashoffset:0}}
+.anim-in{animation:fadeUp .4s ease-out both}
+.anim-in-2{animation:fadeUp .4s .08s ease-out both}
+.anim-in-3{animation:fadeUp .4s .16s ease-out both}
+.anim-pop{animation:pop .5s cubic-bezier(.2,.8,.2,1) both}
+.check-path{stroke-dasharray:40;stroke-dashoffset:40;animation:draw .45s .3s ease-out forwards}
+.lift{transition:transform .15s ease,box-shadow .15s ease}.lift:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(24,32,28,.08)}.lift:active{transform:scale(.97)}
+.pimg{background-image:url(/_blob/22db5b6938a5782c73ea28ae89ef9012);background-size:400% 300%;background-repeat:no-repeat}
+.p-water{background-position:0% 0%}.p-coffee{background-position:33.333% 0%}.p-tea{background-position:66.667% 0%}.p-milk{background-position:100% 0%}
+.p-bread{background-position:0% 50%}.p-chips{background-position:33.333% 50%}.p-biscuit{background-position:66.667% 50%}.p-soap{background-position:100% 50%}
+.p-paste{background-position:0% 100%}.p-tissue{background-position:33.333% 100%}.p-pen{background-position:66.667% 100%}.p-battery{background-position:100% 100%}
+.p-bill{background-image:none;background-color:#e3f1ec}
+@media (prefers-reduced-motion:reduce){.anim-in,.anim-in-2,.anim-in-3,.anim-pop{animation:none}.check-path{animation:none;stroke-dashoffset:0}.lift{transition:none}}
+</style>
+</helmet>
+<div data-theme="myshop" class="min-h-[800px] flex flex-col bg-base-200 text-base-content" style="font-family: 'IBM Plex Sans Thai', 'IBM Plex Sans', sans-serif; font-variant-numeric: tabular-nums">
+<header class="navbar min-h-0 bg-base-100 border-b border-base-300 px-4 py-2 gap-2 flex-wrap">
+<div class="flex-1 flex items-center gap-3 flex-wrap">
+<a href="Sale.dc.html" class="text-lg font-semibold no-underline text-base-content">My Shop</a>
+<span class="badge badge-ghost">T01</span>
+<span class="badge badge-soft badge-success gap-1"><span class="w-2 h-2 rounded-full bg-primary"></span>กะเปิด 08:00</span>
+</div>
+<nav aria-label="เมนู POS" class="flex flex-wrap items-center gap-1">
+<a href="Sale.dc.html" class="btn btn-ghost">หน้าขาย</a>
+<a href="Held.dc.html" class="btn btn-ghost">บิลที่พัก <span class="badge badge-sm badge-primary">2</span></a>
+<a href="Refund.dc.html" class="btn btn-ghost">คืนสินค้า</a>
+<a href="CashMove.dc.html" class="btn btn-ghost">เงินเข้า/ออก</a>
+<a href="CloseShift.dc.html" class="btn btn-ghost">ปิดกะ</a>
+<span class="flex items-center gap-2 pl-2 ml-1 border-l border-base-300"><span class="bg-neutral text-neutral-content w-9 h-9 rounded-full grid place-items-center text-sm">สช</span><span class="text-sm">สมชาย</span></span>
+</nav>
+</header>
+<main class="flex-1 flex flex-col gap-4 p-4">
+<div class="flex flex-wrap items-center justify-between gap-3 anim-in">
+<ul class="steps">
+<li class="step step-primary">คีย์สินค้า</li>
+<li class="step step-primary">ตรวจโปรโมชัน</li>
+<li class="step">ชำระเงิน</li>
+</ul>
+<a href="Sale.dc.html" class="btn btn-ghost">กลับไปแก้บิล</a>
+</div>
+
+<div class="flex flex-wrap gap-4 items-start">
+<div class="flex flex-col gap-4" style="flex: 999 1 560px; min-width: 0">
+
+<section aria-label="แนะนำให้ลูกค้า" class="flex flex-col gap-2 anim-in-2">
+<div class="flex items-baseline justify-between gap-2">
+<h2 class="text-lg font-semibold m-0 flex items-center gap-2"><span class="w-6 h-6 rounded-full bg-warning text-warning-content grid place-items-center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></span>แนะนำ · ยังไม่ได้รับ <span class="badge badge-warning badge-soft">{{hintCount}}</span></h2>
+<span class="text-sm opacity-70">ลูกค้าต้องหยิบเพิ่มก่อน ส่วนลดยังไม่อยู่ในบิล</span>
+</div>
+<sc-for list="{{hints}}" as="h" hint-placeholder-count="3">
+<article class="anim-in card bg-base-100 border-2 border-dashed border-warning">
+<div class="card-body p-4 flex-row flex-wrap items-center gap-4">
+<span aria-hidden="true" class="pimg {{h.img}} block w-16 h-16 rounded-lg shrink-0"></span>
+<div class="flex flex-col gap-1" style="flex: 1 1 240px">
+<div class="flex flex-wrap items-center gap-2"><span class="badge badge-warning badge-outline font-semibold">ยังไม่ได้รับ</span><span class="font-semibold">{{h.name}}</span><span class="badge badge-ghost">{{h.type}}</span></div>
+<span>{{h.say}}</span>
+<span class="text-sm opacity-70">{{h.now}}</span>
+</div>
+<div class="flex flex-col items-end gap-2">
+<span class="text-sm font-semibold text-warning">{{h.gain}}</span>
+<div class="flex gap-2">
+<button type="button" onClick="{{h.skip}}" class="btn btn-ghost btn-sm">ลูกค้าไม่รับ</button>
+<button type="button" onClick="{{h.add}}" class="btn btn-primary btn-sm">{{h.cta}}</button>
+</div>
+</div>
+</div>
+</article>
+</sc-for>
+<sc-if value="{{noHints}}" hint-placeholder-val="{{ false }}">
+<div class="anim-in rounded-box border border-base-300 bg-base-100 p-6 text-center opacity-70">ไม่มีโปรที่แนะนำเพิ่มได้แล้ว</div>
+</sc-if>
+</section>
+
+<section aria-label="โปรที่ได้รับแล้ว" class="flex flex-col gap-2 anim-in-3">
+<div class="flex items-baseline justify-between gap-2"><h2 class="text-lg font-semibold m-0 flex items-center gap-2"><span class="w-6 h-6 rounded-full bg-primary text-primary-content grid place-items-center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span>ได้รับแล้ว <span class="badge badge-success badge-soft">{{appliedCount}}</span></h2><span class="text-sm opacity-70">ส่วนลดคิดในบิลแล้ว</span></div>
+<sc-for list="{{applied}}" as="a" hint-placeholder-count="2">
+<article class="anim-in card bg-secondary border border-primary/30">
+<div class="card-body p-4 flex-row items-center gap-4">
+<span aria-hidden="true" class="pimg {{a.img}} block w-12 h-12 rounded-lg shrink-0"></span>
+<div class="flex flex-col" style="flex: 1 1 200px">
+<div class="flex flex-wrap items-center gap-2"><span class="badge badge-primary gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>ได้รับแล้ว</span><span class="font-medium">{{a.name}}</span><span class="badge badge-ghost">{{a.type}}</span></div>
+<span class="text-sm opacity-70">{{a.detail}}</span>
+</div>
+<span class="flex flex-col items-end"><span class="text-xs opacity-70">ลดแล้ว</span><span class="font-semibold text-primary text-lg">{{a.save}}</span></span>
+</div>
+</article>
+</sc-for>
+</section>
+</div>
+
+<aside class="card bg-base-100 border border-base-300 anim-in-2" style="flex: 1 1 340px; max-width: 420px; min-width: 0">
+<div class="card-body gap-2">
+<span class="text-sm opacity-70">{{lineCount}} รายการ · {{pieceCount}} ชิ้น</span>
+<div class="flex justify-between text-sm"><span class="opacity-70">ราคาปกติ</span><span>{{subtotalText}}</span></div>
+<div class="flex justify-between text-sm text-primary"><span>ส่วนลดจากโปร</span><span>{{discountText}}</span></div>
+<div class="divider my-0"></div>
+<div class="flex justify-between items-baseline"><span class="font-semibold">ยอดสุทธิ</span><span class="text-4xl font-semibold">{{netText}}</span></div>
+<div class="rounded-box bg-secondary text-secondary-content px-4 py-3 flex justify-between items-center">
+<span class="font-medium">ลูกค้าประหยัด</span><span class="text-2xl font-semibold anim-pop">{{discountPlain}}</span>
+</div>
+<button type="button" class="btn btn-outline btn-primary border-dashed">+ สมาชิก · ประหยัดเพิ่ม {{memberText}}</button>
+<a href="Payment.dc.html" class="btn btn-primary btn-lg h-16 mt-2 justify-between text-lg"><span>ไปชำระเงิน</span><span>{{netText}}</span></a>
+</div>
+</aside>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":800}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { cart: { chips: 2, biscuit: 1, bread: 1, milk: 1, paste: 1, tea: 2, water: 1 }, skipped: {} };
+  }
+  renderVals() {
+    var self = this, cart = this.state.cart, skipped = this.state.skipped;
+    var fmt = function (n) { return '฿' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
+    var P = {
+      chips: ['มันฝรั่งทอด', 20, 19], biscuit: ['บิสกิต', 15, 14], bread: ['ขนมปังโฮลวีท', 45, 42], milk: ['นมจืด 225 ml', 14, 13],
+      paste: ['ยาสีฟัน', 39, 37], soap: ['สบู่ก้อน', 25, 23], tea: ['ชาเขียวขวด', 20, 19], water: ['น้ำดื่ม 600 ml', 10, 9]
+    };
+    var PROMOS = [
+      { kind: 'qty', item: 'chips', n: 2, unit: 15 }, { kind: 'qty', item: 'biscuit', n: 2, unit: 10 },
+      { kind: 'gift', buy: 'bread', gift: 'milk' }, { kind: 'gift', buy: 'paste', gift: 'soap' },
+      { kind: 'bogo', item: 'tea' }, { kind: 'bogo', item: 'water' }
+    ];
+    var TYPE = { qty: 'ซื้อ 2 ชิ้นลดราคา', gift: 'ซื้อ A แถม B', bogo: '1 แถม 1' };
+    var q = function (id) { return cart[id] || 0; };
+    var add = function (id, n) { var c = Object.assign({}, self.state.cart); c[id] = q(id) + n; self.setState({ cart: c }); };
+    var skip = function (k) { var s = Object.assign({}, self.state.skipped); s[k] = true; self.setState({ skipped: s }); };
+    var subtotal = 0, pieces = 0, lines = 0, memberSave = 0, disc = 0, applied = [], hints = [];
+    Object.keys(cart).forEach(function (id) { var p = P[id]; subtotal += p[1] * cart[id]; pieces += cart[id]; lines += 1; memberSave += (p[1] - p[2]) * cart[id]; });
+    PROMOS.forEach(function (pr, i) {
+      var key = 'k' + i;
+      if (pr.kind === 'qty') {
+        var p = P[pr.item], qty = q(pr.item); if (!qty) { return; }
+        var sets = Math.floor(qty / pr.n), rem = qty % pr.n, save = sets * pr.n * (p[1] - pr.unit);
+        if (sets) { disc += save; applied.push({ img: 'p-' + pr.item, type: TYPE.qty, name: p[0], detail: (sets * pr.n) + ' ชิ้น ลดเหลือชิ้นละ ' + fmt(pr.unit) + ' (ปกติ ' + fmt(p[1]) + ')', save: '−' + fmt(save) }); }
+        if (rem && !skipped[key]) {
+          var need = pr.n - rem, extra = pr.n * pr.unit - rem * p[1];
+          hints.push({ img: 'p-' + pr.item, type: TYPE.qty, name: p[0], say: 'ซื้ออีก ' + need + ' ชิ้น ลดเหลือชิ้นละ ' + fmt(pr.unit) + ' · จ่ายเพิ่มแค่ ' + fmt(extra),
+            now: 'ตอนนี้ลูกค้าหยิบ ' + qty + ' ชิ้น ราคาชิ้นละ ' + fmt(p[1]), gain: 'ถ้ารับ ประหยัด ' + fmt(pr.n * p[1] - pr.n * pr.unit), cta: 'เพิ่ม ' + need + ' ชิ้น',
+            add: function () { add(pr.item, need); }, skip: function () { skip(key); } });
+        }
+      } else if (pr.kind === 'gift') {
+        var a = P[pr.buy], g = P[pr.gift], qa = q(pr.buy), qg = q(pr.gift); if (!qa) { return; }
+        var free = Math.min(qa, qg);
+        if (free) { disc += free * g[1]; applied.push({ img: 'p-' + pr.gift, type: TYPE.gift, name: g[0] + ' (ของแถม)', detail: 'ซื้อ' + a[0] + ' แถม' + g[0] + (free > 1 ? ' ×' + free : ''), save: '−' + fmt(free * g[1]) }); }
+        if (qa > qg && !skipped[key]) {
+          var more = qa - qg;
+          hints.push({ img: 'p-' + pr.gift, type: TYPE.gift, name: g[0], say: 'ซื้อ' + a[0] + ' ได้' + g[0] + ' ฟรี ' + more + ' ชิ้น ให้ลูกค้าไปหยิบ',
+            now: 'ลูกค้าซื้อ' + a[0] + ' ' + qa + ' ชิ้น แต่ยังไม่ได้หยิบของแถม', gain: 'ถ้ารับ ฟรี ' + fmt(more * g[1]), cta: 'เพิ่มของแถม',
+            add: function () { add(pr.gift, more); }, skip: function () { skip(key); } });
+        }
+      } else if (pr.kind === 'bogo') {
+        var b = P[pr.item], qb = q(pr.item); if (!qb) { return; }
+        var fr = Math.floor(qb / 2);
+        if (fr) { disc += fr * b[1]; applied.push({ img: 'p-' + pr.item, type: TYPE.bogo, name: b[0], detail: 'ซื้อ ' + (qb - fr) + ' ได้ฟรี ' + fr + ' ชิ้น', save: '−' + fmt(fr * b[1]) }); }
+        if (qb % 2 && !skipped[key]) {
+          hints.push({ img: 'p-' + pr.item, type: TYPE.bogo, name: b[0], say: 'ได้' + b[0] + ' ฟรีอีก 1 ชิ้น ให้ลูกค้าไปหยิบ', now: 'ตอนนี้ลูกค้าหยิบ ' + qb + ' ชิ้น',
+            gain: 'ถ้ารับ ฟรี ' + fmt(b[1]), cta: 'เพิ่มของแถม', add: function () { add(pr.item, 1); }, skip: function () { skip(key); } });
+        }
+      }
+    });
+    var net = subtotal - disc;
+    return {
+      hints: hints, noHints: hints.length === 0, hintCount: hints.length,
+      applied: applied, appliedCount: applied.length,
+      lineCount: lines, pieceCount: pieces,
+      subtotalText: fmt(subtotal), discountText: '−' + fmt(disc), discountPlain: fmt(disc), netText: fmt(net),
+      memberText: fmt(memberSave)
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>หลังบ้าน ผู้ใช้และสิทธิ์</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/37d9b3ad37cec22200d6cae5a6c509c8">
+<script src="/_blob/dc764973e8003d6d5b097b4eb3f523fd"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+[data-theme=myshop]{color-scheme:light;--color-base-100:#ffffff;--color-base-200:#f4f5f2;--color-base-300:#e3e6e0;--color-base-content:#18201c;--color-primary:#0e6b58;--color-primary-content:#ffffff;--color-secondary:#e3f1ec;--color-secondary-content:#0a4a3d;--color-accent:#e3f1ec;--color-accent-content:#0a4a3d;--color-neutral:#18201c;--color-neutral-content:#ffffff;--color-info:#1d4ed8;--color-info-content:#ffffff;--color-success:#0e6b58;--color-success-content:#ffffff;--color-warning:#b54708;--color-warning-content:#ffffff;--color-error:#b42318;--color-error-content:#ffffff;--radius-selector:2rem;--radius-field:.75rem;--radius-box:1rem;--size-selector:.25rem;--size-field:.25rem;--border:1px;--depth:0;--noise:0}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes pop{0%{opacity:0;transform:scale(.6)}60%{opacity:1;transform:scale(1.06)}100%{transform:scale(1)}}
+@keyframes draw{to{stroke-dashoffset:0}}
+.anim-in{animation:fadeUp .4s ease-out both}
+.anim-in-2{animation:fadeUp .4s .08s ease-out both}
+.anim-in-3{animation:fadeUp .4s .16s ease-out both}
+.anim-pop{animation:pop .5s cubic-bezier(.2,.8,.2,1) both}
+.check-path{stroke-dasharray:40;stroke-dashoffset:40;animation:draw .45s .3s ease-out forwards}
+.lift{transition:transform .15s ease,box-shadow .15s ease}.lift:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(24,32,28,.08)}.lift:active{transform:scale(.97)}
+@media (prefers-reduced-motion:reduce){.anim-in,.anim-in-2,.anim-in-3,.anim-pop{animation:none}.check-path{animation:none;stroke-dashoffset:0}.lift{transition:none}}
+</style>
+</helmet>
+<div data-theme="myshop" class="min-h-[900px] flex flex-wrap bg-base-200 text-base-content" style="font-family: 'IBM Plex Sans Thai', 'IBM Plex Sans', sans-serif; font-variant-numeric: tabular-nums">
+<aside class="bg-base-100 border-r border-base-300 p-3 flex flex-col gap-2" style="flex: 1 1 220px; max-width: 250px">
+<div class="px-3 py-2 flex flex-col"><span class="text-lg font-semibold">My Shop</span><span class="text-xs opacity-70">หลังบ้าน · สาขา [ชื่อสาขา]</span></div>
+<ul class="menu w-full gap-0.5 p-0">
+<li><a href="Backoffice.dc.html">Dashboard</a></li>
+<li><a href="BoProducts.dc.html">สินค้าและราคา</a></li>
+<li><a href="BoPromos.dc.html">โปรโมชัน</a></li>
+<li class="menu-title pt-3">สต็อก</li>
+<li><a href="BoReceive.dc.html">รับสินค้า</a></li>
+<li><a href="BoCount.dc.html">ตรวจนับสต็อก</a></li>
+<li class="menu-title pt-3">การขาย</li>
+<li><a href="BoDayClose.dc.html">กะและปิดวัน</a></li>
+<li><a href="#">เอกสารการขาย</a></li>
+<li><a href="BoReport.dc.html">รายงาน</a></li>
+<li class="menu-title pt-3">ระบบ</li>
+<li><a href="BoUsers.dc.html" aria-current="page" class="menu-active">ผู้ใช้และสิทธิ์</a></li>
+<li><a href="#">ตั้งค่าร้าน</a></li>
+<li><a href="#">Audit log</a></li>
+</ul>
+<div class="mt-auto px-3 py-2 flex items-center gap-2 text-sm"><span class="bg-neutral text-neutral-content w-8 h-8 rounded-full grid place-items-center text-xs">ผจ</span><span class="flex flex-col"><span>ผู้จัดการ</span><span class="text-xs opacity-70">เจ้าของร้าน</span></span></div>
+</aside>
+<main class="flex flex-col gap-4 p-8" style="flex: 999 1 560px; min-width: 0">
+<div class="flex flex-wrap justify-between items-end gap-3 anim-in">
+<h1 class="text-2xl font-semibold m-0">ผู้ใช้และสิทธิ์</h1>
+<button type="button" class="btn btn-primary">+ เพิ่มพนักงาน</button>
+</div>
+
+<div class="flex flex-wrap gap-4 items-start">
+<section class="card bg-base-100 border border-base-300 anim-in-2" style="flex: 999 1 460px; min-width: 0">
+<div class="overflow-x-auto"><table class="table">
+<thead><tr><th>พนักงาน</th><th>บทบาท</th><th>เข้าระบบล่าสุด</th><th>สถานะ</th></tr></thead>
+<tbody>
+<sc-for list="{{users}}" as="u" hint-placeholder-count="5">
+<tr class="{{u.rowCls}}">
+<td><button type="button" onClick="{{u.pick}}" class="flex items-center gap-3 text-left cursor-pointer bg-transparent border-0 p-0 font-medium">
+<span class="bg-neutral text-neutral-content w-9 h-9 rounded-full grid place-items-center text-xs">{{u.ini}}</span>{{u.name}}</button></td>
+<td><span class="badge badge-ghost">{{u.role}}</span></td>
+<td class="opacity-70">{{u.last}}</td>
+<td><span class="{{u.statusCls}}">{{u.status}}</span></td>
+</tr>
+</sc-for>
+</tbody></table></div>
+</section>
+
+<aside class="card bg-base-100 border border-base-300 anim-in-3" style="flex: 1 1 360px; min-width: 0">
+<div class="card-body gap-3">
+<div class="flex items-center gap-3">
+<span class="bg-primary text-primary-content w-11 h-11 rounded-full grid place-items-center">{{sel.ini}}</span>
+<div class="flex flex-col"><span class="font-semibold text-lg">{{sel.name}}</span><span class="text-sm opacity-70">รหัสพนักงาน {{sel.code}}</span></div>
+</div>
+<label class="flex flex-col gap-1"><span class="text-sm">บทบาท</span>
+<select class="select w-full" value="{{sel.role}}" onChange="{{onRole}}">
+<option>แคชเชียร์</option><option>หัวหน้ากะ</option><option>ผู้จัดการ</option><option>เจ้าของ</option>
+</select></label>
+<label class="flex flex-col gap-1"><span class="text-sm">เพดานส่วนลดที่ให้เองได้</span><input type="text" value="{{ceiling}}" class="input w-full"></label>
+<div class="divider my-0"></div>
+<span class="text-sm font-semibold">สิทธิ์</span>
+<ul class="flex flex-col gap-2">
+<sc-for list="{{perms}}" as="p" hint-placeholder-count="8">
+<li class="flex items-center justify-between gap-2">
+<span class="text-sm">{{p.label}}</span>
+<sc-if value="{{p.ask}}" hint-placeholder-val="{{ false }}"><span class="badge badge-soft badge-warning badge-sm">ขออนุมัติ</span></sc-if>
+<sc-if value="{{p.notAsk}}" hint-placeholder-val="{{ true }}"><input type="checkbox" aria-label="{{p.label}}" checked="{{p.on}}" readonly="readonly" class="toggle toggle-sm toggle-primary"></sc-if>
+</li>
+</sc-for>
+</ul>
+<div class="flex gap-2 pt-2">
+<button type="button" class="btn btn-ghost">รีเซ็ต PIN</button>
+<button type="button" class="btn btn-primary flex-1">บันทึก</button>
+</div>
+</div>
+</aside>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { sel: 0, roles: ['แคชเชียร์', 'แคชเชียร์', 'หัวหน้ากะ', 'ผู้จัดการ', 'เจ้าของ'] };
+  }
+  renderVals() {
+    var self = this;
+    var base = [['สมชาย', 'สช', 'E001', 'วันนี้ 08:00', true], ['วิภา', 'วภ', 'E002', 'วันนี้ 09:30', true], ['ปรีชา', 'ปช', 'E003', 'วันนี้ 10:40', true], ['ผู้จัดการ', 'ผจ', 'E004', 'วันนี้ 15:42', true], ['[ชื่อเจ้าของ]', 'จข', 'E005', 'เมื่อวาน', true]];
+    var order = ['แคชเชียร์', 'หัวหน้ากะ', 'ผู้จัดการ', 'เจ้าของ'];
+    var matrix = [
+      ['ส่วนลดเกินเพดาน', 'ask', 1], ['ยกเลิกบิล', 'ask', 1], ['คืนสินค้า', 'ask', 1], ['เปิดลิ้นชักโดยไม่มีการขาย', 'no', 1],
+      ['ดูยอดที่ควรมีตอนปิดกะ', 'no', 1], ['จัดการสินค้าและราคา', 'no', 2], ['รับสินค้าและปรับสต็อก', 'no', 2], ['ดูรายงานยอดขาย', 'no', 2],
+      ['ดูต้นทุนและกำไร', 'no', 3], ['จัดการผู้ใช้และตั้งค่าร้าน', 'no', 3]];
+    var i = this.state.sel, role = this.state.roles[i], lvl = order.indexOf(role);
+    var u = base[i];
+    return {
+      users: base.map(function (b, j) {
+        return { name: b[0], ini: b[1], role: self.state.roles[j], last: b[3], status: b[4] ? 'ใช้งาน' : 'ปิดใช้งาน',
+          statusCls: b[4] ? 'badge badge-soft badge-success' : 'badge badge-ghost', rowCls: j === i ? 'bg-secondary/60' : 'hover:bg-base-200',
+          pick: function () { self.setState({ sel: j }); } };
+      }),
+      sel: { name: u[0], ini: u[1], code: u[2], role: role },
+      ceiling: ['5% ต่อบิล', '15% ต่อบิล', 'ไม่จำกัด', 'ไม่จำกัด'][lvl],
+      onRole: function (e) { var r = self.state.roles.slice(); r[i] = e.target.value; self.setState({ roles: r }); },
+      perms: matrix.map(function (m) {
+        var ask = lvl === 0 && m[1] === 'ask';
+        return { label: m[0], ask: ask, notAsk: !ask, on: lvl >= m[2] };
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>

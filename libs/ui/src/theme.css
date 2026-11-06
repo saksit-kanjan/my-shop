@@ -1,0 +1,97 @@
+/*
+ * Shared look for POS, customer display and back office.
+ * Each app imports this after `@import "tailwindcss"` and the daisyUI plugin.
+ */
+@import '@fontsource/ibm-plex-sans-thai/400.css';
+@import '@fontsource/ibm-plex-sans-thai/500.css';
+@import '@fontsource/ibm-plex-sans-thai/600.css';
+
+@plugin "daisyui/theme" {
+  name: 'myshop';
+  default: true;
+  prefersdark: false;
+  color-scheme: light;
+  --color-base-100: #ffffff;
+  --color-base-200: #f4f5f2;
+  --color-base-300: #e3e6e0;
+  --color-base-content: #18201c;
+  --color-primary: #0e6b58;
+  --color-primary-content: #ffffff;
+  --color-secondary: #e3f1ec;
+  --color-secondary-content: #0a4a3d;
+  --color-accent: #e3f1ec;
+  --color-accent-content: #0a4a3d;
+  --color-neutral: #18201c;
+  --color-neutral-content: #ffffff;
+  --color-info: #1d4ed8;
+  --color-info-content: #ffffff;
+  --color-success: #0e6b58;
+  --color-success-content: #ffffff;
+  --color-warning: #b54708;
+  --color-warning-content: #ffffff;
+  --color-error: #b42318;
+  --color-error-content: #ffffff;
+  --radius-selector: 2rem;
+  --radius-field: 0.75rem;
+  --radius-box: 1rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
+}
+
+@theme {
+  --font-sans: 'IBM Plex Sans Thai', ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  html {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@layer components {
+  .pimg {
+    background-image: url('./assets/products-sprite.svg');
+    background-size: 400% 300%;
+    background-repeat: no-repeat;
+    background-color: #eef4f1;
+  }
+  .p-water { background-position: 0% 0%; }
+  .p-coffee { background-position: 33.333% 0%; }
+  .p-tea { background-position: 66.667% 0%; }
+  .p-milk { background-position: 100% 0%; }
+  .p-bread { background-position: 0% 50%; }
+  .p-chips { background-position: 33.333% 50%; }
+  .p-biscuit { background-position: 66.667% 50%; }
+  .p-soap { background-position: 100% 50%; }
+  .p-paste { background-position: 0% 100%; }
+  .p-tissue { background-position: 33.333% 100%; }
+  .p-pen { background-position: 66.667% 100%; }
+  .p-battery { background-position: 100% 100%; }
+  .p-none { background-image: none; }
+}
+
+@keyframes ms-fade-up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes ms-pop { 0% { opacity: 0; transform: scale(0.6); } 60% { opacity: 1; transform: scale(1.06); } 100% { transform: scale(1); } }
+@keyframes ms-draw { to { stroke-dashoffset: 0; } }
+@keyframes ms-slide-in { from { opacity: 0; transform: translateX(-16px); } to { opacity: 1; transform: none; } }
+@keyframes ms-drift { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+@utility anim-in { animation: ms-fade-up 0.35s ease-out both; }
+@utility anim-pop { animation: ms-pop 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+@utility anim-slide { animation: ms-slide-in 0.4s ease-out both; }
+@utility anim-drift { animation: ms-drift 40s linear infinite; }
+@utility check-draw { stroke-dasharray: 40; stroke-dashoffset: 40; animation: ms-draw 0.45s 0.3s ease-out forwards; }
+@utility lift {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  &:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgb(24 32 28 / 0.08); }
+  &:active { transform: scale(0.97); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-in, .anim-pop, .anim-slide, .anim-drift { animation: none; }
+  .check-draw { animation: none; stroke-dashoffset: 0; }
+  .lift { transition: none; }
+}

@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>จอลูกค้า ระหว่างคีย์สินค้า</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/37d9b3ad37cec22200d6cae5a6c509c8">
+<script src="/_blob/dc764973e8003d6d5b097b4eb3f523fd"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+[data-theme=myshop]{color-scheme:light;--color-base-100:#ffffff;--color-base-200:#f4f5f2;--color-base-300:#e3e6e0;--color-base-content:#18201c;--color-primary:#0e6b58;--color-primary-content:#ffffff;--color-secondary:#e3f1ec;--color-secondary-content:#0a4a3d;--color-accent:#e3f1ec;--color-accent-content:#0a4a3d;--color-neutral:#18201c;--color-neutral-content:#ffffff;--color-info:#1d4ed8;--color-info-content:#ffffff;--color-success:#0e6b58;--color-success-content:#ffffff;--color-warning:#b54708;--color-warning-content:#ffffff;--color-error:#b42318;--color-error-content:#ffffff;--radius-selector:2rem;--radius-field:.75rem;--radius-box:1rem;--size-selector:.25rem;--size-field:.25rem;--border:1px;--depth:0;--noise:0}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes pop{0%{opacity:0;transform:scale(.6)}60%{opacity:1;transform:scale(1.06)}100%{transform:scale(1)}}
+@keyframes draw{to{stroke-dashoffset:0}}
+.anim-in{animation:fadeUp .4s ease-out both}
+.anim-in-2{animation:fadeUp .4s .08s ease-out both}
+.anim-in-3{animation:fadeUp .4s .16s ease-out both}
+.anim-pop{animation:pop .5s cubic-bezier(.2,.8,.2,1) both}
+.check-path{stroke-dasharray:40;stroke-dashoffset:40;animation:draw .45s .3s ease-out forwards}
+.lift{transition:transform .15s ease,box-shadow .15s ease}.lift:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(24,32,28,.08)}.lift:active{transform:scale(.97)}
+.pimg{background-image:url(/_blob/22db5b6938a5782c73ea28ae89ef9012);background-size:400% 300%;background-repeat:no-repeat}
+.p-water{background-position:0% 0%}.p-coffee{background-position:33.333% 0%}.p-tea{background-position:66.667% 0%}.p-milk{background-position:100% 0%}
+.p-bread{background-position:0% 50%}.p-chips{background-position:33.333% 50%}.p-biscuit{background-position:66.667% 50%}.p-soap{background-position:100% 50%}
+.p-paste{background-position:0% 100%}.p-tissue{background-position:33.333% 100%}.p-pen{background-position:66.667% 100%}.p-battery{background-position:100% 100%}
+@keyframes slideIn{from{opacity:0;transform:translateX(-16px)}to{opacity:1;transform:none}}
+@keyframes glow{0%,100%{box-shadow:0 0 0 0 rgba(14,107,88,0)}50%{box-shadow:0 0 0 6px rgba(14,107,88,.15)}}
+@keyframes drift{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.02)}}
+.anim-slide{animation:slideIn .45s ease-out both}.anim-glow{animation:glow 2s ease-in-out infinite}
+.anim-drift{animation:drift 40s linear infinite}.anim-breathe{animation:breathe 4s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){.anim-slide,.anim-glow,.anim-drift,.anim-breathe{animation:none}.anim-in,.anim-in-2,.anim-in-3,.anim-pop{animation:none}.check-path{animation:none;stroke-dashoffset:0}.lift{transition:none}}
+</style>
+</helmet>
+<div data-theme="myshop" class="min-h-[800px] flex flex-col bg-base-200 text-base-content" style="font-family: 'IBM Plex Sans Thai', 'IBM Plex Sans', sans-serif; font-variant-numeric: tabular-nums">
+<header class="flex items-center justify-between px-8 py-5">
+<span class="text-2xl font-semibold">My Shop</span>
+<span class="text-lg opacity-70">สาขา [ชื่อสาขา]</span>
+</header>
+<main class="flex-1 flex flex-wrap gap-6 px-8 pb-8 items-stretch">
+<section aria-label="รายการสินค้า" class="card bg-base-100 border border-base-300" style="flex: 999 1 520px; min-width: 0">
+<div class="card-body gap-1 p-6">
+<sc-for list="{{lines}}" as="l" hint-placeholder-count="4">
+<div class="{{l.cls}}">
+<span aria-hidden="true" class="pimg {{l.img}} block w-16 h-16 rounded-xl shrink-0"></span>
+<div class="flex flex-col flex-1 min-w-0">
+<span class="text-2xl font-medium">{{l.name}}</span>
+<span class="text-lg opacity-70">{{l.qty}} × {{l.unit}}</span>
+<sc-if value="{{l.hasPromo}}" hint-placeholder-val="{{ false }}"><span class="text-lg text-primary font-medium">{{l.promo}}</span></sc-if>
+</div>
+<span class="text-2xl font-semibold">{{l.total}}</span>
+</div>
+</sc-for>
+</div>
+</section>
+
+<aside class="flex flex-col gap-4" style="flex: 1 1 380px; min-width: 0">
+<div class="card bg-neutral text-neutral-content anim-in">
+<div class="card-body gap-1 p-7">
+<span class="text-xl opacity-80">ยอดรวม</span>
+<span class="text-7xl font-semibold leading-none">฿130.00</span>
+<span class="text-lg opacity-80 mt-2">7 ชิ้น · รวม VAT แล้ว</span>
+</div>
+</div>
+<div class="rounded-box bg-secondary text-secondary-content px-7 py-5 flex justify-between items-center anim-in-2">
+<span class="text-xl font-medium">คุณประหยัดแล้ว</span>
+<span class="text-4xl font-semibold">฿6.00</span>
+</div>
+<div class="rounded-box border-2 border-dashed border-warning/60 bg-base-100 px-7 py-5 flex flex-col gap-3 anim-in-3 anim-breathe">
+<span class="flex flex-wrap items-center gap-2"><span class="badge badge-warning badge-outline badge-lg font-semibold">ยังไม่ได้รับ</span><span class="text-xl font-semibold text-warning">ซื้ออีก ฿70.00 รับส่วนลด ฿20</span></span>
+<progress class="progress progress-warning w-full h-3" value="130" max="200"></progress>
+<span class="text-lg opacity-70">โปรซื้อครบ ฿200 ลด ฿20</span>
+</div>
+</aside>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":800}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var rows = [['p-water', 'น้ำดื่ม 600 ml', 3, '฿10.00', '฿30.00', ''], ['p-bread', 'ขนมปังโฮลวีท', 1, '฿45.00', '฿45.00', ''],
+      ['p-coffee', 'กาแฟกระป๋อง', 2, '฿18.00', '฿36.00', '✓ ได้รับโปร ซื้อ 2 ลด ฿6.00'], ['p-soap', 'สบู่ก้อน', 1, '฿25.00', '฿25.00', '']];
+    return { lines: rows.map(function (r, i) {
+      var last = i === rows.length - 1;
+      return { img: r[0], name: r[1], qty: r[2], unit: r[3], total: r[4], promo: r[5], hasPromo: !!r[5],
+        cls: last ? 'anim-slide anim-glow flex items-center gap-4 p-3 -mx-3 rounded-xl bg-secondary/60' : 'flex items-center gap-4 p-3 -mx-3 border-b border-base-200' };
+    }) };
+  }
+}
+</script>
+</body>
+</html>

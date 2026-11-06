@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>หลังบ้าน ตรวจนับสต็อก</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/37d9b3ad37cec22200d6cae5a6c509c8">
+<script src="/_blob/dc764973e8003d6d5b097b4eb3f523fd"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+[data-theme=myshop]{color-scheme:light;--color-base-100:#ffffff;--color-base-200:#f4f5f2;--color-base-300:#e3e6e0;--color-base-content:#18201c;--color-primary:#0e6b58;--color-primary-content:#ffffff;--color-secondary:#e3f1ec;--color-secondary-content:#0a4a3d;--color-accent:#e3f1ec;--color-accent-content:#0a4a3d;--color-neutral:#18201c;--color-neutral-content:#ffffff;--color-info:#1d4ed8;--color-info-content:#ffffff;--color-success:#0e6b58;--color-success-content:#ffffff;--color-warning:#b54708;--color-warning-content:#ffffff;--color-error:#b42318;--color-error-content:#ffffff;--radius-selector:2rem;--radius-field:.75rem;--radius-box:1rem;--size-selector:.25rem;--size-field:.25rem;--border:1px;--depth:0;--noise:0}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes pop{0%{opacity:0;transform:scale(.6)}60%{opacity:1;transform:scale(1.06)}100%{transform:scale(1)}}
+@keyframes draw{to{stroke-dashoffset:0}}
+.anim-in{animation:fadeUp .4s ease-out both}
+.anim-in-2{animation:fadeUp .4s .08s ease-out both}
+.anim-in-3{animation:fadeUp .4s .16s ease-out both}
+.anim-pop{animation:pop .5s cubic-bezier(.2,.8,.2,1) both}
+.check-path{stroke-dasharray:40;stroke-dashoffset:40;animation:draw .45s .3s ease-out forwards}
+.lift{transition:transform .15s ease,box-shadow .15s ease}.lift:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(24,32,28,.08)}.lift:active{transform:scale(.97)}
+@media (prefers-reduced-motion:reduce){.anim-in,.anim-in-2,.anim-in-3,.anim-pop{animation:none}.check-path{animation:none;stroke-dashoffset:0}.lift{transition:none}}
+</style>
+</helmet>
+<div data-theme="myshop" class="min-h-[900px] flex flex-wrap bg-base-200 text-base-content" style="font-family: 'IBM Plex Sans Thai', 'IBM Plex Sans', sans-serif; font-variant-numeric: tabular-nums">
+<aside class="bg-base-100 border-r border-base-300 p-3 flex flex-col gap-2" style="flex: 1 1 220px; max-width: 250px">
+<div class="px-3 py-2 flex flex-col"><span class="text-lg font-semibold">My Shop</span><span class="text-xs opacity-70">หลังบ้าน · สาขา [ชื่อสาขา]</span></div>
+<ul class="menu w-full gap-0.5 p-0">
+<li><a href="Backoffice.dc.html">Dashboard</a></li>
+<li><a href="BoProducts.dc.html">สินค้าและราคา</a></li>
+<li><a href="BoPromos.dc.html">โปรโมชัน</a></li>
+<li class="menu-title pt-3">สต็อก</li>
+<li><a href="BoReceive.dc.html">รับสินค้า</a></li>
+<li><a href="BoCount.dc.html" aria-current="page" class="menu-active">ตรวจนับสต็อก</a></li>
+<li class="menu-title pt-3">การขาย</li>
+<li><a href="BoDayClose.dc.html">กะและปิดวัน</a></li>
+<li><a href="#">เอกสารการขาย</a></li>
+<li><a href="BoReport.dc.html">รายงาน</a></li>
+<li class="menu-title pt-3">ระบบ</li>
+<li><a href="BoUsers.dc.html">ผู้ใช้และสิทธิ์</a></li>
+<li><a href="#">ตั้งค่าร้าน</a></li>
+<li><a href="#">Audit log</a></li>
+</ul>
+<div class="mt-auto px-3 py-2 flex items-center gap-2 text-sm"><span class="bg-neutral text-neutral-content w-8 h-8 rounded-full grid place-items-center text-xs">ผจ</span><span class="flex flex-col"><span>ผู้จัดการ</span><span class="text-xs opacity-70">เจ้าของร้าน</span></span></div>
+</aside>
+<main class="flex flex-col gap-4 p-8" style="flex: 999 1 560px; min-width: 0">
+<div class="flex flex-wrap justify-between items-end gap-3 anim-in">
+<div class="flex flex-col">
+<h1 class="text-2xl font-semibold m-0">ตรวจนับ หมวดเครื่องดื่ม</h1>
+<span class="text-sm opacity-70">เริ่ม 6 พ.ย. 2569 07:30 · นับโดย วิภา, ปรีชา</span>
+</div>
+<ul class="steps">
+<li class="step step-primary">สร้างรอบ</li>
+<li class="step step-primary">นับ</li>
+<li class="step step-primary">อนุมัติ</li>
+</ul>
+</div>
+
+<div class="stats stats-vertical md:stats-horizontal bg-base-100 border border-base-300 anim-in-2">
+<div class="stat"><div class="stat-title">SKU ที่นับ</div><div class="stat-value text-3xl">7</div></div>
+<div class="stat"><div class="stat-title">มีผลต่าง</div><div class="stat-value text-3xl text-warning">5</div></div>
+<div class="stat"><div class="stat-title">มูลค่าผลต่าง (ตามต้นทุน)</div><div class="stat-value text-3xl text-warning">−฿47.00</div></div>
+</div>
+
+<section class="card bg-base-100 border border-base-300 anim-in-3">
+<div class="card-body gap-3">
+<div class="flex flex-wrap justify-between items-center gap-2">
+<span class="text-sm opacity-70">ยอดที่ควรมี = ยอดในระบบตอนเริ่มนับ − ขายระหว่างนับ</span>
+<label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked="{{onlyDiff}}" onChange="{{toggle}}" class="toggle toggle-sm toggle-primary"><span class="text-sm">แสดงเฉพาะที่มีผลต่าง</span></label>
+</div>
+<div class="overflow-x-auto"><table class="table">
+<thead><tr><th>สินค้า</th><th class="text-right">ในระบบ</th><th class="text-right">ขายระหว่างนับ</th><th class="text-right">ควรมี</th><th class="text-right">นับได้</th><th class="text-right">ผลต่าง</th><th class="text-right">มูลค่า</th></tr></thead>
+<tbody>
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="5">
+<tr class="anim-in">
+<td class="font-medium">{{r.name}}</td><td class="text-right">{{r.snap}}</td><td class="text-right opacity-70">{{r.sold}}</td><td class="text-right">{{r.exp}}</td><td class="text-right font-semibold">{{r.counted}}</td>
+<td class="{{r.diffCls}}">{{r.diff}}</td><td class="{{r.diffCls}}">{{r.value}}</td>
+</tr>
+</sc-for>
+</tbody></table></div>
+<label class="flex flex-col gap-1"><span class="text-sm">หมายเหตุการอนุมัติ</span><input type="text" placeholder="เช่น น้ำส้มแตก 3 ขวด" class="input w-full"></label>
+</div>
+</section>
+
+<div class="flex justify-end gap-2">
+<button type="button" class="btn">ให้นับซ้ำ</button>
+<a href="Backoffice.dc.html" class="btn btn-primary">อนุมัติและปรับสต็อก</a>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { onlyDiff: true }; }
+  renderVals() {
+    var self = this;
+    var data = [['น้ำดื่ม 600 ml', 20, 2, 16, 6.5], ['กาแฟกระป๋อง', 10, 1, 9, 12.4], ['ชาเขียวขวด', 36, 0, 35, 13], ['นมจืด 225 ml', 40, 0, 42, 9.5],
+      ['น้ำส้ม 250 ml', 24, 0, 21, 11], ['โซดา', 30, 0, 29, 7], ['น้ำแร่ 1.5 L', 12, 0, 12, 14]];
+    var rows = data.map(function (d) {
+      var exp = d[1] - d[2], diff = d[3] - exp, v = diff * d[4];
+      var sign = function (n, s) { return (n > 0 ? '+' : n < 0 ? '−' : '') + s; };
+      return { name: d[0], snap: d[1], sold: d[2], exp: exp, counted: d[3], has: diff !== 0,
+        diff: sign(diff, String(Math.abs(diff))), value: sign(v, '฿' + Math.abs(v).toFixed(2)),
+        diffCls: diff < 0 ? 'text-right font-semibold text-warning' : diff > 0 ? 'text-right font-semibold text-info' : 'text-right opacity-50' };
+    }).filter(function (r) { return !self.state.onlyDiff || r.has; });
+    return { rows: rows, onlyDiff: this.state.onlyDiff, toggle: function () { self.setState({ onlyDiff: !self.state.onlyDiff }); } };
+  }
+}
+</script>
+</body>
+</html>

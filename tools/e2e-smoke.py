@@ -1,0 +1,46 @@
+import asyncio
+from playwright.async_api import async_playwright
+async def main():
+    async with async_playwright() as p:
+        b = await p.chromium.launch()
+        ctx = await b.new_context(viewport={'width':1280,'height':800})
+        pos = await ctx.new_page(); disp = await ctx.new_page()
+        errs=[]
+        for pg,n in [(pos,'pos'),(disp,'disp')]:
+            pg.on('pageerror', lambda e,n=n: errs.append(f'{n}: {e}'))
+            pg.on('console', lambda m,n=n: errs.append(f'{n} console {m.type}: {m.text}') if m.type=='error' else None)
+        await disp.goto('http://localhost:8080/display/')
+        await pos.goto('http://localhost:8080/login')
+        await pos.get_by_text('กดรหัสพนักงาน 6 หลัก').wait_for()
+        for d in '100123': await pos.keyboard.press(d)
+        await pos.wait_for_url('**/open-shift')
+        await pos.get_by_label('เพิ่ม ธนบัตร 100').click(click_count=10)
+        await pos.get_by_role('button', name='เปิดกะและเริ่มขาย').click()
+        await pos.wait_for_url('**/sale')
+        await pos.screenshot(path='/tmp/s1.png'); await disp.screenshot(path='/tmp/d1.png')
+        for name in ['มันฝรั่งทอด','มันฝรั่งทอด','มันฝรั่งทอด','บิสกิต','ขนมปังโฮลวีท','ยาสีฟัน','ชาเขียวขวด','ชาเขียวขวด','น้ำดื่ม 600 ml']:
+            await pos.locator('section[aria-label="เลือกสินค้า"] button', has_text=name).first.click()
+        # barcode scan milk
+        s = pos.get_by_label('สแกนบาร์โค้ดหรือค้นหาสินค้า'); await s.fill('8850000000042'); await s.press('Enter')
+        await pos.wait_for_timeout(300)
+        await pos.screenshot(path='/tmp/s2.png'); await disp.screenshot(path='/tmp/d2.png')
+        await pos.get_by_role('button', name='ตรวจโปรโมชัน').click()
+        await pos.wait_for_url('**/offers'); await pos.wait_for_timeout(400)
+        await pos.screenshot(path='/tmp/s3.png', full_page=True); await disp.screenshot(path='/tmp/d3.png')
+        await pos.get_by_role('button', name='ไปชำระเงิน').click()
+        await pos.wait_for_url('**/payment')
+        await pos.get_by_role('button', name='฿500').click()
+        await pos.wait_for_timeout(300)
+        await pos.screenshot(path='/tmp/s4.png'); await disp.screenshot(path='/tmp/d4.png')
+        await pos.get_by_role('button', name='ยืนยันและปิดบิล').click()
+        await pos.wait_for_url('**/success'); await pos.wait_for_timeout(800)
+        await pos.screenshot(path='/tmp/s5.png'); await disp.screenshot(path='/tmp/d5.png')
+        await pos.keyboard.press('Enter'); await pos.wait_for_url('**/sale')
+        await pos.get_by_role('link', name='ปิดกะ').click(); await pos.wait_for_url('**/close-shift')
+        await pos.get_by_label('เพิ่ม ธนบัตร 1,000').click(); await pos.get_by_label('เพิ่ม ธนบัตร 100').click(click_count=11)
+        await pos.get_by_role('button', name='ยืนยันยอดนับและปิดกะ').click()
+        await pos.wait_for_url('**/z-report'); await pos.wait_for_timeout(500)
+        await pos.screenshot(path='/tmp/s6.png', full_page=True)
+        print('\n'.join(errs) or 'no errors')
+        await b.close()
+asyncio.run(main())

@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>หลังบ้าน Dashboard</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/37d9b3ad37cec22200d6cae5a6c509c8">
+<script src="/_blob/dc764973e8003d6d5b097b4eb3f523fd"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+[data-theme=myshop]{color-scheme:light;--color-base-100:#ffffff;--color-base-200:#f4f5f2;--color-base-300:#e3e6e0;--color-base-content:#18201c;--color-primary:#0e6b58;--color-primary-content:#ffffff;--color-secondary:#e3f1ec;--color-secondary-content:#0a4a3d;--color-accent:#e3f1ec;--color-accent-content:#0a4a3d;--color-neutral:#18201c;--color-neutral-content:#ffffff;--color-info:#1d4ed8;--color-info-content:#ffffff;--color-success:#0e6b58;--color-success-content:#ffffff;--color-warning:#b54708;--color-warning-content:#ffffff;--color-error:#b42318;--color-error-content:#ffffff;--radius-selector:2rem;--radius-field:.75rem;--radius-box:1rem;--size-selector:.25rem;--size-field:.25rem;--border:1px;--depth:0;--noise:0}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes pop{0%{opacity:0;transform:scale(.6)}60%{opacity:1;transform:scale(1.06)}100%{transform:scale(1)}}
+@keyframes draw{to{stroke-dashoffset:0}}
+.anim-in{animation:fadeUp .4s ease-out both}
+.anim-in-2{animation:fadeUp .4s .08s ease-out both}
+.anim-in-3{animation:fadeUp .4s .16s ease-out both}
+.anim-pop{animation:pop .5s cubic-bezier(.2,.8,.2,1) both}
+.check-path{stroke-dasharray:40;stroke-dashoffset:40;animation:draw .45s .3s ease-out forwards}
+.lift{transition:transform .15s ease,box-shadow .15s ease}.lift:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(24,32,28,.08)}.lift:active{transform:scale(.97)}
+@media (prefers-reduced-motion:reduce){.anim-in,.anim-in-2,.anim-in-3,.anim-pop{animation:none}.check-path{animation:none;stroke-dashoffset:0}.lift{transition:none}}
+</style>
+</helmet>
+<div data-theme="myshop" class="min-h-[900px] flex flex-wrap bg-base-200 text-base-content" style="font-family: 'IBM Plex Sans Thai', 'IBM Plex Sans', sans-serif; font-variant-numeric: tabular-nums">
+<aside class="bg-base-100 border-r border-base-300 p-3 flex flex-col gap-2" style="flex: 1 1 220px; max-width: 250px">
+<div class="px-3 py-2 flex flex-col"><span class="text-lg font-semibold">My Shop</span><span class="text-xs opacity-70">หลังบ้าน · สาขา [ชื่อสาขา]</span></div>
+<ul class="menu w-full gap-0.5 p-0">
+<li><a href="Backoffice.dc.html" aria-current="page" class="menu-active">Dashboard</a></li>
+<li><a href="BoProducts.dc.html">สินค้าและราคา</a></li>
+<li><a href="BoPromos.dc.html">โปรโมชัน</a></li>
+<li class="menu-title pt-3">สต็อก</li>
+<li><a href="BoReceive.dc.html">รับสินค้า</a></li>
+<li><a href="BoCount.dc.html">ตรวจนับสต็อก</a></li>
+<li class="menu-title pt-3">การขาย</li>
+<li><a href="BoDayClose.dc.html">กะและปิดวัน</a></li>
+<li><a href="#">เอกสารการขาย</a></li>
+<li><a href="BoReport.dc.html">รายงาน</a></li>
+<li class="menu-title pt-3">ระบบ</li>
+<li><a href="BoUsers.dc.html">ผู้ใช้และสิทธิ์</a></li>
+<li><a href="#">ตั้งค่าร้าน</a></li>
+<li><a href="#">Audit log</a></li>
+</ul>
+<div class="mt-auto px-3 py-2 flex items-center gap-2 text-sm"><span class="bg-neutral text-neutral-content w-8 h-8 rounded-full grid place-items-center text-xs">ผจ</span><span class="flex flex-col"><span>ผู้จัดการ</span><span class="text-xs opacity-70">เจ้าของร้าน</span></span></div>
+</aside>
+<main class="flex flex-col gap-5 p-8" style="flex: 999 1 560px; min-width: 0">
+<div class="flex flex-wrap justify-between items-end gap-3 anim-in">
+<div class="flex flex-col">
+<h1 class="text-2xl font-semibold m-0">ภาพรวมวันนี้</h1>
+<span class="text-sm opacity-70">วันทำการ ศุกร์ 6 พ.ย. 2569 · อัปเดต 15:42</span>
+</div>
+<span class="badge badge-soft badge-success">สำรองข้อมูลล่าสุด 02:00 สำเร็จ</span>
+</div>
+
+<div class="stats stats-vertical lg:stats-horizontal bg-base-100 border border-base-300 w-full anim-in-2">
+<div class="stat"><div class="stat-title">ยอดขายสุทธิ</div><div class="stat-value text-3xl">฿24,580.00</div><div class="stat-desc">เมื่อวานช่วงเดียวกัน ฿22,140.00</div></div>
+<div class="stat"><div class="stat-title">จำนวนบิล</div><div class="stat-value text-3xl">186</div><div class="stat-desc">2 เครื่องเปิดอยู่</div></div>
+<div class="stat"><div class="stat-title">ค่าเฉลี่ยต่อบิล</div><div class="stat-value text-3xl">฿132.15</div><div class="stat-desc">หลังส่วนลด</div></div>
+<div class="stat"><div class="stat-title">คืนสินค้า</div><div class="stat-value text-3xl text-warning">3</div><div class="stat-desc">มูลค่า ฿412.00</div></div>
+</div>
+
+<section class="card bg-base-100 border border-base-300 anim-in-2">
+<div class="card-body gap-3">
+<h2 class="text-lg font-semibold m-0">ยอดขายรายชั่วโมง</h2>
+<div class="flex items-end gap-2 h-40" role="img" aria-label="ยอดขายรายชั่วโมงวันนี้ สูงสุดช่วง 13:00">
+<sc-for list="{{hours}}" as="h" hint-placeholder-count="8">
+<div class="flex-1 flex flex-col items-center gap-1 h-full justify-end">
+<div class="w-full rounded-t-md bg-primary/80 origin-bottom" style="height: {{h.pct}}; animation: fadeUp .5s ease-out both"></div>
+<span class="text-xs opacity-70">{{h.label}}</span>
+</div>
+</sc-for>
+</div>
+</div>
+</section>
+
+<div class="flex flex-wrap gap-4 anim-in-3">
+<section class="card bg-base-100 border border-base-300" style="flex: 2 1 420px; min-width: 0">
+<div class="card-body gap-2">
+<h2 class="text-lg font-semibold m-0">กะที่เปิดอยู่</h2>
+<div class="overflow-x-auto"><table class="table">
+<thead><tr><th>เครื่อง</th><th>แคชเชียร์</th><th>เปิดเมื่อ</th><th class="text-right">ยอดขาย</th></tr></thead>
+<tbody>
+<tr class="hover:bg-base-200"><td>T01</td><td>สมชาย</td><td>08:00</td><td class="text-right font-semibold">฿14,320.00</td></tr>
+<tr class="hover:bg-base-200"><td>T02</td><td>วิภา</td><td>09:30</td><td class="text-right font-semibold">฿10,260.00</td></tr>
+</tbody></table></div>
+</div>
+</section>
+<section class="card bg-base-100 border border-base-300" style="flex: 1 1 300px; min-width: 0">
+<div class="card-body gap-2">
+<h2 class="text-lg font-semibold m-0">รออนุมัติ</h2>
+<div class="flex items-center justify-between gap-2 p-3 rounded-box bg-warning/10">
+<span class="flex flex-col"><span class="font-medium">คืนสินค้าเกิน 7 วัน</span><span class="text-xs opacity-70">T02-2611-000087 · ฿89.00</span></span>
+<button type="button" class="btn btn-sm">ตรวจสอบ</button>
+</div>
+<div class="flex items-center justify-between gap-2 p-3 rounded-box bg-warning/10">
+<span class="flex flex-col"><span class="font-medium">ผลตรวจนับ เครื่องดื่ม</span><span class="text-xs opacity-70">ผลต่าง 5 SKU</span></span>
+<a href="BoCount.dc.html" class="btn btn-sm">ตรวจสอบ</a>
+</div>
+</div>
+</section>
+</div>
+
+<section class="card bg-base-100 border border-base-300 anim-in-3">
+<div class="card-body gap-2">
+<div class="flex justify-between items-center"><h2 class="text-lg font-semibold m-0">สินค้าใกล้หมด</h2><a href="BoReceive.dc.html" class="btn btn-sm btn-ghost">รับสินค้า</a></div>
+<div class="overflow-x-auto"><table class="table">
+<thead><tr><th>สินค้า</th><th>หมวด</th><th class="text-right">คงเหลือ</th><th class="text-right">จุดสั่งซื้อซ้ำ</th></tr></thead>
+<tbody>
+<tr><td>ถ่าน AA 2 ก้อน</td><td>ของใช้</td><td class="text-right text-warning font-semibold">4</td><td class="text-right">12</td></tr>
+<tr><td>กาแฟกระป๋อง</td><td>เครื่องดื่ม</td><td class="text-right text-warning font-semibold">9</td><td class="text-right">24</td></tr>
+<tr><td>น้ำดื่ม 600 ml</td><td>เครื่องดื่ม</td><td class="text-right text-warning font-semibold">18</td><td class="text-right">48</td></tr>
+</tbody></table></div>
+</div>
+</section>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var v = [['8', 900], ['9', 1800], ['10', 2600], ['11', 3400], ['12', 4300], ['13', 4700], ['14', 3800], ['15', 3080]];
+    var max = 4700;
+    return { hours: v.map(function (x) { return { label: x[0] + ':00', pct: Math.round(x[1] / max * 100) + '%' }; }) };
+  }
+}
+</script>
+</body>
+</html>

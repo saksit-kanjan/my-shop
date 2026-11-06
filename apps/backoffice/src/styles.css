@@ -1,0 +1,6 @@
+@import 'tailwindcss';
+@plugin "daisyui" {
+  themes: false;
+}
+@import '../../../libs/ui/src/theme.css';
+@source '../../../libs/ui/src';

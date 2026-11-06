@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>ชำระเงินสำเร็จ</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/37d9b3ad37cec22200d6cae5a6c509c8">
+<script src="/_blob/dc764973e8003d6d5b097b4eb3f523fd"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+[data-theme=myshop]{color-scheme:light;--color-base-100:#ffffff;--color-base-200:#f4f5f2;--color-base-300:#e3e6e0;--color-base-content:#18201c;--color-primary:#0e6b58;--color-primary-content:#ffffff;--color-secondary:#e3f1ec;--color-secondary-content:#0a4a3d;--color-accent:#e3f1ec;--color-accent-content:#0a4a3d;--color-neutral:#18201c;--color-neutral-content:#ffffff;--color-info:#1d4ed8;--color-info-content:#ffffff;--color-success:#0e6b58;--color-success-content:#ffffff;--color-warning:#b54708;--color-warning-content:#ffffff;--color-error:#b42318;--color-error-content:#ffffff;--radius-selector:2rem;--radius-field:.75rem;--radius-box:1rem;--size-selector:.25rem;--size-field:.25rem;--border:1px;--depth:0;--noise:0}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes pop{0%{opacity:0;transform:scale(.6)}60%{opacity:1;transform:scale(1.06)}100%{transform:scale(1)}}
+@keyframes draw{to{stroke-dashoffset:0}}
+.anim-in{animation:fadeUp .4s ease-out both}
+.anim-in-2{animation:fadeUp .4s .08s ease-out both}
+.anim-in-3{animation:fadeUp .4s .16s ease-out both}
+.anim-pop{animation:pop .5s cubic-bezier(.2,.8,.2,1) both}
+.check-path{stroke-dasharray:40;stroke-dashoffset:40;animation:draw .45s .3s ease-out forwards}
+.lift{transition:transform .15s ease,box-shadow .15s ease}.lift:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(24,32,28,.08)}.lift:active{transform:scale(.97)}
+@media (prefers-reduced-motion:reduce){.anim-in,.anim-in-2,.anim-in-3,.anim-pop{animation:none}.check-path{animation:none;stroke-dashoffset:0}.lift{transition:none}}
+</style>
+</helmet>
+<div data-theme="myshop" class="min-h-[800px] flex flex-col bg-base-200 text-base-content" style="font-family: 'IBM Plex Sans Thai', 'IBM Plex Sans', sans-serif; font-variant-numeric: tabular-nums">
+<header class="navbar min-h-0 bg-base-100 border-b border-base-300 px-4 py-2 gap-2 flex-wrap">
+<div class="flex-1 flex items-center gap-3 flex-wrap">
+<a href="Sale.dc.html" class="text-lg font-semibold no-underline text-base-content">My Shop</a>
+<span class="badge badge-ghost">T01</span>
+<span class="badge badge-soft badge-success gap-1"><span class="w-2 h-2 rounded-full bg-primary"></span>กะเปิด 08:00</span>
+</div>
+<nav aria-label="เมนู POS" class="flex flex-wrap items-center gap-1">
+<a href="Sale.dc.html" class="btn btn-ghost">หน้าขาย</a>
+<a href="Held.dc.html" class="btn btn-ghost">บิลที่พัก <span class="badge badge-sm badge-primary">2</span></a>
+<a href="Refund.dc.html" class="btn btn-ghost">คืนสินค้า</a>
+<a href="CashMove.dc.html" class="btn btn-ghost">เงินเข้า/ออก</a>
+<a href="CloseShift.dc.html" class="btn btn-ghost">ปิดกะ</a>
+<span class="flex items-center gap-2 pl-2 ml-1 border-l border-base-300"><span class="bg-neutral text-neutral-content w-9 h-9 rounded-full grid place-items-center text-sm">สช</span><span class="text-sm">สมชาย</span></span>
+</nav>
+</header>
+<main class="flex-1 flex flex-wrap items-center justify-center gap-8 p-6">
+
+<section class="flex flex-col items-center text-center gap-4" style="flex: 1 1 380px; max-width: 460px">
+<svg width="96" height="96" viewBox="0 0 48 48" class="anim-pop" role="img" aria-label="สำเร็จ"><circle cx="24" cy="24" r="22" fill="#e3f1ec"></circle><path class="check-path" d="M14 24.5l7 7 13-14" fill="none" stroke="#0e6b58" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+<h1 class="text-2xl font-semibold m-0 anim-in">ชำระเงินสำเร็จ</h1>
+<div class="flex flex-col anim-in-2">
+<span class="text-sm opacity-70">เงินทอน</span>
+<span class="text-6xl font-semibold">฿70.00</span>
+</div>
+<div class="grid grid-cols-2 gap-2 w-full anim-in-3">
+<button type="button" class="btn btn-lg">พิมพ์ใบเสร็จ</button>
+<button type="button" class="btn btn-lg">ขอใบกำกับเต็มรูป</button>
+<a href="Sale.dc.html" class="btn btn-primary btn-lg h-16 col-span-2 text-lg">บิลถัดไป <kbd class="kbd kbd-sm text-base-content">Enter</kbd></a>
+</div>
+</section>
+
+<section aria-label="ตัวอย่างใบเสร็จ" class="bg-base-100 border border-base-300 rounded-box p-6 flex flex-col gap-2 text-sm anim-in-2" style="flex: 0 1 340px; font-family: 'IBM Plex Sans Thai', 'IBM Plex Mono', monospace">
+<div class="text-center flex flex-col">
+<span class="font-semibold text-base">My Shop</span>
+<span class="opacity-70">สาขา [ชื่อสาขา] · เลขผู้เสียภาษี [เลข 13 หลัก]</span>
+<span class="opacity-70">ใบกำกับภาษีอย่างย่อ</span>
+</div>
+<div class="flex justify-between opacity-70"><span>T01-2611-000124</span><span>06/11/69 10:24</span></div>
+<div class="border-t border-dashed border-base-300 my-1"></div>
+<div class="flex justify-between"><span>น้ำดื่ม 600 ml ×3</span><span>30.00</span></div>
+<div class="flex justify-between"><span>ขนมปังโฮลวีท ×1</span><span>45.00</span></div>
+<div class="flex justify-between"><span>กาแฟกระป๋อง ×2</span><span>36.00</span></div>
+<div class="flex justify-between text-primary"><span>&nbsp;&nbsp;โปร ซื้อ 2 ลด 6</span><span>−6.00</span></div>
+<div class="flex justify-between"><span>สบู่ก้อน ×1</span><span>25.00</span></div>
+<div class="border-t border-dashed border-base-300 my-1"></div>
+<div class="flex justify-between font-semibold text-base"><span>ยอดสุทธิ</span><span>130.00</span></div>
+<div class="flex justify-between opacity-70"><span>VAT 7% (รวมในราคา)</span><span>8.50</span></div>
+<div class="flex justify-between"><span>เงินสด</span><span>200.00</span></div>
+<div class="flex justify-between"><span>เงินทอน</span><span>70.00</span></div>
+<div class="border-t border-dashed border-base-300 my-1"></div>
+<span class="text-center opacity-70">แคชเชียร์ สมชาย · ขอบคุณที่อุดหนุน</span>
+</section>
+
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":800}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

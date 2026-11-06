@@ -1,0 +1,9 @@
+@import 'tailwindcss';
+@plugin "daisyui" {
+  themes: false;
+}
+@import '../../../libs/ui/src/theme.css';
+@source '../../../libs/ui/src';
+
+/* The display is a kiosk: no scrollbars, no text selection. */
+html, body { overflow: hidden; user-select: none; }

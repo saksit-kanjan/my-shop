@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>หน้าขาย</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/37d9b3ad37cec22200d6cae5a6c509c8">
+<script src="/_blob/dc764973e8003d6d5b097b4eb3f523fd"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+[data-theme=myshop]{color-scheme:light;--color-base-100:#ffffff;--color-base-200:#f4f5f2;--color-base-300:#e3e6e0;--color-base-content:#18201c;--color-primary:#0e6b58;--color-primary-content:#ffffff;--color-secondary:#e3f1ec;--color-secondary-content:#0a4a3d;--color-accent:#e3f1ec;--color-accent-content:#0a4a3d;--color-neutral:#18201c;--color-neutral-content:#ffffff;--color-info:#1d4ed8;--color-info-content:#ffffff;--color-success:#0e6b58;--color-success-content:#ffffff;--color-warning:#b54708;--color-warning-content:#ffffff;--color-error:#b42318;--color-error-content:#ffffff;--radius-selector:2rem;--radius-field:.75rem;--radius-box:1rem;--size-selector:.25rem;--size-field:.25rem;--border:1px;--depth:0;--noise:0}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes pop{0%{opacity:0;transform:scale(.6)}60%{opacity:1;transform:scale(1.06)}100%{transform:scale(1)}}
+@keyframes draw{to{stroke-dashoffset:0}}
+.anim-in{animation:fadeUp .4s ease-out both}
+.anim-in-2{animation:fadeUp .4s .08s ease-out both}
+.anim-in-3{animation:fadeUp .4s .16s ease-out both}
+.anim-pop{animation:pop .5s cubic-bezier(.2,.8,.2,1) both}
+.check-path{stroke-dasharray:40;stroke-dashoffset:40;animation:draw .45s .3s ease-out forwards}
+.lift{transition:transform .15s ease,box-shadow .15s ease}.lift:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(24,32,28,.08)}.lift:active{transform:scale(.97)}
+.pimg{background-image:url(/_blob/22db5b6938a5782c73ea28ae89ef9012);background-size:400% 300%;background-repeat:no-repeat}
+.p-water{background-position:0% 0%}.p-coffee{background-position:33.333% 0%}.p-tea{background-position:66.667% 0%}.p-milk{background-position:100% 0%}
+.p-bread{background-position:0% 50%}.p-chips{background-position:33.333% 50%}.p-biscuit{background-position:66.667% 50%}.p-soap{background-position:100% 50%}
+.p-paste{background-position:0% 100%}.p-tissue{background-position:33.333% 100%}.p-pen{background-position:66.667% 100%}.p-battery{background-position:100% 100%}
+.lift:hover .pimg{transform:scale(1.06)}.pimg{transition:transform .2s ease}
+@media (prefers-reduced-motion:reduce){.anim-in,.anim-in-2,.anim-in-3,.anim-pop{animation:none}.check-path{animation:none;stroke-dashoffset:0}.lift{transition:none}}
+</style>
+</helmet>
+<div data-theme="myshop" class="min-h-[800px] flex flex-col bg-base-200 text-base-content" style="font-family: 'IBM Plex Sans Thai', 'IBM Plex Sans', sans-serif; font-variant-numeric: tabular-nums">
+<header class="navbar min-h-0 bg-base-100 border-b border-base-300 px-4 py-2 gap-2 flex-wrap">
+<div class="flex-1 flex items-center gap-3 flex-wrap">
+<a href="Sale.dc.html" class="text-lg font-semibold no-underline text-base-content">My Shop</a>
+<span class="badge badge-ghost">T01</span>
+<span class="badge badge-soft badge-success gap-1"><span class="w-2 h-2 rounded-full bg-primary"></span>กะเปิด 08:00</span>
+</div>
+<nav aria-label="เมนู POS" class="flex flex-wrap items-center gap-1">
+<a href="Sale.dc.html" class="btn btn-ghost">หน้าขาย</a>
+<a href="Held.dc.html" class="btn btn-ghost">บิลที่พัก <span class="badge badge-sm badge-primary">2</span></a>
+<a href="Refund.dc.html" class="btn btn-ghost">คืนสินค้า</a>
+<a href="CashMove.dc.html" class="btn btn-ghost">เงินเข้า/ออก</a>
+<a href="CloseShift.dc.html" class="btn btn-ghost">ปิดกะ</a>
+<span class="flex items-center gap-2 pl-2 ml-1 border-l border-base-300"><span class="bg-neutral text-neutral-content w-9 h-9 rounded-full grid place-items-center text-sm">สช</span><span class="text-sm">สมชาย</span></span>
+</nav>
+</header>
+<main class="flex-1 flex flex-wrap gap-4 p-4 items-stretch">
+
+<section aria-label="เลือกสินค้า" class="flex flex-col gap-3" style="flex: 999 1 560px; min-width: 0">
+<label class="input input-lg w-full h-14 border-2 border-primary bg-base-100">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" class="text-primary"><path d="M3 5v14M7 5v14M11 5v14M15 5v14M19 5v14"></path></svg>
+<input type="search" aria-label="สแกนบาร์โค้ดหรือค้นหาสินค้า" placeholder="สแกนบาร์โค้ด หรือพิมพ์ชื่อสินค้า" class="grow text-base">
+<kbd class="kbd kbd-sm">F2</kbd>
+</label>
+
+<div class="flex flex-wrap gap-2">
+<button type="button" aria-pressed="true" class="btn btn-neutral rounded-full">ทั้งหมด</button>
+<button type="button" aria-pressed="false" class="btn btn-outline border-base-300 bg-base-100 rounded-full">เครื่องดื่ม</button>
+<button type="button" aria-pressed="false" class="btn btn-outline border-base-300 bg-base-100 rounded-full">ขนมและอาหาร</button>
+<button type="button" aria-pressed="false" class="btn btn-outline border-base-300 bg-base-100 rounded-full">ของใช้</button>
+<button type="button" aria-pressed="false" class="btn btn-outline border-base-300 bg-base-100 rounded-full">เครื่องเขียน</button>
+</div>
+
+<div class="grid gap-2" style="grid-template-columns: repeat(auto-fill, minmax(150px, 1fr))">
+<sc-for list="{{products}}" as="p" hint-placeholder-count="12">
+<button type="button" onClick="{{p.add}}" class="lift flex flex-col items-stretch text-left gap-1 p-2 pb-3 rounded-box border border-base-300 bg-base-100 cursor-pointer">
+<span class="grid place-items-center rounded-lg h-24 overflow-hidden" style="background: #EEF4F1"><span role="img" aria-label="{{p.name}}" class="pimg {{p.img}} block w-24 h-24"></span></span>
+<span class="px-1 pt-1 font-medium leading-snug">{{p.name}}</span>
+<span class="px-1 font-semibold text-primary">{{p.priceText}}</span>
+</button>
+</sc-for>
+</div>
+</section>
+
+<aside aria-label="บิลปัจจุบัน" class="card bg-base-100 border border-base-300" style="flex: 1 1 360px; max-width: 440px; min-width: 0">
+<div class="flex items-center justify-between gap-2 px-4 py-3 border-b border-base-300">
+<div class="flex flex-col">
+<span class="font-semibold text-lg">บิลปัจจุบัน</span>
+<span class="text-sm opacity-70">{{lineCount}} รายการ · {{pieceCount}} ชิ้น</span>
+</div>
+<button type="button" class="btn btn-outline btn-primary border-dashed">+ สมาชิก</button>
+</div>
+
+<div class="flex-1 flex flex-col px-4 py-1">
+<sc-if value="{{isEmpty}}" hint-placeholder-val="{{ false }}">
+<div class="flex-1 grid place-items-center py-16 text-center opacity-70">สแกนหรือแตะสินค้าเพื่อเริ่มบิล</div>
+</sc-if>
+<sc-for list="{{lines}}" as="c" hint-placeholder-count="4">
+<div class="anim-in flex flex-col gap-1 py-3 border-b border-base-200">
+<div class="flex justify-between gap-3">
+<span class="flex items-center gap-2"><span aria-hidden="true" class="pimg {{c.img}} block w-9 h-9 rounded-md shrink-0"></span><span class="font-medium">{{c.name}}</span></span>
+<span class="font-semibold">{{c.totalText}}</span>
+</div>
+<div class="flex justify-between items-center gap-3">
+<span class="text-sm opacity-70">{{c.unitText}}</span>
+<div class="join">
+<button type="button" onClick="{{c.dec}}" aria-label="ลดจำนวน" class="btn btn-sm join-item w-10">−</button>
+<span class="join-item grid place-items-center w-10 border-y border-base-300 font-semibold">{{c.qty}}</span>
+<button type="button" onClick="{{c.inc}}" aria-label="เพิ่มจำนวน" class="btn btn-sm join-item w-10">+</button>
+</div>
+</div>
+<sc-if value="{{c.hasPromo}}" hint-placeholder-val="{{ false }}">
+<div class="flex justify-between gap-3 text-sm text-primary font-medium"><span>✓ ได้รับโปร: ซื้อ 2 กระป๋อง ลด 6 บาท</span><span>{{c.promoText}}</span></div>
+</sc-if>
+</div>
+</sc-for>
+</div>
+
+<div class="flex flex-col gap-1 px-4 py-4 border-t border-base-300 bg-base-200/50 rounded-b-box">
+<div class="flex justify-between text-sm opacity-70"><span>รวม</span><span>{{subtotalText}}</span></div>
+<div class="flex justify-between text-sm text-primary"><span>ส่วนลด</span><span>{{discountText}}</span></div>
+<div class="flex justify-between items-baseline mt-1"><span class="font-semibold">ยอดสุทธิ</span><span class="text-3xl font-semibold">{{netText}}</span></div>
+<div class="flex justify-between text-sm opacity-70"><span>VAT 7% (รวมในราคาแล้ว)</span><span>{{vatText}}</span></div>
+<div class="grid grid-cols-3 gap-2 mt-3">
+<a href="Held.dc.html" class="btn">พักบิล</a>
+<button type="button" class="btn">ส่วนลดท้ายบิล</button>
+<button type="button" onClick="{{clear}}" class="btn text-error">ล้างบิล</button>
+</div>
+<a href="Offers.dc.html" class="btn btn-primary btn-lg h-16 mt-1 justify-between text-lg"><span>ตรวจโปรโมชัน</span><span>{{netText}}</span></a>
+</div>
+</aside>
+
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":800}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { cart: [['water', 3], ['bread', 1], ['coffee', 2], ['soap', 1]] };
+  }
+  renderVals() {
+    var self = this;
+    var catalog = [
+      ['water', 'น้ำดื่ม 600 ml', 10, 9], ['coffee', 'กาแฟกระป๋อง', 18, 17], ['tea', 'ชาเขียวขวด', 20, 19], ['milk', 'นมจืด 225 ml', 14, 13],
+      ['bread', 'ขนมปังโฮลวีท', 45, 42], ['chips', 'มันฝรั่งทอด', 20, 19], ['biscuit', 'บิสกิต', 15, 14], ['soap', 'สบู่ก้อน', 25, 23],
+      ['paste', 'ยาสีฟัน', 39, 37], ['tissue', 'ทิชชู่ 6 ม้วน', 89, 85], ['pen', 'ปากกาลูกลื่น', 12, 12], ['battery', 'ถ่าน AA 2 ก้อน', 35, 33]
+    ];
+    var fmt = function (n) { return '฿' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
+    var find = function (id) { return catalog.filter(function (c) { return c[0] === id; })[0]; };
+    var setQty = function (id, delta) {
+      var cart = self.state.cart.map(function (l) { return l.slice(); });
+      var hit = cart.filter(function (l) { return l[0] === id; })[0];
+      if (hit) { hit[1] += delta; } else if (delta > 0) { cart.push([id, delta]); }
+      self.setState({ cart: cart.filter(function (l) { return l[1] > 0; }) });
+    };
+    var subtotal = 0, discount = 0, pieces = 0, memberSave = 0, coffeeQty = 0;
+    var lines = this.state.cart.map(function (l) {
+      var c = find(l[0]);
+      var total = c[2] * l[1];
+      var promo = l[0] === 'coffee' ? Math.floor(l[1] / 2) * 6 : 0;
+      subtotal += total; discount += promo; pieces += l[1]; memberSave += (c[2] - c[3]) * l[1]; if (l[0] === 'coffee') { coffeeQty = l[1]; }
+      return { name: c[1], img: 'p-' + l[0], qty: l[1], unitText: fmt(c[2]) + ' / ชิ้น', totalText: fmt(total), hasPromo: promo > 0, promoText: '−' + fmt(promo),
+        inc: function () { setQty(l[0], 1); }, dec: function () { setQty(l[0], -1); } };
+    });
+    var applied = [], hints = [];
+    if (coffeeQty >= 2) { applied.push({ text: 'กาแฟกระป๋อง ซื้อ 2 ลด 6 บาท' + (coffeeQty >= 4 ? ' ×' + Math.floor(coffeeQty / 2) : ''), amount: '−' + fmt(Math.floor(coffeeQty / 2) * 6) }); }
+    if (coffeeQty % 2 === 1) { hints.push({ text: 'เพิ่มกาแฟอีก 1 กระป๋อง ลดอีก 6 บาท', tag: 'เกือบได้', hasBar: false }); }
+    var afterItem = subtotal - discount, BILL_MIN = 200, BILL_OFF = 20;
+    if (afterItem >= BILL_MIN) { discount += BILL_OFF; applied.push({ text: 'ซื้อครบ ฿200 ลด ฿20', amount: '−' + fmt(BILL_OFF) }); }
+    else if (afterItem > 0) { hints.push({ text: 'ซื้ออีก ' + fmt(BILL_MIN - afterItem) + ' ลด ฿20', tag: 'ซื้อครบ ฿200', hasBar: true, now: afterItem, goal: BILL_MIN }); }
+    if (memberSave > 0) { hints.push({ text: 'ถามลูกค้าว่าเป็นสมาชิกไหม ประหยัดเพิ่ม ' + fmt(memberSave), tag: 'ราคาสมาชิก', hasBar: false }); }
+    var net = subtotal - discount;
+    return {
+      products: catalog.map(function (c) { return { name: c[1], img: 'p-' + c[0], priceText: fmt(c[2]), add: function () { setQty(c[0], 1); } }; }),
+      lines: lines,
+      applied: applied, hints: hints, noOffers: applied.length === 0 && hints.length === 0,
+      isEmpty: lines.length === 0,
+      lineCount: lines.length,
+      pieceCount: pieces,
+      subtotalText: fmt(subtotal),
+      discountText: '−' + fmt(discount),
+      netText: fmt(net),
+      vatText: fmt(net * 7 / 107),
+      clear: function () { self.setState({ cart: [] }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

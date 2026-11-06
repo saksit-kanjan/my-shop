@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>หลังบ้าน สินค้า</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/37d9b3ad37cec22200d6cae5a6c509c8">
+<script src="/_blob/dc764973e8003d6d5b097b4eb3f523fd"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+[data-theme=myshop]{color-scheme:light;--color-base-100:#ffffff;--color-base-200:#f4f5f2;--color-base-300:#e3e6e0;--color-base-content:#18201c;--color-primary:#0e6b58;--color-primary-content:#ffffff;--color-secondary:#e3f1ec;--color-secondary-content:#0a4a3d;--color-accent:#e3f1ec;--color-accent-content:#0a4a3d;--color-neutral:#18201c;--color-neutral-content:#ffffff;--color-info:#1d4ed8;--color-info-content:#ffffff;--color-success:#0e6b58;--color-success-content:#ffffff;--color-warning:#b54708;--color-warning-content:#ffffff;--color-error:#b42318;--color-error-content:#ffffff;--radius-selector:2rem;--radius-field:.75rem;--radius-box:1rem;--size-selector:.25rem;--size-field:.25rem;--border:1px;--depth:0;--noise:0}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes pop{0%{opacity:0;transform:scale(.6)}60%{opacity:1;transform:scale(1.06)}100%{transform:scale(1)}}
+@keyframes draw{to{stroke-dashoffset:0}}
+.anim-in{animation:fadeUp .4s ease-out both}
+.anim-in-2{animation:fadeUp .4s .08s ease-out both}
+.anim-in-3{animation:fadeUp .4s .16s ease-out both}
+.anim-pop{animation:pop .5s cubic-bezier(.2,.8,.2,1) both}
+.check-path{stroke-dasharray:40;stroke-dashoffset:40;animation:draw .45s .3s ease-out forwards}
+.lift{transition:transform .15s ease,box-shadow .15s ease}.lift:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(24,32,28,.08)}.lift:active{transform:scale(.97)}
+@media (prefers-reduced-motion:reduce){.anim-in,.anim-in-2,.anim-in-3,.anim-pop{animation:none}.check-path{animation:none;stroke-dashoffset:0}.lift{transition:none}}
+</style>
+</helmet>
+<div data-theme="myshop" class="min-h-[900px] flex flex-wrap bg-base-200 text-base-content" style="font-family: 'IBM Plex Sans Thai', 'IBM Plex Sans', sans-serif; font-variant-numeric: tabular-nums">
+<aside class="bg-base-100 border-r border-base-300 p-3 flex flex-col gap-2" style="flex: 1 1 220px; max-width: 250px">
+<div class="px-3 py-2 flex flex-col"><span class="text-lg font-semibold">My Shop</span><span class="text-xs opacity-70">หลังบ้าน · สาขา [ชื่อสาขา]</span></div>
+<ul class="menu w-full gap-0.5 p-0">
+<li><a href="Backoffice.dc.html">Dashboard</a></li>
+<li><a href="BoProducts.dc.html" aria-current="page" class="menu-active">สินค้าและราคา</a></li>
+<li><a href="BoPromos.dc.html">โปรโมชัน</a></li>
+<li class="menu-title pt-3">สต็อก</li>
+<li><a href="BoReceive.dc.html">รับสินค้า</a></li>
+<li><a href="BoCount.dc.html">ตรวจนับสต็อก</a></li>
+<li class="menu-title pt-3">การขาย</li>
+<li><a href="BoDayClose.dc.html">กะและปิดวัน</a></li>
+<li><a href="#">เอกสารการขาย</a></li>
+<li><a href="BoReport.dc.html">รายงาน</a></li>
+<li class="menu-title pt-3">ระบบ</li>
+<li><a href="BoUsers.dc.html">ผู้ใช้และสิทธิ์</a></li>
+<li><a href="#">ตั้งค่าร้าน</a></li>
+<li><a href="#">Audit log</a></li>
+</ul>
+<div class="mt-auto px-3 py-2 flex items-center gap-2 text-sm"><span class="bg-neutral text-neutral-content w-8 h-8 rounded-full grid place-items-center text-xs">ผจ</span><span class="flex flex-col"><span>ผู้จัดการ</span><span class="text-xs opacity-70">เจ้าของร้าน</span></span></div>
+</aside>
+<main class="flex flex-col gap-4 p-8" style="flex: 999 1 560px; min-width: 0">
+<div class="flex flex-wrap justify-between items-end gap-3 anim-in">
+<div class="flex flex-col">
+<h1 class="text-2xl font-semibold m-0">สินค้าและราคา</h1>
+<span class="text-sm opacity-70">{{countText}}</span>
+</div>
+<div class="flex flex-wrap gap-2">
+<button type="button" class="btn">นำเข้าจาก Excel</button>
+<button type="button" class="btn">ส่งออก</button>
+<a href="BoProductEdit.dc.html" class="btn btn-primary">+ เพิ่มสินค้า</a>
+</div>
+</div>
+
+<div class="flex flex-wrap gap-2 anim-in-2">
+<label class="input bg-base-100" style="flex: 1 1 320px">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+<input type="search" aria-label="ค้นหาสินค้า" placeholder="ค้นหาชื่อ SKU หรือบาร์โค้ด" value="{{q}}" onChange="{{onSearch}}" class="grow">
+</label>
+<div role="radiogroup" aria-label="หมวด" class="join">
+<sc-for list="{{cats}}" as="c" hint-placeholder-count="4">
+<button type="button" role="radio" aria-checked="{{c.on}}" onClick="{{c.pick}}" class="{{c.cls}}">{{c.label}}</button>
+</sc-for>
+</div>
+</div>
+
+<section class="card bg-base-100 border border-base-300 anim-in-3">
+<div class="overflow-x-auto">
+<table class="table">
+<thead><tr><th>SKU</th><th>สินค้า</th><th>หมวด</th><th class="text-right">ราคา</th><th class="text-right">ราคาสมาชิก</th><th class="text-right">คงเหลือ</th><th>สถานะ</th><th><span class="sr-only">แก้ไข</span></th></tr></thead>
+<tbody>
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="8">
+<tr class="hover:bg-base-200 transition-colors">
+<td class="opacity-70">{{r.sku}}</td>
+<td class="font-medium">{{r.name}}</td>
+<td>{{r.cat}}</td>
+<td class="text-right">{{r.price}}</td>
+<td class="text-right opacity-70">{{r.member}}</td>
+<td class="{{r.stockCls}}">{{r.stock}}</td>
+<td><span class="{{r.badgeCls}}">{{r.status}}</span></td>
+<td class="text-right"><a href="BoProductEdit.dc.html" class="btn btn-ghost btn-sm">แก้ไข</a></td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+<sc-if value="{{empty}}" hint-placeholder-val="{{ false }}">
+<div class="p-10 text-center opacity-70">ไม่พบสินค้าที่ค้นหา</div>
+</sc-if>
+</section>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { q: '', cat: 'all' }; }
+  renderVals() {
+    var self = this;
+    var data = [
+      ['DR-0001', 'น้ำดื่ม 600 ml', 'เครื่องดื่ม', 10, 9, 18, 48, true], ['DR-0002', 'กาแฟกระป๋อง', 'เครื่องดื่ม', 18, 17, 9, 24, true],
+      ['DR-0003', 'ชาเขียวขวด', 'เครื่องดื่ม', 20, 19, 36, 24, true], ['DR-0004', 'นมจืด 225 ml', 'เครื่องดื่ม', 14, 13, 40, 24, true],
+      ['FD-0001', 'ขนมปังโฮลวีท', 'ขนมและอาหาร', 45, 42, 12, 6, true], ['FD-0002', 'มันฝรั่งทอด', 'ขนมและอาหาร', 20, 19, 30, 12, true],
+      ['HH-0001', 'สบู่ก้อน', 'ของใช้', 25, 23, 22, 10, true], ['HH-0002', 'ถ่าน AA 2 ก้อน', 'ของใช้', 35, 33, 4, 12, true],
+      ['HH-0003', 'ทิชชู่ 6 ม้วน', 'ของใช้', 89, 85, 15, 6, true], ['ST-0001', 'ปากกาลูกลื่น', 'เครื่องเขียน', 12, 12, 60, 20, false]
+    ];
+    var fmt = function (n) { return '฿' + n.toFixed(2); };
+    var q = this.state.q.trim().toLowerCase(), cat = this.state.cat;
+    var rows = data.filter(function (d) {
+      return (cat === 'all' || d[2] === cat) && (!q || d[1].toLowerCase().indexOf(q) >= 0 || d[0].toLowerCase().indexOf(q) >= 0);
+    }).map(function (d) {
+      var low = d[5] < d[6];
+      return { sku: d[0], name: d[1], cat: d[2], price: fmt(d[3]), member: fmt(d[4]), stock: String(d[5]),
+        stockCls: low ? 'text-right font-semibold text-warning' : 'text-right',
+        status: d[7] ? 'ขายอยู่' : 'หยุดขาย', badgeCls: d[7] ? 'badge badge-soft badge-success' : 'badge badge-ghost' };
+    });
+    var cats = ['all', 'เครื่องดื่ม', 'ขนมและอาหาร', 'ของใช้', 'เครื่องเขียน'];
+    return {
+      q: this.state.q,
+      onSearch: function (e) { self.setState({ q: e.target.value }); },
+      cats: cats.map(function (c) {
+        var on = c === cat;
+        return { label: c === 'all' ? 'ทั้งหมด' : c, on: String(on), pick: function () { self.setState({ cat: c }); }, cls: on ? 'btn join-item btn-neutral' : 'btn join-item bg-base-100' };
+      }),
+      rows: rows, empty: rows.length === 0,
+      countText: 'แสดง ' + rows.length + ' จาก ' + data.length + ' SKU'
+    };
+  }
+}
+</script>
+</body>
+</html>

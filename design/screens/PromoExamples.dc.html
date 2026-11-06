@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>ตัวอย่างโปรซื้อ 2 ชิ้น</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/37d9b3ad37cec22200d6cae5a6c509c8">
+<script src="/_blob/dc764973e8003d6d5b097b4eb3f523fd"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+[data-theme=myshop]{color-scheme:light;--color-base-100:#ffffff;--color-base-200:#f4f5f2;--color-base-300:#e3e6e0;--color-base-content:#18201c;--color-primary:#0e6b58;--color-primary-content:#ffffff;--color-secondary:#e3f1ec;--color-secondary-content:#0a4a3d;--color-accent:#e3f1ec;--color-accent-content:#0a4a3d;--color-neutral:#18201c;--color-neutral-content:#ffffff;--color-info:#1d4ed8;--color-info-content:#ffffff;--color-success:#0e6b58;--color-success-content:#ffffff;--color-warning:#b54708;--color-warning-content:#ffffff;--color-error:#b42318;--color-error-content:#ffffff;--radius-selector:2rem;--radius-field:.75rem;--radius-box:1rem;--size-selector:.25rem;--size-field:.25rem;--border:1px;--depth:0;--noise:0}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes pop{0%{opacity:0;transform:scale(.6)}60%{opacity:1;transform:scale(1.06)}100%{transform:scale(1)}}
+@keyframes draw{to{stroke-dashoffset:0}}
+.anim-in{animation:fadeUp .4s ease-out both}
+.anim-in-2{animation:fadeUp .4s .08s ease-out both}
+.anim-in-3{animation:fadeUp .4s .16s ease-out both}
+.anim-pop{animation:pop .5s cubic-bezier(.2,.8,.2,1) both}
+.check-path{stroke-dasharray:40;stroke-dashoffset:40;animation:draw .45s .3s ease-out forwards}
+.lift{transition:transform .15s ease,box-shadow .15s ease}.lift:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(24,32,28,.08)}.lift:active{transform:scale(.97)}
+.pimg{background-image:url(/_blob/22db5b6938a5782c73ea28ae89ef9012);background-size:400% 300%;background-repeat:no-repeat}
+.p-water{background-position:0% 0%}.p-coffee{background-position:33.333% 0%}.p-tea{background-position:66.667% 0%}.p-milk{background-position:100% 0%}
+.p-bread{background-position:0% 50%}.p-chips{background-position:33.333% 50%}.p-biscuit{background-position:66.667% 50%}.p-soap{background-position:100% 50%}
+.p-paste{background-position:0% 100%}.p-tissue{background-position:33.333% 100%}.p-pen{background-position:66.667% 100%}.p-battery{background-position:100% 100%}
+@keyframes slideIn{from{opacity:0;transform:translateX(-16px)}to{opacity:1;transform:none}}
+@keyframes glow{0%,100%{box-shadow:0 0 0 0 rgba(14,107,88,0)}50%{box-shadow:0 0 0 6px rgba(14,107,88,.15)}}
+@keyframes drift{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.02)}}
+.anim-slide{animation:slideIn .45s ease-out both}.anim-glow{animation:glow 2s ease-in-out infinite}
+.anim-drift{animation:drift 40s linear infinite}.anim-breathe{animation:breathe 4s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){.anim-slide,.anim-glow,.anim-drift,.anim-breathe{animation:none}.anim-in,.anim-in-2,.anim-in-3,.anim-pop{animation:none}.check-path{animation:none;stroke-dashoffset:0}.lift{transition:none}}
+</style>
+</helmet>
+<div data-theme="myshop" class="min-h-[800px] flex flex-col bg-base-200 text-base-content" style="font-family: 'IBM Plex Sans Thai', 'IBM Plex Sans', sans-serif; font-variant-numeric: tabular-nums">
+<main class="flex-1 flex flex-col gap-5 p-8">
+<div class="flex flex-wrap items-center gap-4 anim-in">
+<span aria-hidden="true" class="pimg p-chips block w-16 h-16 rounded-xl"></span>
+<div class="flex flex-col">
+<h1 class="text-3xl font-semibold m-0">มันฝรั่งทอด · ซื้อ 2 ลดเหลือชิ้นละ ฿15</h1>
+<span class="text-lg opacity-70">ราคาปกติห่อละ ฿20 · แสดงแบบที่ลูกค้าเห็นบนจอ</span>
+</div>
+</div>
+
+<div class="flex flex-wrap gap-5 items-start">
+<sc-for list="{{modes}}" as="m" hint-placeholder-count="2">
+<section class="card bg-base-100 border border-base-300 anim-in-2" style="flex: 1 1 520px; min-width: 0">
+<div class="card-body p-5 gap-0">
+<div class="flex flex-col pb-3 border-b border-base-300">
+<h2 class="text-2xl font-semibold m-0">{{m.title}}</h2>
+<span class="text-base opacity-70">{{m.sub}}</span>
+</div>
+<sc-for list="{{m.rows}}" as="r" hint-placeholder-count="4">
+<div class="{{r.rowCls}}">
+<span class="badge badge-neutral badge-lg shrink-0 mt-0.5">{{r.q}} ห่อ</span>
+<div class="flex flex-col gap-1 flex-1 min-w-0">
+<div class="flex items-baseline justify-between gap-3">
+<span class="text-lg opacity-70">{{r.calc}}</span>
+<span class="flex flex-col items-end"><span class="text-xs opacity-60">จ่ายจริง</span><span class="text-xl font-semibold">{{r.pay}}</span></span>
+</div>
+<sc-if value="{{r.hasGot}}" hint-placeholder-val="{{ false }}">
+<div class="flex items-center justify-between gap-3 rounded-lg bg-secondary text-secondary-content px-3 py-1">
+<span class="font-medium">✓ {{r.got}}</span><span class="font-semibold">{{r.save}}</span>
+</div>
+</sc-if>
+<sc-if value="{{r.hasNear}}" hint-placeholder-val="{{ false }}">
+<div class="flex items-center justify-between gap-3 rounded-lg border-2 border-dashed border-warning px-3 py-0.5">
+<span class="font-medium text-warning">+ {{r.near}}</span><span class="font-semibold text-warning">ประหยัด ฿10.00</span>
+</div>
+</sc-if>
+</div>
+</div>
+</sc-for>
+</div>
+</section>
+</sc-for>
+</div>
+<span class="text-lg opacity-70 anim-in-3">แถวที่ไฮไลต์คือจำนวนที่สองแบบให้ผลต่างกัน</span>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":800}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var fmt = function (n) { return '฿' + n.toFixed(2); };
+    var build = function (mode) {
+      return [1, 2, 3, 4].map(function (q) {
+        var sets = Math.floor(q / 2), rem = q % 2, pay, disc, calc, got = '', near = '';
+        if (mode === 'set') {
+          pay = sets * 30 + rem * 20; disc = sets * 10;
+          calc = sets ? (sets + ' ชุด × ฿30' + (rem ? ' + 1 ห่อ × ฿20' : '')) : '1 ห่อ × ฿20';
+          if (sets) { got = 'ซื้อ 2 ลดเหลือชิ้นละ ฿15 × ' + sets + ' ชุด'; }
+          if (rem) { near = sets ? 'ซื้ออีก 1 ห่อ ครบ ' + (sets + 1) + ' ชุด จ่ายเพิ่มแค่ ฿10' : 'ซื้ออีก 1 ห่อ ลดเหลือชิ้นละ ฿15 จ่ายเพิ่มแค่ ฿10'; }
+        } else {
+          var ok = q >= 2; pay = ok ? q * 15 : q * 20; disc = ok ? q * 5 : 0;
+          calc = q + ' ห่อ × ' + (ok ? '฿15' : '฿20');
+          if (ok) { got = 'ซื้อ 2 ห่อขึ้นไป ชิ้นละ ฿15 (' + q + ' ห่อ)'; } else { near = 'ซื้ออีก 1 ห่อ ลดเหลือชิ้นละ ฿15 จ่ายเพิ่มแค่ ฿10'; }
+        }
+        var diff = q === 3;
+        return { q: q, calc: calc, pay: fmt(pay), got: got, hasGot: !!got, save: '−' + fmt(disc), near: near, hasNear: !!near,
+          rowCls: diff ? 'flex items-start gap-4 py-3 -mx-3 px-3 rounded-xl bg-warning/10' : 'flex items-start gap-4 py-3 border-b border-base-200' };
+      });
+    };
+    return { modes: [
+      { title: 'แบบคิดเป็นชุด', sub: 'ทุก 2 ห่อได้ราคาโปร ห่อที่เกินชุดคิดราคาปกติ', rows: build('set') },
+      { title: 'แบบทุกชิ้นได้ราคาโปร', sub: 'ซื้อครบ 2 ห่อ ทุกห่อได้ ฿15', rows: build('all') }
+    ] };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>หลังบ้าน กะและปิดวัน</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/37d9b3ad37cec22200d6cae5a6c509c8">
+<script src="/_blob/dc764973e8003d6d5b097b4eb3f523fd"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+[data-theme=myshop]{color-scheme:light;--color-base-100:#ffffff;--color-base-200:#f4f5f2;--color-base-300:#e3e6e0;--color-base-content:#18201c;--color-primary:#0e6b58;--color-primary-content:#ffffff;--color-secondary:#e3f1ec;--color-secondary-content:#0a4a3d;--color-accent:#e3f1ec;--color-accent-content:#0a4a3d;--color-neutral:#18201c;--color-neutral-content:#ffffff;--color-info:#1d4ed8;--color-info-content:#ffffff;--color-success:#0e6b58;--color-success-content:#ffffff;--color-warning:#b54708;--color-warning-content:#ffffff;--color-error:#b42318;--color-error-content:#ffffff;--radius-selector:2rem;--radius-field:.75rem;--radius-box:1rem;--size-selector:.25rem;--size-field:.25rem;--border:1px;--depth:0;--noise:0}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes pop{0%{opacity:0;transform:scale(.6)}60%{opacity:1;transform:scale(1.06)}100%{transform:scale(1)}}
+@keyframes draw{to{stroke-dashoffset:0}}
+.anim-in{animation:fadeUp .4s ease-out both}
+.anim-in-2{animation:fadeUp .4s .08s ease-out both}
+.anim-in-3{animation:fadeUp .4s .16s ease-out both}
+.anim-pop{animation:pop .5s cubic-bezier(.2,.8,.2,1) both}
+.check-path{stroke-dasharray:40;stroke-dashoffset:40;animation:draw .45s .3s ease-out forwards}
+.lift{transition:transform .15s ease,box-shadow .15s ease}.lift:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(24,32,28,.08)}.lift:active{transform:scale(.97)}
+@media (prefers-reduced-motion:reduce){.anim-in,.anim-in-2,.anim-in-3,.anim-pop{animation:none}.check-path{animation:none;stroke-dashoffset:0}.lift{transition:none}}
+</style>
+</helmet>
+<div data-theme="myshop" class="min-h-[900px] flex flex-wrap bg-base-200 text-base-content" style="font-family: 'IBM Plex Sans Thai', 'IBM Plex Sans', sans-serif; font-variant-numeric: tabular-nums">
+<aside class="bg-base-100 border-r border-base-300 p-3 flex flex-col gap-2" style="flex: 1 1 220px; max-width: 250px">
+<div class="px-3 py-2 flex flex-col"><span class="text-lg font-semibold">My Shop</span><span class="text-xs opacity-70">หลังบ้าน · สาขา [ชื่อสาขา]</span></div>
+<ul class="menu w-full gap-0.5 p-0">
+<li><a href="Backoffice.dc.html">Dashboard</a></li>
+<li><a href="BoProducts.dc.html">สินค้าและราคา</a></li>
+<li><a href="BoPromos.dc.html">โปรโมชัน</a></li>
+<li class="menu-title pt-3">สต็อก</li>
+<li><a href="BoReceive.dc.html">รับสินค้า</a></li>
+<li><a href="BoCount.dc.html">ตรวจนับสต็อก</a></li>
+<li class="menu-title pt-3">การขาย</li>
+<li><a href="BoDayClose.dc.html" aria-current="page" class="menu-active">กะและปิดวัน</a></li>
+<li><a href="#">เอกสารการขาย</a></li>
+<li><a href="BoReport.dc.html">รายงาน</a></li>
+<li class="menu-title pt-3">ระบบ</li>
+<li><a href="BoUsers.dc.html">ผู้ใช้และสิทธิ์</a></li>
+<li><a href="#">ตั้งค่าร้าน</a></li>
+<li><a href="#">Audit log</a></li>
+</ul>
+<div class="mt-auto px-3 py-2 flex items-center gap-2 text-sm"><span class="bg-neutral text-neutral-content w-8 h-8 rounded-full grid place-items-center text-xs">ผจ</span><span class="flex flex-col"><span>ผู้จัดการ</span><span class="text-xs opacity-70">เจ้าของร้าน</span></span></div>
+</aside>
+<main class="flex flex-col gap-4 p-8" style="flex: 999 1 560px; min-width: 0">
+<div class="flex flex-wrap justify-between items-end gap-3 anim-in">
+<div class="flex flex-col">
+<h1 class="text-2xl font-semibold m-0">กะและปิดวัน</h1>
+<span class="text-sm opacity-70">วันทำการ ศุกร์ 6 พ.ย. 2569</span>
+</div>
+<input type="date" aria-label="เลือกวันทำการ" value="2026-11-06" class="input w-auto">
+</div>
+
+<div class="flex flex-wrap gap-4 items-start">
+<div class="flex flex-col gap-3" style="flex: 999 1 560px; min-width: 0">
+<div class="collapse collapse-arrow bg-base-100 border border-base-300 anim-in-2">
+<input type="checkbox" checked="checked" aria-label="รายละเอียดกะ T01">
+<div class="collapse-title flex flex-wrap items-center gap-3 pe-12">
+<span class="font-semibold">T01 · สมชาย</span><span class="text-sm opacity-70">08:00–16:05</span>
+<span class="badge badge-soft badge-success">ปิดกะแล้ว</span><span class="badge badge-soft badge-warning">ขาด ฿31.00</span>
+<span class="ml-auto font-semibold">฿14,320.00</span>
+</div>
+<div class="collapse-content">
+<div class="grid gap-4 text-sm" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr))">
+<table class="table table-sm"><tbody>
+<tr><td>เงินทอนตั้งต้น</td><td class="text-right">฿2,000.00</td></tr>
+<tr><td>ขายเงินสด</td><td class="text-right">฿9,870.00</td></tr>
+<tr><td>คืน / จ่ายออก / เข้าเซฟ</td><td class="text-right">−฿5,145.00</td></tr>
+<tr class="font-semibold"><td>ควรมี / นับได้</td><td class="text-right">฿6,725.00 / ฿6,694.00</td></tr>
+</tbody></table>
+<table class="table table-sm"><tbody>
+<tr><td>PromptPay</td><td class="text-right">฿3,150.00</td></tr>
+<tr><td>บัตร</td><td class="text-right">฿1,300.00</td></tr>
+<tr><td>จำนวนบิล</td><td class="text-right">108</td></tr>
+<tr><td>หมายเหตุ</td><td class="text-right">ทอนเงินผิด</td></tr>
+</tbody></table>
+</div>
+<div class="flex justify-end mt-2"><a href="ZReport.dc.html" class="btn btn-sm">ดู Z report</a></div>
+</div>
+</div>
+
+<div class="collapse collapse-arrow bg-base-100 border border-base-300 anim-in-3">
+<input type="checkbox" aria-label="รายละเอียดกะ T02">
+<div class="collapse-title flex flex-wrap items-center gap-3 pe-12">
+<span class="font-semibold">T02 · วิภา</span><span class="text-sm opacity-70">09:30–17:00</span>
+<span class="badge badge-soft badge-success">ปิดกะแล้ว</span><span class="badge badge-ghost">ไม่มีผลต่าง</span>
+<span class="ml-auto font-semibold">฿10,260.00</span>
+</div>
+<div class="collapse-content text-sm">
+<table class="table table-sm"><tbody>
+<tr><td>เงินสด</td><td class="text-right">฿6,100.00</td></tr>
+<tr><td>PromptPay</td><td class="text-right">฿2,860.00</td></tr>
+<tr><td>บัตร</td><td class="text-right">฿1,300.00</td></tr>
+<tr><td>จำนวนบิล</td><td class="text-right">78</td></tr>
+</tbody></table>
+</div>
+</div>
+</div>
+
+<aside class="flex flex-col gap-3 anim-in-2" style="flex: 1 1 320px; min-width: 0">
+<section class="card bg-base-100 border border-base-300">
+<div class="card-body gap-2">
+<h2 class="font-semibold m-0">ก่อนปิดวัน</h2>
+<ul class="flex flex-col gap-2 text-sm">
+<li class="flex items-center gap-2"><span class="w-5 h-5 rounded-full bg-primary text-primary-content grid place-items-center text-xs" aria-hidden="true">✓</span>ทุกกะปิดแล้ว (2/2)</li>
+<li class="flex items-center gap-2"><span class="w-5 h-5 rounded-full bg-primary text-primary-content grid place-items-center text-xs" aria-hidden="true">✓</span>ไม่มีบิลที่พักค้าง</li>
+<li class="flex items-center gap-2"><span class="w-5 h-5 rounded-full bg-warning text-warning-content grid place-items-center text-xs" aria-hidden="true">!</span>รออนุมัติ 1 รายการ</li>
+</ul>
+</div>
+</section>
+<section class="card bg-base-100 border border-base-300">
+<div class="card-body gap-1">
+<span class="text-sm opacity-70">ยอดขายสุทธิทั้งวัน</span>
+<span class="text-3xl font-semibold">฿24,580.00</span>
+<span class="text-sm opacity-70">186 บิล · VAT ในยอดขาย ฿1,608.04</span>
+</div>
+</section>
+<button type="button" class="btn btn-primary btn-lg">ปิดวันทำการ</button>
+<span class="text-xs opacity-70 text-center">หลังปิดวัน ยอดของวันนี้จะถูกล็อกสำหรับรายงานและบัญชี</span>
+</aside>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

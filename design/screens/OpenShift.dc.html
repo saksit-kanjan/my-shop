@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>เปิดกะ</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/37d9b3ad37cec22200d6cae5a6c509c8">
+<script src="/_blob/dc764973e8003d6d5b097b4eb3f523fd"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+[data-theme=myshop]{color-scheme:light;--color-base-100:#ffffff;--color-base-200:#f4f5f2;--color-base-300:#e3e6e0;--color-base-content:#18201c;--color-primary:#0e6b58;--color-primary-content:#ffffff;--color-secondary:#e3f1ec;--color-secondary-content:#0a4a3d;--color-accent:#e3f1ec;--color-accent-content:#0a4a3d;--color-neutral:#18201c;--color-neutral-content:#ffffff;--color-info:#1d4ed8;--color-info-content:#ffffff;--color-success:#0e6b58;--color-success-content:#ffffff;--color-warning:#b54708;--color-warning-content:#ffffff;--color-error:#b42318;--color-error-content:#ffffff;--radius-selector:2rem;--radius-field:.75rem;--radius-box:1rem;--size-selector:.25rem;--size-field:.25rem;--border:1px;--depth:0;--noise:0}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes pop{0%{opacity:0;transform:scale(.6)}60%{opacity:1;transform:scale(1.06)}100%{transform:scale(1)}}
+@keyframes draw{to{stroke-dashoffset:0}}
+.anim-in{animation:fadeUp .4s ease-out both}
+.anim-in-2{animation:fadeUp .4s .08s ease-out both}
+.anim-in-3{animation:fadeUp .4s .16s ease-out both}
+.anim-pop{animation:pop .5s cubic-bezier(.2,.8,.2,1) both}
+.check-path{stroke-dasharray:40;stroke-dashoffset:40;animation:draw .45s .3s ease-out forwards}
+.lift{transition:transform .15s ease,box-shadow .15s ease}.lift:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(24,32,28,.08)}.lift:active{transform:scale(.97)}
+@media (prefers-reduced-motion:reduce){.anim-in,.anim-in-2,.anim-in-3,.anim-pop{animation:none}.check-path{animation:none;stroke-dashoffset:0}.lift{transition:none}}
+</style>
+</helmet>
+<div data-theme="myshop" class="min-h-[800px] flex flex-col bg-base-200 text-base-content" style="font-family: 'IBM Plex Sans Thai', 'IBM Plex Sans', sans-serif; font-variant-numeric: tabular-nums">
+<main class="flex-1 flex flex-col items-center gap-6 p-6">
+<ul class="steps w-full max-w-[640px] anim-in">
+<li class="step step-primary">เข้าสู่ระบบ</li>
+<li class="step step-primary">เปิดกะ</li>
+<li class="step">เริ่มขาย</li>
+</ul>
+
+<div class="w-full max-w-[880px] flex flex-wrap gap-4 anim-in-2">
+<section class="card bg-base-100 border border-base-300" style="flex: 999 1 460px; min-width: 0">
+<div class="card-body gap-4">
+<div class="flex flex-col">
+<h1 class="text-xl font-semibold m-0">นับเงินทอนตั้งต้น</h1>
+<span class="text-sm opacity-70">นับเงินในลิ้นชักก่อนเริ่มขาย แล้วกรอกจำนวนแต่ละชนิด</span>
+</div>
+<div class="flex flex-col">
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="9">
+<div class="flex items-center justify-between gap-3 py-2 border-b border-base-200">
+<span class="w-24 font-medium">{{r.label}}</span>
+<div class="join">
+<button type="button" class="btn join-item w-11" aria-label="ลด">−</button>
+<input type="text" value="{{r.qty}}" aria-label="{{r.label}}" class="input join-item w-16 text-center">
+<button type="button" class="btn join-item w-11" aria-label="เพิ่ม">+</button>
+</div>
+<span class="w-28 text-right">{{r.sum}}</span>
+</div>
+</sc-for>
+</div>
+</div>
+</section>
+
+<aside class="flex flex-col gap-4" style="flex: 1 1 300px; min-width: 0">
+<div class="card bg-base-100 border border-base-300">
+<div class="card-body gap-1">
+<span class="text-sm opacity-70">เงินทอนตั้งต้น</span>
+<span class="text-4xl font-semibold">฿2,000.00</span>
+<span class="text-sm opacity-70">แคชเชียร์ สมชาย · เครื่อง T01</span>
+</div>
+</div>
+<div role="note" class="alert alert-soft">
+<span class="text-sm">ยอดนี้จะเป็นจุดเริ่มของการกระทบยอดเงินสดตอนปิดกะ</span>
+</div>
+<a href="Sale.dc.html" class="btn btn-primary btn-lg h-14">เปิดกะและเริ่มขาย</a>
+<a href="Main.dc.html" class="btn btn-ghost">ออกจากระบบ</a>
+</aside>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":800}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var data = [['ธนบัตร 1,000',0,0],['ธนบัตร 500',0,0],['ธนบัตร 100',10,1000],['ธนบัตร 50',10,500],['ธนบัตร 20',15,300],['เหรียญ 10',15,150],['เหรียญ 5',8,40],['เหรียญ 2',5,10],['เหรียญ 1',0,0]];
+    return { rows: data.map(function (d) { return { label: d[0], qty: String(d[1]), sum: '฿' + d[2].toLocaleString('en-US', { minimumFractionDigits: 2 }) }; }) };
+  }
+}
+</script>
+</body>
+</html>

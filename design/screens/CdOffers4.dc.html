@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>จอลูกค้า สรุปบิลและโปรโมชัน</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/37d9b3ad37cec22200d6cae5a6c509c8">
+<script src="/_blob/dc764973e8003d6d5b097b4eb3f523fd"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+[data-theme=myshop]{color-scheme:light;--color-base-100:#ffffff;--color-base-200:#f4f5f2;--color-base-300:#e3e6e0;--color-base-content:#18201c;--color-primary:#0e6b58;--color-primary-content:#ffffff;--color-secondary:#e3f1ec;--color-secondary-content:#0a4a3d;--color-accent:#e3f1ec;--color-accent-content:#0a4a3d;--color-neutral:#18201c;--color-neutral-content:#ffffff;--color-info:#1d4ed8;--color-info-content:#ffffff;--color-success:#0e6b58;--color-success-content:#ffffff;--color-warning:#b54708;--color-warning-content:#ffffff;--color-error:#b42318;--color-error-content:#ffffff;--radius-selector:2rem;--radius-field:.75rem;--radius-box:1rem;--size-selector:.25rem;--size-field:.25rem;--border:1px;--depth:0;--noise:0}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes pop{0%{opacity:0;transform:scale(.6)}60%{opacity:1;transform:scale(1.06)}100%{transform:scale(1)}}
+@keyframes draw{to{stroke-dashoffset:0}}
+.anim-in{animation:fadeUp .4s ease-out both}
+.anim-in-2{animation:fadeUp .4s .08s ease-out both}
+.anim-in-3{animation:fadeUp .4s .16s ease-out both}
+.anim-pop{animation:pop .5s cubic-bezier(.2,.8,.2,1) both}
+.check-path{stroke-dasharray:40;stroke-dashoffset:40;animation:draw .45s .3s ease-out forwards}
+.lift{transition:transform .15s ease,box-shadow .15s ease}.lift:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(24,32,28,.08)}.lift:active{transform:scale(.97)}
+.pimg{background-image:url(/_blob/22db5b6938a5782c73ea28ae89ef9012);background-size:400% 300%;background-repeat:no-repeat}
+.p-water{background-position:0% 0%}.p-coffee{background-position:33.333% 0%}.p-tea{background-position:66.667% 0%}.p-milk{background-position:100% 0%}
+.p-bread{background-position:0% 50%}.p-chips{background-position:33.333% 50%}.p-biscuit{background-position:66.667% 50%}.p-soap{background-position:100% 50%}
+.p-paste{background-position:0% 100%}.p-tissue{background-position:33.333% 100%}.p-pen{background-position:66.667% 100%}.p-battery{background-position:100% 100%}
+@keyframes slideIn{from{opacity:0;transform:translateX(-16px)}to{opacity:1;transform:none}}
+@keyframes glow{0%,100%{box-shadow:0 0 0 0 rgba(14,107,88,0)}50%{box-shadow:0 0 0 6px rgba(14,107,88,.15)}}
+@keyframes drift{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.02)}}
+.anim-slide{animation:slideIn .45s ease-out both}.anim-glow{animation:glow 2s ease-in-out infinite}
+.anim-drift{animation:drift 40s linear infinite}.anim-breathe{animation:breathe 4s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){.anim-slide,.anim-glow,.anim-drift,.anim-breathe{animation:none}.anim-in,.anim-in-2,.anim-in-3,.anim-pop{animation:none}.check-path{animation:none;stroke-dashoffset:0}.lift{transition:none}}
+</style>
+</helmet>
+<div data-theme="myshop" class="min-h-[800px] flex flex-col bg-base-200 text-base-content" style="font-family: 'IBM Plex Sans Thai', 'IBM Plex Sans', sans-serif; font-variant-numeric: tabular-nums">
+<header class="flex items-center justify-between px-8 py-5">
+<span class="text-2xl font-semibold">My Shop</span>
+<span class="text-lg opacity-70">สาขา [ชื่อสาขา]</span>
+</header>
+<main class="flex-1 flex flex-wrap gap-6 px-8 pb-8 items-stretch">
+
+<section aria-label="สรุปบิล" class="card bg-base-100 border border-base-300 anim-in" style="flex: 999 1 600px; min-width: 0">
+<div class="card-body px-6 py-4 gap-0">
+<sc-for list="{{items}}" as="i" hint-placeholder-count="7">
+<div class="{{i.rowCls}}">
+<sc-if value="{{i.child}}" hint-placeholder-val="{{ false }}"><span aria-hidden="true" class="text-2xl opacity-40 w-6 text-center shrink-0">↳</span></sc-if>
+<sc-if value="{{i.premium}}" hint-placeholder-val="{{ false }}"><span aria-hidden="true" class="w-10 h-10 rounded-lg shrink-0 grid place-items-center bg-secondary text-secondary-content"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"></rect><path d="M12 8v13M5 12v9h14v-9M7.5 8a2.5 2.5 0 0 1 0-5C10 3 12 8 12 8s2-5 4.5-5a2.5 2.5 0 0 1 0 5"></path></svg></span></sc-if>
+<sc-if value="{{i.notPremium}}" hint-placeholder-val="{{ true }}"><span aria-hidden="true" class="{{i.imgCls}}"></span></sc-if>
+<div class="flex flex-col gap-1.5 flex-1 min-w-0">
+<span class="text-xl font-medium">{{i.name}} <span class="font-normal opacity-60">×{{i.qty}}</span></span>
+<sc-if value="{{i.hasTags}}" hint-placeholder-val="{{ false }}">
+<span class="flex flex-wrap gap-2">
+<sc-if value="{{i.got}}" hint-placeholder-val="{{ false }}"><span class="rounded-full bg-secondary text-secondary-content px-3 py-0.5 text-base font-medium">✓ {{i.gotText}}</span></sc-if>
+<sc-if value="{{i.near}}" hint-placeholder-val="{{ false }}"><span class="rounded-full border-2 border-dashed border-warning text-warning px-3 py-0 text-base font-semibold">+ {{i.nearText}}</span></sc-if>
+</span>
+</sc-if>
+</div>
+<span class="flex flex-col items-end leading-tight shrink-0">
+<sc-if value="{{i.discounted}}" hint-placeholder-val="{{ false }}"><span class="text-lg line-through opacity-60" aria-label="ราคาเดิม {{i.orig}}">{{i.orig}}</span></sc-if>
+<span class="{{i.priceCls}}">{{i.price}}</span>
+</span>
+</div>
+</sc-for>
+<div class="flex flex-wrap gap-2 pt-4">
+<sc-for list="{{extra}}" as="e" hint-placeholder-count="2">
+<span class="{{e.cls}}">{{e.text}}</span>
+</sc-for>
+</div>
+</div>
+</section>
+
+<aside class="flex flex-col gap-4 justify-center" style="flex: 1 1 340px; min-width: 0">
+<div class="card bg-neutral text-neutral-content anim-in-2">
+<div class="card-body gap-2 p-8">
+<span class="text-2xl opacity-80">ยอดชำระ</span>
+<span class="text-8xl font-semibold leading-none">{{net}}</span>
+</div>
+</div>
+<div class="rounded-box bg-secondary text-secondary-content px-8 py-5 flex justify-between items-center anim-in-3">
+<span class="text-2xl font-medium">ประหยัดแล้ว</span><span class="text-4xl font-semibold">{{saved}}</span>
+</div>
+<span class="text-xl px-1 anim-in-3"><span class="text-warning font-semibold">+ สีส้ม</span> <span class="opacity-70">คือรับเพิ่มได้ แจ้งพนักงาน</span></span>
+</aside>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"chipsQty":{"editor":"int","min":1,"max":6,"default":4},"chipsRule":{"editor":"enum","options":["ชุด","ทุกชิ้น"],"default":"ชุด"},"$preview":{"width":1280,"height":800}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var fmt = function (n) { return '฿' + (n % 1 ? n.toFixed(2) : String(n)); };
+    var cq = this.props.chipsQty ?? 4, mode = this.props.chipsRule ?? 'ชุด';
+    var cg = '', cs = 0, cn = '';
+    if (mode === 'ชุด') {
+      var sets = Math.floor(cq / 2), rem = cq % 2;
+      if (sets) { cg = 'ซื้อ 2 ลด ' + fmt(sets * 10); cs = sets * 10; }
+      if (rem) { cn = sets ? 'อีก 1 ห่อ ลดอีก ฿10' : 'อีก 1 ห่อ ลด ฿10'; }
+    } else {
+      if (cq >= 2) { cg = 'ซื้อ 2 ขึ้นไป ลด ' + fmt(cq * 5); cs = cq * 5; } else { cn = 'อีก 1 ห่อ ลด ฿10'; }
+    }
+    var rows = [
+      ['p-chips', 'มันฝรั่งทอด', cq, 20, cg, cs, cn],
+      ['p-biscuit', 'บิสกิต', 1, 15, '', 0, 'อีก 1 ชิ้น ลด ฿10'],
+      ['p-bread', 'ขนมปังโฮลวีท', 1, 45, 'แถมนมจืด 1 กล่อง', 0, '', 'parent'],
+      ['p-milk', 'นมจืด 225 ml', 1, 14, 'ของแถมจาก ขนมปังโฮลวีท', 14, '', 'child'],
+      ['p-paste', 'ยาสีฟัน', 1, 39, 'แถมแปรงสีฟันพกพา', 0, '', 'parent'],
+      ['', 'แปรงสีฟันพกพา', 1, 0, 'ของพรีเมียมจาก ยาสีฟัน', 0, '', 'child', 'premium'],
+      ['p-tea', 'ชาเขียวขวด', 2, 20, '1 แถม 1', 20, ''],
+      ['p-water', 'น้ำดื่ม 600 ml', 1, 10, '', 0, 'หยิบอีก 1 ขวด ฟรี']
+    ];
+    var net = 0, saved = 0;
+    var items = rows.map(function (r) {
+      var pay = r[2] * r[3] - r[5]; net += pay; saved += r[5];
+      var child = r[7] === 'child', parent = r[7] === 'parent', premium = r[8] === 'premium';
+      return { premium: premium, notPremium: !premium, child: child, rowCls: 'flex items-center gap-4 ' + (child ? 'pb-3 pl-4 border-b border-base-200' : parent ? 'pt-3 pb-1' : 'py-3 border-b border-base-200'),
+        imgCls: 'pimg ' + r[0] + ' block rounded-lg shrink-0 ' + (child ? 'w-10 h-10' : 'w-12 h-12'), img: r[0], name: r[1], qty: r[2], got: !!r[4], gotText: r[4], near: !!r[6], nearText: r[6], hasTags: !!(r[4] || r[6]),
+        price: pay === 0 ? 'ฟรี' : fmt(pay), orig: fmt(r[2] * r[3]), discounted: r[5] > 0, priceCls: (r[5] > 0 || premium) ? 'text-2xl font-semibold text-primary' : 'text-2xl font-semibold' };
+    });
+    var extra = [];
+    if (net >= 200) { net -= 20; saved += 20; extra.push({ text: '✓ ซื้อครบ ฿200 ลด ฿20', cls: 'rounded-full bg-secondary text-secondary-content px-4 py-1 text-lg font-medium' }); }
+    else { extra.push({ text: '+ ซื้ออีก ' + fmt(200 - net) + ' ลด ฿20', cls: 'rounded-full border-2 border-dashed border-warning text-warning px-4 py-0.5 text-lg font-semibold' }); }
+    extra.push({ text: '+ แจ้งเบอร์สมาชิก ลดอีก ฿7', cls: 'rounded-full border-2 border-dashed border-warning text-warning px-4 py-0.5 text-lg font-semibold' });
+    return { items: items, extra: extra, net: fmt(net), saved: fmt(saved) };
+  }
+}
+</script>
+</body>
+</html>

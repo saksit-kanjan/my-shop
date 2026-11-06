@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>หลังบ้าน โปรโมชัน</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/37d9b3ad37cec22200d6cae5a6c509c8">
+<script src="/_blob/dc764973e8003d6d5b097b4eb3f523fd"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+[data-theme=myshop]{color-scheme:light;--color-base-100:#ffffff;--color-base-200:#f4f5f2;--color-base-300:#e3e6e0;--color-base-content:#18201c;--color-primary:#0e6b58;--color-primary-content:#ffffff;--color-secondary:#e3f1ec;--color-secondary-content:#0a4a3d;--color-accent:#e3f1ec;--color-accent-content:#0a4a3d;--color-neutral:#18201c;--color-neutral-content:#ffffff;--color-info:#1d4ed8;--color-info-content:#ffffff;--color-success:#0e6b58;--color-success-content:#ffffff;--color-warning:#b54708;--color-warning-content:#ffffff;--color-error:#b42318;--color-error-content:#ffffff;--radius-selector:2rem;--radius-field:.75rem;--radius-box:1rem;--size-selector:.25rem;--size-field:.25rem;--border:1px;--depth:0;--noise:0}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes pop{0%{opacity:0;transform:scale(.6)}60%{opacity:1;transform:scale(1.06)}100%{transform:scale(1)}}
+@keyframes draw{to{stroke-dashoffset:0}}
+.anim-in{animation:fadeUp .4s ease-out both}
+.anim-in-2{animation:fadeUp .4s .08s ease-out both}
+.anim-in-3{animation:fadeUp .4s .16s ease-out both}
+.anim-pop{animation:pop .5s cubic-bezier(.2,.8,.2,1) both}
+.check-path{stroke-dasharray:40;stroke-dashoffset:40;animation:draw .45s .3s ease-out forwards}
+.lift{transition:transform .15s ease,box-shadow .15s ease}.lift:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(24,32,28,.08)}.lift:active{transform:scale(.97)}
+.pimg{background-image:url(/_blob/22db5b6938a5782c73ea28ae89ef9012);background-size:400% 300%;background-repeat:no-repeat}
+.p-water{background-position:0% 0%}.p-coffee{background-position:33.333% 0%}.p-tea{background-position:66.667% 0%}.p-milk{background-position:100% 0%}
+.p-bread{background-position:0% 50%}.p-chips{background-position:33.333% 50%}.p-biscuit{background-position:66.667% 50%}.p-soap{background-position:100% 50%}
+.p-paste{background-position:0% 100%}.p-tissue{background-position:33.333% 100%}.p-pen{background-position:66.667% 100%}.p-battery{background-position:100% 100%}
+@media (prefers-reduced-motion:reduce){.anim-in,.anim-in-2,.anim-in-3,.anim-pop{animation:none}.check-path{animation:none;stroke-dashoffset:0}.lift{transition:none}}
+</style>
+</helmet>
+<div data-theme="myshop" class="min-h-[900px] flex flex-wrap bg-base-200 text-base-content" style="font-family: 'IBM Plex Sans Thai', 'IBM Plex Sans', sans-serif; font-variant-numeric: tabular-nums">
+<aside class="bg-base-100 border-r border-base-300 p-3 flex flex-col gap-2" style="flex: 1 1 220px; max-width: 250px">
+<div class="px-3 py-2 flex flex-col"><span class="text-lg font-semibold">My Shop</span><span class="text-xs opacity-70">หลังบ้าน · สาขา [ชื่อสาขา]</span></div>
+<ul class="menu w-full gap-0.5 p-0">
+<li><a href="Backoffice.dc.html">Dashboard</a></li>
+<li><a href="BoProducts.dc.html">สินค้าและราคา</a></li>
+<li><a href="BoPromos.dc.html" aria-current="page" class="menu-active">โปรโมชัน</a></li>
+<li class="menu-title pt-3">สต็อก</li>
+<li><a href="BoReceive.dc.html">รับสินค้า</a></li>
+<li><a href="BoCount.dc.html">ตรวจนับสต็อก</a></li>
+<li class="menu-title pt-3">การขาย</li>
+<li><a href="BoDayClose.dc.html">กะและปิดวัน</a></li>
+<li><a href="#">เอกสารการขาย</a></li>
+<li><a href="BoReport.dc.html">รายงาน</a></li>
+<li class="menu-title pt-3">ระบบ</li>
+<li><a href="BoUsers.dc.html">ผู้ใช้และสิทธิ์</a></li>
+<li><a href="#">ตั้งค่าร้าน</a></li>
+<li><a href="#">Audit log</a></li>
+</ul>
+<div class="mt-auto px-3 py-2 flex items-center gap-2 text-sm"><span class="bg-neutral text-neutral-content w-8 h-8 rounded-full grid place-items-center text-xs">ผจ</span><span class="flex flex-col"><span>ผู้จัดการ</span><span class="text-xs opacity-70">เจ้าของร้าน</span></span></div>
+</aside>
+<main class="flex flex-col gap-4 p-8" style="flex: 999 1 560px; min-width: 0">
+<div class="flex flex-wrap justify-between items-end gap-3 anim-in">
+<div class="flex flex-col">
+<h1 class="text-2xl font-semibold m-0">โปรโมชัน</h1>
+<span class="text-sm opacity-70">6 โปรใช้งานอยู่</span>
+</div>
+</div>
+
+<div class="flex flex-wrap gap-4 items-start">
+<section class="card bg-base-100 border border-base-300 anim-in-2" style="flex: 999 1 460px; min-width: 0">
+<div class="overflow-x-auto"><table class="table">
+<thead><tr><th>โปร</th><th>ประเภท</th><th>ช่วงเวลา</th><th>สถานะ</th></tr></thead>
+<tbody>
+<sc-for list="{{list}}" as="p" hint-placeholder-count="6">
+<tr class="hover:bg-base-200">
+<td><span class="flex items-center gap-3"><span aria-hidden="true" class="pimg {{p.img}} block w-9 h-9 rounded-md shrink-0"></span><span class="font-medium">{{p.name}}</span></span></td>
+<td><span class="badge badge-ghost">{{p.type}}</span></td>
+<td class="opacity-70">1–30 พ.ย. 2569</td>
+<td><span class="badge badge-soft badge-success">ใช้งาน</span></td>
+</tr>
+</sc-for>
+</tbody></table></div>
+</section>
+
+<aside class="card bg-base-100 border border-base-300 anim-in-3" style="flex: 1 1 420px; max-width: 520px; min-width: 0">
+<div class="card-body gap-4">
+<h2 class="text-lg font-semibold m-0">สร้างโปรใหม่</h2>
+<div role="radiogroup" aria-label="ประเภทโปร" class="grid grid-cols-3 gap-2">
+<sc-for list="{{types}}" as="t" hint-placeholder-count="3">
+<button type="button" role="radio" aria-checked="{{t.on}}" onClick="{{t.pick}}" class="{{t.cls}}">
+<span class="font-semibold">{{t.label}}</span><span class="text-xs opacity-70 font-normal">{{t.hint}}</span>
+</button>
+</sc-for>
+</div>
+
+<sc-if value="{{isQty}}" hint-placeholder-val="{{ true }}">
+<div class="grid grid-cols-2 gap-3 anim-in">
+<label class="flex flex-col gap-1 col-span-2"><span class="text-sm">สินค้า A</span><select class="select w-full"><option>บิสกิต · ฿15.00</option><option>มันฝรั่งทอด · ฿20.00</option></select></label>
+<label class="flex flex-col gap-1"><span class="text-sm">ซื้อครบ (ชิ้น)</span><input type="text" value="2" class="input w-full text-right"></label>
+<label class="flex flex-col gap-1"><span class="text-sm">ลดเหลือ (บาท)</span><input type="text" value="10.00" class="input w-full text-right"></label>
+<div class="join col-span-2" role="radiogroup" aria-label="ราคาที่ลดเหลือคิดแบบ">
+<button type="button" role="radio" aria-checked="{{perUnitOn}}" onClick="{{setPerUnit}}" class="{{perUnitCls}}">ชิ้นละ</button>
+<button type="button" role="radio" aria-checked="{{perSetOn}}" onClick="{{setPerSet}}" class="{{perSetCls}}">รวมทั้งชุด</button>
+</div>
+<div class="flex flex-col gap-1 col-span-2"><span class="text-sm">เมื่อซื้อเกินจำนวนที่ตั้ง</span>
+<div class="join" role="radiogroup" aria-label="วิธีคิดเมื่อซื้อเกิน">
+<button type="button" role="radio" aria-checked="{{calcSetOn}}" onClick="{{setCalcSet}}" class="{{calcSetCls}}">คิดเป็นชุด</button>
+<button type="button" role="radio" aria-checked="{{calcAllOn}}" onClick="{{setCalcAll}}" class="{{calcAllCls}}">ทุกชิ้นได้ราคาโปร</button>
+</div>
+<span class="text-xs opacity-70 anim-in">{{calcHint}}</span></div>
+</div>
+</sc-if>
+<sc-if value="{{isGift}}" hint-placeholder-val="{{ false }}">
+<div class="grid grid-cols-2 gap-3 anim-in">
+<label class="flex flex-col gap-1"><span class="text-sm">ซื้อสินค้า A</span><select class="select w-full"><option>ยาสีฟัน</option><option>ขนมปังโฮลวีท</option></select></label>
+<label class="flex flex-col gap-1"><span class="text-sm">จำนวน A</span><input type="text" value="1" class="input w-full text-right"></label>
+<label class="flex flex-col gap-1"><span class="text-sm">ของแถม B</span><select class="select w-full"><optgroup label="สินค้าในร้าน (ตัดสต็อก มีมูลค่า)"><option>สบู่ก้อน</option><option>นมจืด 225 ml</option></optgroup><optgroup label="ของพรีเมียม (ไม่ขาย)"><option>แปรงสีฟันพกพา · เหลือ 120</option><option>ถุงผ้า My Shop · เหลือ 35</option></optgroup></select></label>
+<label class="flex flex-col gap-1"><span class="text-sm">จำนวน B ที่แถม</span><input type="text" value="1" class="input w-full text-right"></label>
+</div>
+</sc-if>
+<sc-if value="{{isBogo}}" hint-placeholder-val="{{ false }}">
+<div class="grid grid-cols-2 gap-3 anim-in">
+<label class="flex flex-col gap-1 col-span-2"><span class="text-sm">สินค้า</span><select class="select w-full"><option>น้ำดื่ม 600 ml</option><option>ชาเขียวขวด</option></select></label>
+<label class="flex flex-col gap-1"><span class="text-sm">ซื้อ</span><input type="text" value="1" class="input w-full text-right"></label>
+<label class="flex flex-col gap-1"><span class="text-sm">แถม</span><input type="text" value="1" class="input w-full text-right"></label>
+</div>
+</sc-if>
+
+<div class="grid grid-cols-2 gap-3">
+<label class="flex flex-col gap-1"><span class="text-sm">เริ่ม</span><input type="date" value="2026-11-07" class="input w-full"></label>
+<label class="flex flex-col gap-1"><span class="text-sm">สิ้นสุด</span><input type="date" value="2026-11-30" class="input w-full"></label>
+</div>
+<div class="flex flex-wrap gap-4">
+<label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="toggle toggle-sm toggle-primary"><span class="text-sm">เฉพาะสมาชิก</span></label>
+<label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="toggle toggle-sm toggle-primary"><span class="text-sm">ซ้อนกับโปรอื่นได้</span></label>
+</div>
+
+<div class="rounded-box border border-base-300 bg-base-200/60 p-4 flex flex-col gap-2">
+<span class="text-xs font-semibold opacity-70">ตัวอย่างที่ POS</span>
+<div class="flex items-center gap-3 rounded-lg bg-base-100 border-2 border-dashed border-warning p-3 anim-in">
+<span aria-hidden="true" class="pimg {{pv.img}} block w-12 h-12 rounded-md shrink-0"></span>
+<span class="flex flex-col"><span class="text-sm font-semibold text-warning">{{pv.hint}}</span><span class="text-xs opacity-70">เมื่อลูกค้ายังไม่เข้าเงื่อนไข</span></span>
+</div>
+<div class="flex items-center gap-3 rounded-lg bg-secondary border border-primary/30 p-3 anim-in-2">
+<span aria-hidden="true" class="pimg {{pv.img}} block w-12 h-12 rounded-md shrink-0"></span>
+<span class="flex flex-col flex-1"><span class="text-sm font-semibold">{{pv.got}}</span><span class="text-xs opacity-70">เมื่อเข้าเงื่อนไขแล้ว</span></span>
+<span class="text-sm font-semibold text-primary">{{pv.save}}</span>
+</div>
+</div>
+
+<div class="flex justify-end gap-2">
+<button type="button" class="btn btn-ghost">ยกเลิก</button>
+<button type="button" class="btn btn-primary">บันทึกโปร</button>
+</div>
+</div>
+</aside>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { type: 'qty', perUnit: true, calc: 'set' }; }
+  renderVals() {
+    var self = this, t = this.state.type, pu = this.state.perUnit;
+    var defs = [['qty', 'ซื้อจำนวนลดราคา', 'ซื้อ 2 ลดเหลือ ฿10'], ['gift', 'ซื้อ A แถม B', 'ของแถมคนละอย่าง'], ['bogo', '1 แถม 1', 'สินค้าเดียวกัน']];
+    var pv = {
+      qty: pu ? { img: 'p-biscuit', hint: 'ซื้อบิสกิตอีก 1 ชิ้น ลดเหลือชิ้นละ ฿10', got: 'บิสกิต 2 ชิ้น ชิ้นละ ฿10', save: '−฿10.00' }
+              : { img: 'p-biscuit', hint: 'ซื้อบิสกิตอีก 1 ชิ้น 2 ชิ้นเหลือ ฿10', got: 'บิสกิต 2 ชิ้น ฿10', save: '−฿20.00' },
+      gift: { img: 'p-soap', hint: 'ซื้อยาสีฟัน ได้สบู่ก้อนฟรี 1 ก้อน', got: 'สบู่ก้อน (ของแถมจากยาสีฟัน)', save: '−฿25.00' },
+      bogo: { img: 'p-water', hint: 'ได้น้ำดื่ม 600 ml ฟรีอีก 1 ขวด', got: 'น้ำดื่ม 600 ml ซื้อ 1 แถม 1', save: '−฿10.00' }
+    }[t];
+    var seg = function (on) { return on ? 'btn join-item flex-1 btn-neutral' : 'btn join-item flex-1'; };
+    return {
+      list: [['p-chips', 'มันฝรั่งทอด 2 ชิ้น ชิ้นละ ฿15', 'ซื้อจำนวนลดราคา'], ['p-biscuit', 'บิสกิต 2 ชิ้น ชิ้นละ ฿10', 'ซื้อจำนวนลดราคา'], ['p-milk', 'ซื้อขนมปัง แถมนมจืด', 'ซื้อ A แถม B'],
+        ['p-soap', 'ซื้อยาสีฟัน แถมสบู่ก้อน', 'ซื้อ A แถม B'], ['p-tea', 'ชาเขียวขวด 1 แถม 1', '1 แถม 1'], ['p-water', 'น้ำดื่ม 600 ml 1 แถม 1', '1 แถม 1']]
+        .map(function (x) { return { img: x[0], name: x[1], type: x[2] }; }),
+      types: defs.map(function (d) { var on = d[0] === t; return { label: d[1], hint: d[2], on: String(on), pick: function () { self.setState({ type: d[0] }); },
+        cls: on ? 'btn h-auto py-3 flex-col gap-0 border-2 border-primary bg-secondary text-secondary-content' : 'btn btn-outline h-auto py-3 flex-col gap-0 border-base-300' }; }),
+      isQty: t === 'qty', isGift: t === 'gift', isBogo: t === 'bogo',
+      perUnitOn: String(pu), perSetOn: String(!pu), perUnitCls: seg(pu), perSetCls: seg(!pu),
+      setPerUnit: function () { self.setState({ perUnit: true }); }, setPerSet: function () { self.setState({ perUnit: false }); },
+      pv: pv,
+      calcSetOn: String(this.state.calc === 'set'), calcAllOn: String(this.state.calc === 'all'),
+      calcSetCls: seg(this.state.calc === 'set'), calcAllCls: seg(this.state.calc === 'all'),
+      setCalcSet: function () { self.setState({ calc: 'set' }); }, setCalcAll: function () { self.setState({ calc: 'all' }); },
+      calcHint: this.state.calc === 'set' ? 'ตัวอย่าง ซื้อ 3 ชิ้น: 2 ชิ้นได้ราคาโปร อีก 1 ชิ้นราคาปกติ และ POS จะแนะนำให้ซื้อเพิ่มให้ครบชุด' : 'ตัวอย่าง ซื้อ 3 ชิ้น: ทั้ง 3 ชิ้นได้ราคาโปร'
+    };
+  }
+}
+</script>
+</body>
+</html>

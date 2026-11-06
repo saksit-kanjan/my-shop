@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>หลังบ้าน รับสินค้า</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/37d9b3ad37cec22200d6cae5a6c509c8">
+<script src="/_blob/dc764973e8003d6d5b097b4eb3f523fd"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+[data-theme=myshop]{color-scheme:light;--color-base-100:#ffffff;--color-base-200:#f4f5f2;--color-base-300:#e3e6e0;--color-base-content:#18201c;--color-primary:#0e6b58;--color-primary-content:#ffffff;--color-secondary:#e3f1ec;--color-secondary-content:#0a4a3d;--color-accent:#e3f1ec;--color-accent-content:#0a4a3d;--color-neutral:#18201c;--color-neutral-content:#ffffff;--color-info:#1d4ed8;--color-info-content:#ffffff;--color-success:#0e6b58;--color-success-content:#ffffff;--color-warning:#b54708;--color-warning-content:#ffffff;--color-error:#b42318;--color-error-content:#ffffff;--radius-selector:2rem;--radius-field:.75rem;--radius-box:1rem;--size-selector:.25rem;--size-field:.25rem;--border:1px;--depth:0;--noise:0}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes pop{0%{opacity:0;transform:scale(.6)}60%{opacity:1;transform:scale(1.06)}100%{transform:scale(1)}}
+@keyframes draw{to{stroke-dashoffset:0}}
+.anim-in{animation:fadeUp .4s ease-out both}
+.anim-in-2{animation:fadeUp .4s .08s ease-out both}
+.anim-in-3{animation:fadeUp .4s .16s ease-out both}
+.anim-pop{animation:pop .5s cubic-bezier(.2,.8,.2,1) both}
+.check-path{stroke-dasharray:40;stroke-dashoffset:40;animation:draw .45s .3s ease-out forwards}
+.lift{transition:transform .15s ease,box-shadow .15s ease}.lift:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(24,32,28,.08)}.lift:active{transform:scale(.97)}
+@media (prefers-reduced-motion:reduce){.anim-in,.anim-in-2,.anim-in-3,.anim-pop{animation:none}.check-path{animation:none;stroke-dashoffset:0}.lift{transition:none}}
+</style>
+</helmet>
+<div data-theme="myshop" class="min-h-[900px] flex flex-wrap bg-base-200 text-base-content" style="font-family: 'IBM Plex Sans Thai', 'IBM Plex Sans', sans-serif; font-variant-numeric: tabular-nums">
+<aside class="bg-base-100 border-r border-base-300 p-3 flex flex-col gap-2" style="flex: 1 1 220px; max-width: 250px">
+<div class="px-3 py-2 flex flex-col"><span class="text-lg font-semibold">My Shop</span><span class="text-xs opacity-70">หลังบ้าน · สาขา [ชื่อสาขา]</span></div>
+<ul class="menu w-full gap-0.5 p-0">
+<li><a href="Backoffice.dc.html">Dashboard</a></li>
+<li><a href="BoProducts.dc.html">สินค้าและราคา</a></li>
+<li><a href="BoPromos.dc.html">โปรโมชัน</a></li>
+<li class="menu-title pt-3">สต็อก</li>
+<li><a href="BoReceive.dc.html" aria-current="page" class="menu-active">รับสินค้า</a></li>
+<li><a href="BoCount.dc.html">ตรวจนับสต็อก</a></li>
+<li class="menu-title pt-3">การขาย</li>
+<li><a href="BoDayClose.dc.html">กะและปิดวัน</a></li>
+<li><a href="#">เอกสารการขาย</a></li>
+<li><a href="BoReport.dc.html">รายงาน</a></li>
+<li class="menu-title pt-3">ระบบ</li>
+<li><a href="BoUsers.dc.html">ผู้ใช้และสิทธิ์</a></li>
+<li><a href="#">ตั้งค่าร้าน</a></li>
+<li><a href="#">Audit log</a></li>
+</ul>
+<div class="mt-auto px-3 py-2 flex items-center gap-2 text-sm"><span class="bg-neutral text-neutral-content w-8 h-8 rounded-full grid place-items-center text-xs">ผจ</span><span class="flex flex-col"><span>ผู้จัดการ</span><span class="text-xs opacity-70">เจ้าของร้าน</span></span></div>
+</aside>
+<main class="flex flex-col gap-4 p-8" style="flex: 999 1 560px; min-width: 0">
+<div class="flex flex-wrap justify-between items-end gap-3 anim-in">
+<div class="flex flex-col">
+<h1 class="text-2xl font-semibold m-0">รับสินค้าเข้า</h1>
+<span class="text-sm opacity-70">ใบรับสินค้าใหม่ · ยังไม่บันทึก</span>
+</div>
+</div>
+
+<div class="flex flex-wrap gap-4 items-start">
+<div class="flex flex-col gap-4" style="flex: 999 1 560px; min-width: 0">
+<section class="card bg-base-100 border border-base-300 anim-in-2">
+<div class="card-body grid gap-3" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr))">
+<label class="flex flex-col gap-1"><span class="text-sm">ผู้ขาย</span><select class="select w-full"><option>[ชื่อผู้ขาย A]</option><option>[ชื่อผู้ขาย B]</option></select></label>
+<label class="flex flex-col gap-1"><span class="text-sm">เลขที่ใบส่งของ</span><input type="text" placeholder="จากเอกสารผู้ขาย" class="input w-full"></label>
+<label class="flex flex-col gap-1"><span class="text-sm">วันที่รับ</span><input type="date" value="2026-11-06" class="input w-full"></label>
+</div>
+</section>
+
+<section class="card bg-base-100 border border-base-300 anim-in-3">
+<div class="card-body gap-3">
+<label class="input w-full border-2 border-primary">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" class="text-primary"><path d="M3 5v14M7 5v14M11 5v14M15 5v14M19 5v14"></path></svg>
+<input type="search" aria-label="สแกนเพื่อเพิ่มสินค้า" placeholder="สแกนหรือค้นหาสินค้าเพื่อเพิ่ม" class="grow">
+</label>
+<div class="overflow-x-auto"><table class="table">
+<thead><tr><th>สินค้า</th><th class="text-center">จำนวน</th><th class="text-right">ต้นทุน/ชิ้น</th><th class="text-right">รวม</th><th><span class="sr-only">ลบ</span></th></tr></thead>
+<tbody>
+<sc-for list="{{lines}}" as="l" hint-placeholder-count="3">
+<tr class="anim-in">
+<td><span class="font-medium">{{l.name}}</span><span class="block text-xs opacity-70">คงเหลือตอนนี้ {{l.onHand}}</span></td>
+<td class="text-center"><div class="join"><button type="button" onClick="{{l.dec}}" aria-label="ลด" class="btn btn-sm join-item">−</button><span class="join-item grid place-items-center w-14 border-y border-base-300 font-semibold">{{l.qty}}</span><button type="button" onClick="{{l.inc}}" aria-label="เพิ่ม" class="btn btn-sm join-item">+</button></div></td>
+<td class="text-right">{{l.cost}}</td>
+<td class="text-right font-semibold">{{l.total}}</td>
+<td class="text-right"><button type="button" onClick="{{l.remove}}" class="btn btn-ghost btn-sm text-error">ลบ</button></td>
+</tr>
+</sc-for>
+</tbody></table></div>
+<span class="text-xs opacity-70">ปุ่ม +/− เพิ่มลดทีละ 12 ชิ้น (1 ลัง)</span>
+</div>
+</section>
+</div>
+
+<aside class="flex flex-col gap-3 anim-in-2" style="flex: 1 1 300px; min-width: 0">
+<div class="card bg-base-100 border border-base-300">
+<div class="card-body gap-1">
+<span class="text-sm opacity-70">มูลค่ารับเข้า</span>
+<span class="text-3xl font-semibold">{{grandText}}</span>
+<span class="text-sm opacity-70">{{lineCount}} รายการ · {{pieceCount}} ชิ้น</span>
+</div>
+</div>
+<div role="note" class="alert alert-soft text-sm">ระบบจะคำนวณต้นทุนเฉลี่ยใหม่ และเพิ่มยอดคงเหลือเมื่อบันทึก</div>
+<button type="button" class="btn btn-primary btn-lg">บันทึกรับสินค้า</button>
+<button type="button" class="btn btn-ghost">บันทึกร่าง</button>
+</aside>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { lines: [['กาแฟกระป๋อง', 9, 48, 12], ['น้ำดื่ม 600 ml', 18, 96, 6.5], ['ถ่าน AA 2 ก้อน', 4, 24, 24]] };
+  }
+  renderVals() {
+    var self = this;
+    var fmt = function (n) { return '฿' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
+    var update = function (i, fn) { var ls = self.state.lines.map(function (l) { return l.slice(); }); fn(ls, i); self.setState({ lines: ls }); };
+    var grand = 0, pieces = 0;
+    var lines = this.state.lines.map(function (l, i) {
+      var t = l[2] * l[3]; grand += t; pieces += l[2];
+      return { name: l[0], onHand: l[1], qty: l[2], cost: fmt(l[3]), total: fmt(t),
+        inc: function () { update(i, function (ls) { ls[i][2] += 12; }); },
+        dec: function () { update(i, function (ls) { ls[i][2] = Math.max(12, ls[i][2] - 12); }); },
+        remove: function () { update(i, function (ls) { ls.splice(i, 1); }); } };
+    });
+    return { lines: lines, grandText: fmt(grand), lineCount: lines.length, pieceCount: pieces };
+  }
+}
+</script>
+</body>
+</html>

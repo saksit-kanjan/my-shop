@@ -1,0 +1,9 @@
+{
+  "name": "customer-display",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/customer-display/src",
+  "projectType": "application",
+  "tags": [],
+  "// targets": "to see all targets run: nx show project customer-display --web",
+  "targets": {}
+}

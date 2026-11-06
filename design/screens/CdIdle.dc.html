@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>จอลูกค้า รอลูกค้า</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/37d9b3ad37cec22200d6cae5a6c509c8">
+<script src="/_blob/dc764973e8003d6d5b097b4eb3f523fd"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+[data-theme=myshop]{color-scheme:light;--color-base-100:#ffffff;--color-base-200:#f4f5f2;--color-base-300:#e3e6e0;--color-base-content:#18201c;--color-primary:#0e6b58;--color-primary-content:#ffffff;--color-secondary:#e3f1ec;--color-secondary-content:#0a4a3d;--color-accent:#e3f1ec;--color-accent-content:#0a4a3d;--color-neutral:#18201c;--color-neutral-content:#ffffff;--color-info:#1d4ed8;--color-info-content:#ffffff;--color-success:#0e6b58;--color-success-content:#ffffff;--color-warning:#b54708;--color-warning-content:#ffffff;--color-error:#b42318;--color-error-content:#ffffff;--radius-selector:2rem;--radius-field:.75rem;--radius-box:1rem;--size-selector:.25rem;--size-field:.25rem;--border:1px;--depth:0;--noise:0}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes pop{0%{opacity:0;transform:scale(.6)}60%{opacity:1;transform:scale(1.06)}100%{transform:scale(1)}}
+@keyframes draw{to{stroke-dashoffset:0}}
+.anim-in{animation:fadeUp .4s ease-out both}
+.anim-in-2{animation:fadeUp .4s .08s ease-out both}
+.anim-in-3{animation:fadeUp .4s .16s ease-out both}
+.anim-pop{animation:pop .5s cubic-bezier(.2,.8,.2,1) both}
+.check-path{stroke-dasharray:40;stroke-dashoffset:40;animation:draw .45s .3s ease-out forwards}
+.lift{transition:transform .15s ease,box-shadow .15s ease}.lift:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(24,32,28,.08)}.lift:active{transform:scale(.97)}
+.pimg{background-image:url(/_blob/22db5b6938a5782c73ea28ae89ef9012);background-size:400% 300%;background-repeat:no-repeat}
+.p-water{background-position:0% 0%}.p-coffee{background-position:33.333% 0%}.p-tea{background-position:66.667% 0%}.p-milk{background-position:100% 0%}
+.p-bread{background-position:0% 50%}.p-chips{background-position:33.333% 50%}.p-biscuit{background-position:66.667% 50%}.p-soap{background-position:100% 50%}
+.p-paste{background-position:0% 100%}.p-tissue{background-position:33.333% 100%}.p-pen{background-position:66.667% 100%}.p-battery{background-position:100% 100%}
+@keyframes slideIn{from{opacity:0;transform:translateX(-16px)}to{opacity:1;transform:none}}
+@keyframes glow{0%,100%{box-shadow:0 0 0 0 rgba(14,107,88,0)}50%{box-shadow:0 0 0 6px rgba(14,107,88,.15)}}
+@keyframes drift{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.02)}}
+.anim-slide{animation:slideIn .45s ease-out both}.anim-glow{animation:glow 2s ease-in-out infinite}
+.anim-drift{animation:drift 40s linear infinite}.anim-breathe{animation:breathe 4s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){.anim-slide,.anim-glow,.anim-drift,.anim-breathe{animation:none}.anim-in,.anim-in-2,.anim-in-3,.anim-pop{animation:none}.check-path{animation:none;stroke-dashoffset:0}.lift{transition:none}}
+</style>
+</helmet>
+<div data-theme="myshop" class="min-h-[800px] flex flex-col bg-base-200 text-base-content" style="font-family: 'IBM Plex Sans Thai', 'IBM Plex Sans', sans-serif; font-variant-numeric: tabular-nums">
+<header class="flex items-center justify-between px-8 py-5">
+<span class="text-2xl font-semibold">My Shop</span>
+<span class="text-lg opacity-70">สาขา [ชื่อสาขา]</span>
+</header>
+<main class="flex-1 flex flex-col justify-center gap-10 pb-10 overflow-hidden">
+<div class="px-8 flex flex-col gap-2 anim-in">
+<h1 class="text-6xl font-semibold m-0">ยินดีต้อนรับ</h1>
+<span class="text-2xl opacity-70">โปรโมชันประจำสัปดาห์</span>
+</div>
+<div class="overflow-hidden anim-in-2" aria-label="โปรโมชันประจำสัปดาห์">
+<div class="flex gap-5 w-max anim-drift px-8">
+<sc-for list="{{loop}}" as="p" hint-placeholder-count="8">
+<article class="card bg-base-100 border border-base-300 w-[300px] shrink-0">
+<div class="card-body gap-3 p-5">
+<span aria-hidden="true" class="pimg {{p.img}} block w-full h-40 rounded-xl" style="background-size: 400% 300%"></span>
+<span class="badge badge-warning badge-lg">{{p.tag}}</span>
+<span class="text-xl font-semibold">{{p.name}}</span>
+<span class="text-3xl font-semibold text-primary">{{p.deal}}</span>
+</div>
+</article>
+</sc-for>
+</div>
+</div>
+<div class="mx-8 rounded-box bg-secondary text-secondary-content px-8 py-6 flex flex-wrap items-center justify-between gap-4 anim-in-3">
+<span class="text-2xl font-semibold">สมัครสมาชิกฟรีด้วยเบอร์โทร รับราคาพิเศษและสะสมแต้ม</span>
+<span class="text-lg">แจ้งพนักงานได้เลย</span>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":800}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var deals = [
+      { img: 'p-tea', tag: '1 แถม 1', name: 'ชาเขียวขวด', deal: 'ซื้อ 1 แถม 1' },
+      { img: 'p-water', tag: 'ซื้อหลายชิ้นถูกกว่า', name: 'น้ำดื่ม 600 ml', deal: '6 ขวด ฿54' },
+      { img: 'p-coffee', tag: 'ซื้อ 2 ถูกกว่า', name: 'กาแฟกระป๋อง', deal: '2 กระป๋อง ฿30' },
+      { img: 'p-bread', tag: 'ลดราคา', name: 'ขนมปังโฮลวีท', deal: 'ลด 10%' }
+    ];
+    return { loop: deals.concat(deals) };
+  }
+}
+</script>
+</body>
+</html>
