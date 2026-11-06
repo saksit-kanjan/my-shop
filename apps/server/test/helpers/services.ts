@@ -60,6 +60,10 @@ export async function createServices(db: Db, config: TestConfig = {}): Promise<S
   process.env['CODE_SECRET'] = 'test-secret';
   process.env['BACKUP_DIR'] = config.backupDir ?? mkdtempSync(join(tmpdir(), 'myshop-bk-'));
   process.env['DATABASE_URL'] = '';
+  // The tests load their own data; first-run setup stays off.
+  process.env['SEED_DEMO'] = '0';
+  delete process.env['OWNER_USERNAME'];
+  delete process.env['BUSINESS_DAY_CUTOFF_HOUR'];
   const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
     .overrideProvider(DB_CONNECTION).useValue(db)
     .overrideProvider(CLOCK).useValue(config.clock ?? (() => new Date()))

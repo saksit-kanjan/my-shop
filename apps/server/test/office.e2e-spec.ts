@@ -9,7 +9,7 @@ import { priceCart } from '@my-shop/domain';
 import { createServices, type Services } from './helpers/services';
 import type { Db } from '../src/database/database.types';
 import { openTestDb } from './helpers/test-db';
-import { seedDemo } from '../src/database/demo.seed';
+import { seedDemo } from '../src/bootstrap/demo.seed';
 
 let now: Date;
 let db: Db;

@@ -5,7 +5,7 @@ import { demoCatalog } from '@my-shop/seed';
 import { createServices, type Services } from './helpers/services';
 import type { Db } from '../src/database/database.types';
 import { openTestDb } from './helpers/test-db';
-import { seedDemo } from '../src/database/demo.seed';
+import { seedDemo } from '../src/bootstrap/demo.seed';
 import { LOCK_SECONDS, MAX_FAILS } from '../src/auth/login-attempts';
 
 let now = new Date('2026-11-06T03:00:00Z'); // 10:00 in Bangkok

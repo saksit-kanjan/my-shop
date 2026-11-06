@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { AuditModule } from './audit/audit.module';
 import { AuthModule } from './auth/auth.module';
 import { BackupModule } from './backup/backup.module';
+import { BootstrapModule } from './bootstrap/bootstrap.module';
 import { ClockModule } from './common/clock';
 import { validateEnv } from './config/env.validation';
 import { DatabaseModule } from './database/database.module';
@@ -30,6 +31,7 @@ import { UsersModule } from './users/users.module';
     AuditModule,
     SettingsModule,
     AuthModule,
+    BootstrapModule,
     UsersModule,
     BackupModule,
     ProductsModule,

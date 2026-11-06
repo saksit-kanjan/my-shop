@@ -1,6 +1,6 @@
 import { demoCatalog, demoEmployees } from '@my-shop/seed';
 import type { CredentialsService } from '../auth/credentials.service';
-import type { DatabaseService } from './database.service';
+import type { DatabaseService } from '../database/database.service';
 
 /**
  * DEMO credentials for local development only. Production never runs this (SEED_DEMO=0, see bootstrapOwner).
