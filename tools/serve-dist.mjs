@@ -1,6 +1,6 @@
 // Serves the built POS at / and the customer display at /display/ on one origin,
 // the same layout the NestJS server will use on the shop's on-prem machine.
-// Usage: npx nx run-many -t build && node tools/serve-dist.mjs [port]
+// Usage: pnpm nx run-many -t build && node tools/serve-dist.mjs [port]
 import { createReadStream, existsSync, statSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { extname, join, normalize } from 'node:path';

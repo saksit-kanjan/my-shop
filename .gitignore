@@ -23,6 +23,7 @@ coverage/
 # Logs
 *.log
 npm-debug.log*
+pnpm-debug.log*
 
 # OS and editor files
 .DS_Store

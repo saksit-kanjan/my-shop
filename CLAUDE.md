@@ -21,14 +21,14 @@ Read `design/README.md` first. The full written spec is `design/spec.md` (Thai).
 ## Commands
 
 ```bash
-npm install                       # .npmrc sets legacy-peer-deps
-npx nx serve pos                  # :4200
-npx nx serve customer-display     # open :4200/display/ on the second screen
-npx nx run-many -t build test
-npx nx serve api                  # :3000, embedded Postgres in .data/pglite, demo data seeded when empty
-npx nx serve pos                  # :4200, proxies /api to :3000
-npx nx serve backoffice           # :4202/admin/, proxies /api to :3000
-PORT=8080 npx tsx --tsconfig apps/api/tsconfig.app.json apps/api/src/main.ts   # after nx run-many -t build:
+pnpm install                     # pnpm only: do not use npm or yarn (package.json pins pnpm)
+pnpm nx serve pos                  # :4200
+pnpm nx serve customer-display     # open :4200/display/ on the second screen
+pnpm nx run-many -t build test
+pnpm nx serve api                  # :3000, embedded Postgres in .data/pglite, demo data seeded when empty
+pnpm nx serve pos                  # :4200, proxies /api to :3000
+pnpm nx serve backoffice           # :4202/admin/, proxies /api to :3000
+PORT=8080 pnpm exec tsx --tsconfig apps/api/tsconfig.app.json apps/api/src/main.ts   # after nx run-many -t build:
                                   # the shop setup: POS (/), display (/display/), back office (/admin/) and API all on :8080
 python3 tools/e2e-smoke.py        # Playwright run of a full shift against :8080 (needs the line above)
 ```

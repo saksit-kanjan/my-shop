@@ -15,12 +15,12 @@ Nx monorepo for the shop's on-prem POS.
 | `tools/serve-dist.mjs` | Serves both built apps on one origin for on-prem testing |
 
 ```bash
-npm install            # .npmrc sets legacy-peer-deps
-npx nx serve api       # http://localhost:3000/api (embedded Postgres, demo data)
-npx nx serve pos       # http://localhost:4200 (proxies /api)
-npx nx serve backoffice  # http://localhost:4202/admin/
-npx nx serve customer-display   # then open http://localhost:4200/display/ on the second screen
-npx nx run-many -t test
+pnpm install          # pnpm 10+; build scripts of esbuild and nx are allowed in pnpm-workspace.yaml
+pnpm nx serve api       # http://localhost:3000/api (embedded Postgres, demo data)
+pnpm nx serve pos       # http://localhost:4200 (proxies /api)
+pnpm nx serve backoffice  # http://localhost:4202/admin/
+pnpm nx serve customer-display   # then open http://localhost:4200/display/ on the second screen
+pnpm nx run-many -t test
 ```
 
 Demo till codes: 100123 (สมชาย, cashier), 200456 (วิภา, cashier), 300789 (ปรีชา, supervisor). Back-office demo accounts are in `apps/api/src/bootstrap/seed.ts` (local only).
