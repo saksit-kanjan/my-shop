@@ -99,11 +99,11 @@ export class CreditNotesService {
         if (qty > sold - (returned.get(pid) ?? 0)) throw new DomainError('invalid', 'คืนได้ไม่เกินจำนวนที่ขาย (หักที่คืนไปแล้ว)', { productId: pid, available: sold - (returned.get(pid) ?? 0) });
       }
 
-      // Re-price what is left under the promotions of the day: this is how a lost "buy 2 get 1" takes the gift's value out of the refund.
+      // Re-price what is left under the promotions of the day the bill was sold (including which were in their dates): this is how a lost "buy 2 get 1" takes the gift's value out of the refund.
       const remaining = lines.map((l) => ({ productId: l.productId, qty: l.qty - (returned.get(l.productId) ?? 0) - (wanted.get(l.productId) ?? 0) })).filter((l) => l.qty > 0);
       const snap = sale.pricing ?? (await this.fallbackSnapshot(tx, lines.map((l) => l.productId)));
       const catalog = { categories: [], products: snap.products, premiums: snap.premiums.map((p) => ({ ...p, stock: 1_000_000 })), promotions: snap.promotions };
-      const remainingNet = remaining.length ? priceCart(remaining, catalog, { isMember: !!sale.memberId }).net : 0;
+      const remainingNet = remaining.length ? priceCart(remaining, catalog, { isMember: !!sale.memberId, at: sale.at }).net : 0;
       const refundedAfter = sale.net - remainingNet;
       const amount = Math.max(0, refundedAfter - sum(prior.map((c) => c.amount)));
 

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { api } from '../api';
-import { Alert, Card, DateRange, Empty, PageHeader, dateTime, exportCsv, todayIso, useLoad } from '../ui';
+import { Alert, Card, DateRange, Empty, PageHeader, dateTime, exportExcel, todayIso, useLoad } from '../ui';
 
 export function AuditPage() {
   const [from, setFrom] = useState(todayIso());
@@ -10,7 +10,7 @@ export function AuditPage() {
   return (
     <>
       <PageHeader title="Audit log" sub="ทุกการกระทำที่กระทบเงิน สต็อก ราคา และสิทธิ์ ใครทำ เมื่อไร ที่เครื่องไหน ใครอนุมัติ แก้หรือลบไม่ได้">
-        <button type="button" className="btn" onClick={() => exportCsv('audit', [['เวลา', 'ผู้ทำ', 'ผู้อนุมัติ', 'เครื่อง', 'การกระทำ', 'เอกสาร', 'ข้อมูลใหม่'], ...(data ?? []).map((a) => [a.at, a.actor, a.approver, a.terminalId, a.action, a.entityId, JSON.stringify(a.after ?? '')])])}>ส่งออก (Excel)</button>
+        <button type="button" className="btn" onClick={() => exportExcel('audit', [['เวลา', 'ผู้ทำ', 'ผู้อนุมัติ', 'เครื่อง', 'การกระทำ', 'เอกสาร', 'ข้อมูลใหม่'], ...(data ?? []).map((a) => [a.at, a.actor, a.approver, a.terminalId, a.action, a.entityId, JSON.stringify(a.after ?? '')])])}>ส่งออก (Excel)</button>
       </PageHeader>
       <div className="flex flex-wrap gap-3 items-center">
         <DateRange from={from} to={to} onChange={(f, t) => { setFrom(f); setTo(t); }} />

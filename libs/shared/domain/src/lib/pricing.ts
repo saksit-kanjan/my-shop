@@ -14,9 +14,12 @@ import type {
   Satang,
 } from '@my-shop/contracts';
 import { formatBaht, vatIncluded } from './money';
+import { isPromotionActive } from './promotion-schedule';
 
 export interface PriceOptions {
   isMember: boolean;
+  /** The moment the bill is priced, to drop promotions that are out of their dates or weekdays. Omit to apply every promotion. */
+  at?: Date;
 }
 
 /** Merge duplicate product lines and drop empty ones, keeping first-seen order. */
@@ -225,6 +228,7 @@ function applyBill(promos: BillPromotion[], subtotal: Satang): { applied: Applie
  * without a promotion, then the best bill-level promotion on what is left.
  */
 export function priceCart(input: CartLine[], catalog: Catalog, options: PriceOptions): PricedCart {
+  const promotions = options.at ? catalog.promotions.filter((p) => isPromotionActive(p, options.at as Date)) : catalog.promotions;
   const products = productMap(catalog);
   const lines = new Map<string, PricedLine>();
 
@@ -245,7 +249,7 @@ export function priceCart(input: CartLine[], catalog: Catalog, options: PriceOpt
     });
   }
 
-  for (const promo of catalog.promotions) {
+  for (const promo of promotions) {
     if (promo.kind === 'qty' || promo.kind === 'bogo') {
       const line = lines.get(promo.productId);
       const product = products.get(promo.productId);
@@ -256,7 +260,7 @@ export function priceCart(input: CartLine[], catalog: Catalog, options: PriceOpt
   }
 
   const premiums: PremiumLine[] = [];
-  for (const promo of catalog.promotions) {
+  for (const promo of promotions) {
     if (promo.kind === 'gift') applyGift(promo, lines, products, catalog, premiums);
   }
 
@@ -269,7 +273,7 @@ export function priceCart(input: CartLine[], catalog: Catalog, options: PriceOpt
   }
 
   const itemNet = priced.reduce((s, l) => s + l.net, 0);
-  const billPromos = catalog.promotions.filter((p): p is BillPromotion => p.kind === 'bill');
+  const billPromos = promotions.filter((p): p is BillPromotion => p.kind === 'bill');
   const bill = applyBill(billPromos, itemNet);
   const billDiscount = bill.applied.reduce((s, a) => s + a.discount, 0);
 

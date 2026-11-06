@@ -109,13 +109,24 @@ export function DateRange({ from, to, onChange }: { from: string; to: string; on
   );
 }
 
-/** Opens in Excel: UTF-8 with a BOM so Thai text survives. */
-export function exportCsv(name: string, rows: (string | number | null | undefined)[][]) {
-  const cell = (v: string | number | null | undefined) => `"${String(v ?? '').replace(/"/g, '""')}"`;
-  const blob = new Blob(['﻿' + rows.map((r) => r.map(cell).join(',')).join('\r\n')], { type: 'text/csv;charset=utf-8' });
+/**
+ * Saves rows as a real Excel file (.xlsx): bold header row, money and counts as numbers so they can be summed.
+ * Text stays text (SKU, barcodes, phone numbers keep their leading zeros). The library loads only when someone exports.
+ */
+export async function exportExcel(name: string, rows: (string | number | null | undefined)[][]) {
+  const { default: writeExcelFile } = await import('write-excel-file/browser');
+  // A string like "18.00" is an amount written with fromSatang(); other numeric-looking text (barcodes, phones) stays text.
+  const cell = (v: string | number | null | undefined, header: boolean) => {
+    if (v === null || v === undefined || v === '') return null;
+    if (header) return { value: String(v), fontWeight: 'bold' as const };
+    if (typeof v === 'number') return { value: v };
+    return /^-?\d+\.\d{2}$/.test(v) ? { value: Number(v) } : { value: v };
+  };
+  const data = rows.map((r, i) => r.map((v) => cell(v, i === 0)));
+  const blob = await writeExcelFile(data as never).toBlob();
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `${name}.csv`;
+  a.download = `${name}.xlsx`;
   a.click();
   URL.revokeObjectURL(a.href);
 }

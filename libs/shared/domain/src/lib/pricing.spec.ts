@@ -100,3 +100,55 @@ describe('bill promotion and member price', () => {
     expect(memberSaving(lines, cat)).toBe(b(3));
   });
 });
+
+describe('promotion schedule (shop time, Asia/Bangkok)', () => {
+  const lines = [{ productId: 'chips', qty: 2 }];
+  const withSchedule = (schedule: Promotion['schedule']): Promotion => ({ ...qty('set'), schedule });
+  // 2026-11-06 is a Friday. 03:00Z is 10:00 in Bangkok; 18:30Z on the 6th is already the 7th (Saturday) there.
+  const friday = new Date('2026-11-06T03:00:00Z');
+  const saturdayAfterMidnight = new Date('2026-11-06T18:30:00Z');
+
+  it('applies a promotion without a schedule at any time', () => {
+    expect(priceCart(lines, catalog([qty('set')]), { isMember: false, at: friday }).net).toBe(b(30));
+  });
+
+  it('ignores the schedule when no time is given', () => {
+    expect(priceCart(lines, catalog([withSchedule({ from: '2030-01-01' })]), { isMember: false }).net).toBe(b(30));
+  });
+
+  it('applies inside the dates, both ends included, and not outside', () => {
+    const cat = (s: Promotion['schedule']) => catalog([withSchedule(s)]);
+    expect(priceCart(lines, cat({ from: '2026-11-06', to: '2026-11-06' }), { isMember: false, at: friday }).net).toBe(b(30));
+    expect(priceCart(lines, cat({ from: '2026-11-07' }), { isMember: false, at: friday }).net).toBe(b(40)); // not started
+    expect(priceCart(lines, cat({ to: '2026-11-05' }), { isMember: false, at: friday }).net).toBe(b(40)); // ended
+  });
+
+  it('reads the weekday and the date in Bangkok time, not UTC', () => {
+    const fridaysOnly = catalog([withSchedule({ weekdays: [5] })]);
+    expect(priceCart(lines, fridaysOnly, { isMember: false, at: friday }).net).toBe(b(30));
+    // Still the 6th in UTC but already Saturday in Bangkok.
+    expect(priceCart(lines, fridaysOnly, { isMember: false, at: saturdayAfterMidnight }).net).toBe(b(40));
+    expect(priceCart(lines, catalog([withSchedule({ from: '2026-11-07' })]), { isMember: false, at: saturdayAfterMidnight }).net).toBe(b(30));
+  });
+
+  it('treats an empty weekday list as every day', () => {
+    expect(priceCart(lines, catalog([withSchedule({ weekdays: [] })]), { isMember: false, at: friday }).net).toBe(b(30));
+  });
+
+  it('also switches off bill promotions and gifts', () => {
+    const bill: Promotion = { kind: 'bill', id: 'b', name: 'b', minAmount: b(30), discount: b(5), schedule: { to: '2026-11-05' } };
+    expect(priceCart(lines, catalog([bill]), { isMember: false, at: friday }).net).toBe(b(40));
+    expect(priceCart(lines, catalog([bill]), { isMember: false, at: new Date('2026-11-05T03:00:00Z') }).net).toBe(b(35));
+  });
+});
+
+describe('scheduleProblem', () => {
+  it('accepts good schedules and explains bad ones', async () => {
+    const { scheduleProblem } = await import('./promotion-schedule');
+    expect(scheduleProblem(undefined)).toBeNull();
+    expect(scheduleProblem({ from: '2026-11-01', to: '2026-11-30', weekdays: [0, 6] })).toBeNull();
+    expect(scheduleProblem({ from: '01/11/2026' })).toMatch(/เริ่ม/);
+    expect(scheduleProblem({ from: '2026-12-01', to: '2026-11-01' })).toMatch(/ไม่เกิน/);
+    expect(scheduleProblem({ weekdays: [7] })).toMatch(/วันในสัปดาห์/);
+  });
+});

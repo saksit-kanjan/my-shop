@@ -1,4 +1,5 @@
 import type { Promotion } from '@my-shop/contracts';
+import { scheduleProblem } from '@my-shop/domain';
 import { DomainError } from '../common/domain-error';
 
 const positive = (n: unknown, message: string) => {
@@ -11,6 +12,8 @@ const positive = (n: unknown, message: string) => {
  */
 export function checkPromotion(p: Promotion): { productIds: string[]; premiumIds: string[] } {
   if (!p?.id?.trim() || !p.name?.trim()) throw new DomainError('invalid', 'ใส่ชื่อโปรโมชัน');
+  const badSchedule = scheduleProblem(p.schedule);
+  if (badSchedule) throw new DomainError('invalid', badSchedule);
   switch (p.kind) {
     case 'qty':
       positive(p.minQty, 'จำนวนขั้นต่ำต้องมากกว่า 0');

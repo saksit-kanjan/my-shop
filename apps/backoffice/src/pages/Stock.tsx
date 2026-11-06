@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { api } from '../api';
 import { useSession } from '../app/app';
-import { Alert, Card, Empty, Field, Loading, Modal, PageHeader, baht, dateTime, errText, exportCsv, useLoad, useToast } from '../ui';
+import { Alert, Card, Empty, Field, Loading, Modal, PageHeader, baht, dateTime, errText, exportExcel, useLoad, useToast } from '../ui';
 
 const KIND: Record<string, string> = { opening: 'ยอดยกมา', receive: 'รับสินค้า', sale: 'ขาย', void: 'ยกเลิกบิล', refund: 'ลูกค้าคืน', waste: 'ตัดของเสีย', count: 'ปรับจากตรวจนับ', adjust_waste: 'ปรับ: เสียหาย', adjust_lost: 'ปรับ: สูญหาย', adjust_expired: 'ปรับ: หมดอายุ', adjust_other: 'ปรับ: อื่น ๆ', premium: 'แถม' };
 
@@ -36,7 +36,7 @@ export function StockPage() {
   return (
     <>
       <PageHeader title="สต็อกคงเหลือ" sub={canValue ? `มูลค่าตามต้นทุน ${baht(total)}` : 'ยอดคงเหลือคือผลรวมรายการเคลื่อนไหวทั้งหมด แก้ตัวเลขตรง ๆ ไม่ได้'}>
-        <button type="button" className="btn" onClick={() => exportCsv('stock', [['SKU', 'สินค้า', 'คงเหลือ', 'จุดสั่งซื้อซ้ำ', ...(canValue ? ['มูลค่า'] : [])], ...data.rows.map((r) => [r.sku, r.name, r.stock, r.reorderPoint, ...(canValue ? [(r.value ?? 0) / 100] : [])])])}>ส่งออก (Excel)</button>
+        <button type="button" className="btn" onClick={() => exportExcel('stock', [['SKU', 'สินค้า', 'คงเหลือ', 'จุดสั่งซื้อซ้ำ', ...(canValue ? ['มูลค่า'] : [])], ...data.rows.map((r) => [r.sku, r.name, r.stock, r.reorderPoint, ...(canValue ? [(r.value ?? 0) / 100] : [])])])}>ส่งออก (Excel)</button>
       </PageHeader>
       <Alert kind="success">{toast.msg}</Alert>
       <div className="flex flex-wrap gap-3 items-center">

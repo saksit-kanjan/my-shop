@@ -55,6 +55,7 @@
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
     "tailwindcss": "^4.3.3",
+    "write-excel-file": "^4.1.1",
     "zustand": "^5.0.15"
   },
   "packageManager": "pnpm@12.16.1",

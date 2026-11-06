@@ -27,10 +27,16 @@ interface Form {
   freeQty: string;
   minAmount: string;
   discount: string;
+  /** When it applies: dates are yyyy-mm-dd, weekdays 0 = Sunday ... 6 = Saturday; empty means no limit. */
+  from: string;
+  to: string;
+  weekdays: number[];
   active: boolean;
 }
 
-const blank = (productId: string): Form => ({ id: '', kind: 'qty', name: '', productId, minQty: '2', unitPrice: '', countMode: 'set', buyQty: '1', giftType: 'product', giftId: productId, giftQty: '1', freeQty: '1', minAmount: '', discount: '', active: true });
+const DAY_NAMES = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
+
+const blank = (productId: string): Form => ({ id: '', kind: 'qty', name: '', productId, minQty: '2', unitPrice: '', countMode: 'set', buyQty: '1', giftType: 'product', giftId: productId, giftQty: '1', freeQty: '1', minAmount: '', discount: '', from: '', to: '', weekdays: [], active: true });
 
 export function PromosPage() {
   const { data, error, loading, reload } = useLoad(async () => ({ promos: await api.promotions(), products: await api.products() }));
@@ -55,6 +61,16 @@ export function PromosPage() {
     }
   };
 
+  /** "1–30 พ.ย. 2569 · ศ." style summary of when a promotion runs, and whether it runs today. */
+  const when = (p: Promotion): { text: string; state: 'always' | 'live' | 'soon' | 'ended' } => {
+    const sc = p.schedule;
+    if (!sc || (!sc.from && !sc.to && !sc.weekdays?.length)) return { text: 'ตลอด', state: 'always' };
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+    const parts = [sc.from || sc.to ? `${sc.from ?? '…'} ถึง ${sc.to ?? '…'}` : '', sc.weekdays?.length ? sc.weekdays.map((d) => DAY_NAMES[d]).join(' ') : ''].filter(Boolean);
+    const state = sc.to && today > sc.to ? 'ended' : sc.from && today < sc.from ? 'soon' : 'live';
+    return { text: parts.join(' · '), state };
+  };
+
   const edit = (p: Promotion & { active: boolean }) => {
     const f = blank(first);
     f.id = p.id; f.kind = p.kind; f.name = p.name; f.active = p.active;
@@ -62,12 +78,22 @@ export function PromosPage() {
     if (p.kind === 'gift') Object.assign(f, { productId: p.buyProductId, buyQty: String(p.buyQty), giftType: p.gift.type, giftId: p.gift.type === 'product' ? p.gift.productId : p.gift.premiumId, giftQty: String(p.giftQty) });
     if (p.kind === 'bogo') Object.assign(f, { productId: p.productId, buyQty: String(p.buyQty), freeQty: String(p.freeQty) });
     if (p.kind === 'bill') Object.assign(f, { minAmount: fromSatang(p.minAmount), discount: fromSatang(p.discount) });
+    f.from = p.schedule?.from ?? '';
+    f.to = p.schedule?.to ?? '';
+    f.weekdays = p.schedule?.weekdays ?? [];
     setIsNew(false);
     setFormError('');
     setForm(f);
   };
 
+  const scheduleOf = (f: Form): Promotion['schedule'] => (f.from || f.to || f.weekdays.length ? { ...(f.from ? { from: f.from } : {}), ...(f.to ? { to: f.to } : {}), ...(f.weekdays.length ? { weekdays: [...f.weekdays].sort() } : {}) } : undefined);
+
   const build = (f: Form): Promotion | string => {
+    const made = buildBase(f);
+    return typeof made === 'string' ? made : { ...made, ...(scheduleOf(f) ? { schedule: scheduleOf(f) } : {}) };
+  };
+
+  const buildBase = (f: Form): Promotion | string => {
     const name = f.name.trim();
     if (!name) return 'ตั้งชื่อโปร เช่น "มันฝรั่งทอด 2 ชิ้น ชิ้นละ ฿15"';
     const n = (s: string) => Number(s);
@@ -115,13 +141,14 @@ export function PromosPage() {
       <div className="flex flex-wrap gap-4 items-start">
         <Card className="anim-in-2 min-w-0" >
           <div className="overflow-x-auto"><table className="table">
-            <thead><tr><th>โปร</th><th>ประเภท</th><th>เงื่อนไข</th><th>ใช้งาน</th><th><span className="sr-only">แก้ไข</span></th></tr></thead>
+            <thead><tr><th>โปร</th><th>ประเภท</th><th>เงื่อนไข</th><th>ช่วงเวลา</th><th>ใช้งาน</th><th><span className="sr-only">แก้ไข</span></th></tr></thead>
             <tbody>
               {promos.promotions.map((p) => (
                 <tr key={p.id} className="hover:bg-base-200">
                   <td className="font-medium">{p.name}</td>
                   <td><span className="badge badge-ghost">{KIND_LABEL[p.kind]}</span></td>
                   <td className="text-sm opacity-80">{describe(p)}</td>
+                  <td className="text-sm">{(() => { const w = when(p); return <span className={w.state === 'ended' ? 'opacity-50' : ''}>{w.text}{w.state === 'ended' && <span className="badge badge-ghost badge-sm ml-1">หมดแล้ว</span>}{w.state === 'soon' && <span className="badge badge-info badge-soft badge-sm ml-1">ยังไม่เริ่ม</span>}</span>; })()}</td>
                   <td><input type="checkbox" className="toggle toggle-primary toggle-sm" aria-label={`เปิดใช้ ${p.name}`} checked={p.active} onChange={() => void toggle(p)} /></td>
                   <td className="text-right"><button type="button" className="btn btn-ghost btn-sm" onClick={() => edit(p)}>แก้ไข</button></td>
                 </tr>
@@ -162,6 +189,19 @@ export function PromosPage() {
               <Field label="ซื้อครบ (บาท)"><input inputMode="decimal" className="input w-full text-right" value={form.minAmount} onChange={(e) => set({ minAmount: e.target.value })} /></Field>
               <Field label="ลด (บาท)"><input inputMode="decimal" className="input w-full text-right" value={form.discount} onChange={(e) => set({ discount: e.target.value })} /></Field>
             </div>}
+            <fieldset className="flex flex-col gap-2">
+              <legend className="text-sm mb-1">ช่วงเวลาที่ใช้ได้ (เว้นว่าง = ตลอด)</legend>
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="ตั้งแต่วันที่"><input type="date" className="input w-full" value={form.from} max={form.to || undefined} onChange={(e) => set({ from: e.target.value })} /></Field>
+                <Field label="ถึงวันที่ (รวมวันนี้)"><input type="date" className="input w-full" value={form.to} min={form.from || undefined} onChange={(e) => set({ to: e.target.value })} /></Field>
+              </div>
+              <div className="flex flex-wrap gap-1" role="group" aria-label="วันในสัปดาห์">
+                {DAY_NAMES.map((d, i) => (
+                  <button key={d} type="button" aria-pressed={form.weekdays.includes(i)} className={`btn btn-sm ${form.weekdays.includes(i) ? 'btn-neutral' : 'btn-outline border-base-300'}`} onClick={() => set({ weekdays: form.weekdays.includes(i) ? form.weekdays.filter((x) => x !== i) : [...form.weekdays, i] })}>{d}</button>
+                ))}
+              </div>
+              <span className="text-xs opacity-60">เวลาตามเวลาร้าน (กรุงเทพฯ) ไม่เลือกวันในสัปดาห์ = ทุกวัน</span>
+            </fieldset>
             <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" className="toggle toggle-primary" checked={form.active} onChange={(e) => set({ active: e.target.checked })} /><span className="text-sm">เปิดใช้งาน</span></label>
             <Alert>{formError}</Alert>
             <div className="flex gap-2 justify-end"><button type="button" className="btn btn-ghost" onClick={() => setForm(null)}>ยกเลิก</button><button type="button" className="btn btn-primary" onClick={() => void save()}>บันทึกโปร</button></div>

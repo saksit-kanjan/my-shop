@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { api, type ProductRow } from '../api';
 import { useSession } from '../app/app';
-import { Alert, Card, Empty, Field, Loading, Modal, PageHeader, baht, errText, exportCsv, fromSatang, toSatang, useLoad, useToast } from '../ui';
+import { Alert, Card, Empty, Field, Loading, Modal, PageHeader, baht, errText, exportExcel, fromSatang, toSatang, useLoad, useToast } from '../ui';
 
 interface Form {
   sku: string;
@@ -69,7 +69,7 @@ export function ProductsPage() {
   return (
     <>
       <PageHeader title="สินค้าและราคา" sub={`${rows.length} จาก ${data.products.length} รายการ`}>
-        <button type="button" className="btn" onClick={() => exportCsv('products', [['SKU', 'สินค้า', 'หมวด', 'ราคา', 'ราคาสมาชิก', 'คงเหลือ', ...(canCost ? ['ต้นทุน'] : []), 'สถานะ'], ...rows.map((p) => [p.sku, p.name, catName(p.categoryId), fromSatang(p.price), fromSatang(p.memberPrice), p.stock, ...(canCost ? [fromSatang(p.cost)] : []), p.active ? 'ขายอยู่' : 'ไม่ขาย'])])}>ส่งออก (Excel)</button>
+        <button type="button" className="btn" onClick={() => exportExcel('products', [['SKU', 'สินค้า', 'หมวด', 'ราคา', 'ราคาสมาชิก', 'คงเหลือ', ...(canCost ? ['ต้นทุน'] : []), 'สถานะ'], ...rows.map((p) => [p.sku, p.name, catName(p.categoryId), fromSatang(p.price), fromSatang(p.memberPrice), p.stock, ...(canCost ? [fromSatang(p.cost)] : []), p.active ? 'ขายอยู่' : 'ไม่ขาย'])])}>ส่งออก (Excel)</button>
         {canEdit && <button type="button" className="btn btn-primary" onClick={() => { setFormError(''); setEditing({ id: null, form: blank(data.categories[0]?.id ?? '') }); }}>+ เพิ่มสินค้า</button>}
       </PageHeader>
       <Alert kind="success">{toast.msg}</Alert>

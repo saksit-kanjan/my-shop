@@ -21,7 +21,7 @@ Read `design/README.md` first. The full written spec is `design/spec.md` (Thai).
 ## Docker
 
 `docker compose up -d --build` runs three containers: PostgreSQL, the server (`--target server`) and nginx (`--target web`) which serves the three web apps and proxies `/api`.
-Needs `POSTGRES_PASSWORD` and `CODE_SECRET` in `.env`. The images have not been built on the machine this was written on (no Docker daemon was running).
+Needs `POSTGRES_PASSWORD` and `CODE_SECRET` in `.env`. Both images build and the stack runs (checked: pages through nginx, login, daily backup with the bundled `pg_dump`).
 
 ## Commands
 
@@ -115,14 +115,17 @@ Demo accounts (local only, `src/database/demo.seed.ts`): back office `owner` and
 
 1. Purchase orders and "ใบคืนผู้ขาย" (receiving has no PO to compare against); lot and expiry tracking; weighed items.
 2. Manual discounts at the till and the per-role cap (`discount.over_cap` exists as a permission, no screen uses it); coupons;
-   member-tier promotions; promotions have no date window, weekday or priority yet (the spec asks for them).
-3. Exchange screen at the till (the API takes `exchangeFor` on a sale, nothing in the POS sets it).
+   member-tier promotions; promotion priority. (Dates and weekdays per promotion are done: `Promotion.schedule`, evaluated in shop time
+   by `priceCart` with `at`; a refund re-prices at the bill's own time.)
+3. Exchange screen at the till (the server takes `exchangeFor` on a sale, nothing in the POS sets it).
 4. Receipt printing (ESC/POS over LAN), cash drawer and card terminal adapters, device config and the print queue.
    Receipts print through the browser today.
-5. PDF and Excel export are CSV plus the browser's print dialog. No scheduled report emails.
-6. Only PostgreSQL 18 (DBngin) has been tried; older majors are untested. `pg_dump` must be on PATH or set `PG_DUMP_PATH`.
-7. Back-office screens are typechecked, built and clicked through, but have no component tests; the API has the tests.
-8. Approver "รออนุมัติ" queue on the dashboard only counts open stock counts.
+5. PDF export is the browser's print dialog; Excel export is a real .xlsx (`exportExcel` in the back office). No scheduled report emails.
+6. A customer display on a separate device: the display follows the POS through a BroadcastChannel, so it works only in the same
+   browser on the same machine. Swap the transport for WebSocket and keep the `DisplayState` message.
+7. Back-office screens have no component tests; the server has e2e tests. `tools/e2e-smoke.py` still points at port 8080 and was not run.
+8. Needs the owner and the accountant, not code: the spec's open questions (negative stock, refund window, points rates, cash
+   variance limit, business-day cutoff are set to the spec's suggestions), the tax-invoice format, and the Revenue Department approval of the POS.
 
 ## Testing
 

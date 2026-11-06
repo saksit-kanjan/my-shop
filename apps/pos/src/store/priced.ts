@@ -14,7 +14,7 @@ export function usePricedCart(): { cart: PricedCart; memberSaving: number } {
   return useMemo(() => {
     if (!catalog) return { cart: EMPTY, memberSaving: 0 };
     return {
-      cart: priceCart(lines, catalog, { isMember: !!memberPhone }),
+      cart: priceCart(lines, catalog, { isMember: !!memberPhone, at: new Date() }),
       memberSaving: memberPhone ? 0 : memberSaving(lines, catalog),
     };
   }, [catalog, lines, memberPhone]);

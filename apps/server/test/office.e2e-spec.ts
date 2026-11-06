@@ -483,3 +483,43 @@ describe('HTTP permissions', () => {
     expect(full.body.sales).toHaveLength(1);
   });
 });
+
+describe('promotion schedule', () => {
+  const chipsPromo = demoCatalog.promotions.find((p) => p.id === 'promo-chips')!;
+  const penPromo = (schedule?: { from?: string; to?: string; weekdays?: number[] }) => ({ kind: 'bogo' as const, id: 'p-pen', name: 'ปากกา 1 แถม 1', productId: 'pen', buyQty: 1, freeQty: 1, schedule });
+
+  it('rejects a schedule that makes no sense', async () => {
+    const manager = await who(MANAGER);
+    await expect(s.products.savePromotion(penPromo({ from: '2026-12-01', to: '2026-11-01' }), true, manager)).rejects.toMatchObject({ code: 'invalid' });
+    await expect(s.products.savePromotion(penPromo({ weekdays: [9] }), true, manager)).rejects.toMatchObject({ code: 'invalid' });
+  });
+
+  // Price the way the till does (with the moment of sale), so the payment matches what the server will charge.
+  const sellNow = async (shiftId: string, employee: Employee, lines: CartLine[]) => {
+    const cart = priceCart(lines, await s.sales.catalog(), { isMember: false, at: now });
+    return s.sales.closeSale(shiftId, { employeeId: employee.id, cart, change: 0, payments: [cash(cart.net)] });
+  };
+
+  it('prices a bill only with the promotions that are in their dates and weekdays that day', async () => {
+    const manager = await who(MANAGER);
+    const { employee, shift } = await start();
+    // Today in the tests is Friday 2026-11-06.
+    await s.products.savePromotion(penPromo({ from: '2026-11-07' }), true, manager); // starts tomorrow
+    expect((await sellNow(shift.id, employee, [{ productId: 'pen', qty: 2 }])).cart.net).toBe(2400);
+    await s.products.savePromotion(penPromo({ from: '2026-11-01', to: '2026-11-30', weekdays: [1, 5] }), true, manager); // Mondays and Fridays
+    expect((await sellNow(shift.id, employee, [{ productId: 'pen', qty: 2 }])).cart.net).toBe(1200);
+    await s.products.savePromotion(penPromo({ weekdays: [2] }), true, manager); // Tuesdays only
+    expect((await sellNow(shift.id, employee, [{ productId: 'pen', qty: 2 }])).cart.net).toBe(2400);
+  });
+
+  it('refunds under the promotions of the day the bill was sold, even after they ended', async () => {
+    const manager = await who(MANAGER);
+    const { employee, shift } = await start();
+    const sale = await sell(shift.id, employee, [{ productId: 'chips', qty: 3 }]); // 2 at the promo price + 1 = 50
+    expect(sale.cart.net).toBe(5000);
+    advance(86_400_000);
+    await s.products.savePromotion({ ...chipsPromo, schedule: { to: '2026-11-06' } }, true, manager); // ended yesterday
+    const cn = await s.creditNotes.credit(shift.id, 'refund', { saleDocNo: sale.docNo, lines: [{ productId: 'chips', qty: 1 }], reason: 'คืน', approverCode: SUPERVISOR }, employee, 'T01');
+    expect(cn.amount).toBe(2000); // 50 - the 2 left still count at the promo price (30)
+  });
+});

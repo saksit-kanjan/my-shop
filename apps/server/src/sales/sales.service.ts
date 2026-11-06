@@ -59,7 +59,7 @@ export class SalesService {
       const member = input.memberPhone ? await this.members.findByPhone(input.memberPhone, tx) : null;
       if (input.memberPhone && !member) throw new DomainError('invalid', 'เบอร์นี้ยังไม่ได้สมัครสมาชิก สมัครก่อนแล้วผูกกับบิล', { needsMember: input.memberPhone });
 
-      const cart = priceCart(keyed, catalog, { isMember: !!member });
+      const cart = priceCart(keyed, catalog, { isMember: !!member, at: now });
 
       const pointsRedeemed = input.pointsRedeemed ?? 0;
       if (pointsRedeemed > 0 && !member) throw new DomainError('invalid', 'ต้องผูกสมาชิกก่อนใช้แต้ม');

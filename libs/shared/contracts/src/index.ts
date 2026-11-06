@@ -29,8 +29,22 @@ export interface Premium {
   stock: number;
 }
 
+/**
+ * When a promotion applies (shop time, Asia/Bangkok). Leave a field out for "no limit".
+ * `from` and `to` are dates (yyyy-mm-dd, both included); `weekdays` are 0 = Sunday ... 6 = Saturday.
+ */
+export interface PromotionSchedule {
+  from?: string;
+  to?: string;
+  weekdays?: number[];
+}
+
+interface Scheduled {
+  schedule?: PromotionSchedule;
+}
+
 /** Buy `minQty` of a product and each unit drops to `unitPrice`. */
-export interface QtyPricePromotion {
+export interface QtyPricePromotion extends Scheduled {
   kind: 'qty';
   id: string;
   name: string;
@@ -49,7 +63,7 @@ export type GiftTarget =
   | { type: 'premium'; premiumId: string };
 
 /** Buy `buyQty` of A, get `giftQty` of B (a product or a premium) free. */
-export interface GiftPromotion {
+export interface GiftPromotion extends Scheduled {
   kind: 'gift';
   id: string;
   name: string;
@@ -60,7 +74,7 @@ export interface GiftPromotion {
 }
 
 /** Buy X get Y of the same product free (1 แถม 1 is buyQty 1, freeQty 1). */
-export interface BogoPromotion {
+export interface BogoPromotion extends Scheduled {
   kind: 'bogo';
   id: string;
   name: string;
@@ -70,7 +84,7 @@ export interface BogoPromotion {
 }
 
 /** Spend at least `minAmount` after item promotions, get `discount` off the bill. */
-export interface BillPromotion {
+export interface BillPromotion extends Scheduled {
   kind: 'bill';
   id: string;
   name: string;

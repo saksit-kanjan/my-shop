@@ -2,7 +2,7 @@ import type { Permission } from '@my-shop/contracts';
 import { useState, type ReactNode } from 'react';
 import { api } from '../api';
 import { useSession } from '../app/app';
-import { Alert, Card, DateRange, Empty, Loading, PageHeader, baht, dateTime, exportCsv, fromSatang, todayIso, useLoad } from '../ui';
+import { Alert, Card, DateRange, Empty, Loading, PageHeader, baht, dateTime, exportExcel, fromSatang, todayIso, useLoad } from '../ui';
 
 const TABS: { id: string; label: string; perm: Permission }[] = [
   { id: 'sales', label: 'ยอดขายรายวัน', perm: 'reports.all' },
@@ -33,7 +33,7 @@ export function ReportsPage() {
 
   return (
     <>
-      <PageHeader title="รายงาน" sub="ยอดขายนับจากบิลที่ปิดแล้ว หักยกเลิกและคืนสินค้า · ส่งออกเป็น Excel (CSV) หรือพิมพ์เป็น PDF ได้">
+      <PageHeader title="รายงาน" sub="ยอดขายนับจากบิลที่ปิดแล้ว หักยกเลิกและคืนสินค้า · ส่งออกเป็นไฟล์ Excel (.xlsx) หรือพิมพ์เป็น PDF ได้">
         <button type="button" className="btn" onClick={() => window.print()}>พิมพ์ / PDF</button>
       </PageHeader>
       <div role="tablist" className="tabs tabs-box self-start flex-wrap print:hidden">
@@ -84,7 +84,7 @@ function SalesTab({ r }: { r: R }) {
               <table className="table table-sm"><tbody>{Object.entries(d.byMethod).map(([m, v]) => <tr key={m}><td>{METHOD[m] ?? m}</td><td className="text-right">{baht(v)}</td></tr>)}</tbody></table>
             </Card>
             <Card title="รายวัน" className="flex-[2_1_420px] min-w-0">
-              <div className="flex justify-end print:hidden"><button type="button" className="btn btn-sm" onClick={() => exportCsv('sales-daily', [['วันที่', 'ขายก่อนลด', 'ส่วนลด', 'คืน/ยกเลิก', 'สุทธิ', 'VAT', 'บิล'], ...d.days.map((x) => [x.date, fromSatang(x.gross), fromSatang(x.discount), fromSatang(x.refunds), fromSatang(x.net), fromSatang(x.vat), x.bills])])}>ส่งออก (Excel)</button></div>
+              <div className="flex justify-end print:hidden"><button type="button" className="btn btn-sm" onClick={() => exportExcel('sales-daily', [['วันที่', 'ขายก่อนลด', 'ส่วนลด', 'คืน/ยกเลิก', 'สุทธิ', 'VAT', 'บิล'], ...d.days.map((x) => [x.date, fromSatang(x.gross), fromSatang(x.discount), fromSatang(x.refunds), fromSatang(x.net), fromSatang(x.vat), x.bills])])}>ส่งออก (Excel)</button></div>
               <div className="overflow-x-auto"><table className="table table-sm"><thead><tr><th>วันที่</th><th className="text-right">ขาย</th><th className="text-right">ส่วนลด</th><th className="text-right">คืน</th><th className="text-right">สุทธิ</th><th className="text-right">VAT</th><th className="text-right">บิล</th></tr></thead><tbody>
                 {d.days.map((x) => <tr key={x.date}><td>{x.date}</td><td className="text-right">{baht(x.gross)}</td><td className="text-right">{baht(x.discount)}</td><td className="text-right">{baht(x.refunds)}</td><td className="text-right font-semibold">{baht(x.net)}</td><td className="text-right opacity-70">{baht(x.vat)}</td><td className="text-right">{x.bills}</td></tr>)}
               </tbody></table></div>
@@ -137,7 +137,7 @@ function ProductsTab({ r, profit }: { r: R; profit: boolean }) {
           const rows = [...d.all].filter((p) => p.qty > 0).sort((a, b) => (b.profit ?? 0) - (a.profit ?? 0));
           return (
             <Card title="กำไรขั้นต้นต่อสินค้า">
-              <div className="flex justify-end print:hidden"><button type="button" className="btn btn-sm" onClick={() => exportCsv('gross-profit', [['SKU', 'สินค้า', 'จำนวน', 'ยอดขาย', 'ต้นทุน', 'กำไร', '%'], ...rows.map((p) => [p.sku, p.name, p.qty, fromSatang(p.revenue), fromSatang(p.cost ?? 0), fromSatang(p.profit ?? 0), p.marginPct])])}>ส่งออก (Excel)</button></div>
+              <div className="flex justify-end print:hidden"><button type="button" className="btn btn-sm" onClick={() => exportExcel('gross-profit', [['SKU', 'สินค้า', 'จำนวน', 'ยอดขาย', 'ต้นทุน', 'กำไร', '%'], ...rows.map((p) => [p.sku, p.name, p.qty, fromSatang(p.revenue), fromSatang(p.cost ?? 0), fromSatang(p.profit ?? 0), p.marginPct])])}>ส่งออก (Excel)</button></div>
               {table(rows, true)}
               <div className="text-right font-semibold">รวมกำไร {baht(rows.reduce((a, p) => a + (p.profit ?? 0), 0))}</div>
             </Card>
@@ -182,7 +182,7 @@ function CreditsTab({ r }: { r: R }) {
     <Wrap load={() => api.report<{ items: { docNo: string; saleDocNo: string; type: string; at: string; amount: number; reason: string; actor: string; approver: string }[] }>('credits', r)} deps={[r.from, r.to, r.terminalId]}>
       {(d) => (
         <Card title="ยกเลิกบิลและคืนสินค้า">
-          <div className="flex justify-end print:hidden"><button type="button" className="btn btn-sm" onClick={() => exportCsv('credits', [['เอกสาร', 'บิลเดิม', 'ประเภท', 'เวลา', 'ยอด', 'เหตุผล', 'ผู้ทำ', 'ผู้อนุมัติ'], ...d.items.map((i) => [i.docNo, i.saleDocNo, i.type, i.at, fromSatang(i.amount), i.reason, i.actor, i.approver])])}>ส่งออก (Excel)</button></div>
+          <div className="flex justify-end print:hidden"><button type="button" className="btn btn-sm" onClick={() => exportExcel('credits', [['เอกสาร', 'บิลเดิม', 'ประเภท', 'เวลา', 'ยอด', 'เหตุผล', 'ผู้ทำ', 'ผู้อนุมัติ'], ...d.items.map((i) => [i.docNo, i.saleDocNo, i.type, i.at, fromSatang(i.amount), i.reason, i.actor, i.approver])])}>ส่งออก (Excel)</button></div>
           <div className="overflow-x-auto"><table className="table table-sm"><thead><tr><th>เอกสาร</th><th>บิลเดิม</th><th>ประเภท</th><th>เวลา</th><th className="text-right">ยอด</th><th>เหตุผล</th><th>ผู้ทำ</th><th>ผู้อนุมัติ</th></tr></thead><tbody>
             {d.items.map((i) => <tr key={i.docNo}><td className="font-medium">{i.docNo}</td><td>{i.saleDocNo}</td><td>{i.type === 'void' ? 'ยกเลิก' : 'คืนสินค้า'}</td><td>{dateTime(i.at)}</td><td className="text-right">{baht(i.amount)}</td><td>{i.reason}</td><td>{i.actor}</td><td>{i.approver}</td></tr>)}
           </tbody></table></div>
@@ -198,7 +198,7 @@ function StockValueTab({ asOf }: { asOf: string }) {
     <Wrap load={() => api.report<{ total: number; items: { productId: string; sku: string; name: string; qty: number; cost: number; value: number }[] }>('stock-value', { asOf })} deps={[asOf]}>
       {(d) => (
         <Card title={`มูลค่าสต็อกตามต้นทุน ณ ${asOf} · ${baht(d.total)}`}>
-          <div className="flex justify-end print:hidden"><button type="button" className="btn btn-sm" onClick={() => exportCsv('stock-value', [['SKU', 'สินค้า', 'จำนวน', 'ต้นทุน/หน่วย', 'มูลค่า'], ...d.items.map((i) => [i.sku, i.name, i.qty, fromSatang(i.cost), fromSatang(i.value)])])}>ส่งออก (Excel)</button></div>
+          <div className="flex justify-end print:hidden"><button type="button" className="btn btn-sm" onClick={() => exportExcel('stock-value', [['SKU', 'สินค้า', 'จำนวน', 'ต้นทุน/หน่วย', 'มูลค่า'], ...d.items.map((i) => [i.sku, i.name, i.qty, fromSatang(i.cost), fromSatang(i.value)])])}>ส่งออก (Excel)</button></div>
           <div className="overflow-x-auto"><table className="table table-sm"><thead><tr><th>SKU</th><th>สินค้า</th><th className="text-right">จำนวน</th><th className="text-right">ต้นทุน/หน่วย</th><th className="text-right">มูลค่า</th></tr></thead><tbody>
             {d.items.map((i) => <tr key={i.productId}><td className="opacity-70">{i.sku}</td><td>{i.name}</td><td className="text-right">{i.qty}</td><td className="text-right opacity-70">{baht(i.cost)}</td><td className="text-right font-semibold">{baht(i.value)}</td></tr>)}
           </tbody></table></div>
@@ -220,7 +220,7 @@ function TaxTab({ month }: { month: string }) {
             <div className="stat"><div className="stat-title">ยอดขายรวม VAT</div><div className="stat-value text-3xl">{baht(d.net)}</div></div>
           </div>
           <Card title="ใบกำกับภาษีเต็มรูปของเดือนนี้">
-            <div className="flex justify-end print:hidden"><button type="button" className="btn btn-sm" onClick={() => exportCsv(`tax-${month}`, [['เลขที่', 'บิลอ้างอิง', 'วันที่', 'ผู้ซื้อ', 'เลขผู้เสียภาษี', 'สาขา', 'มูลค่า', 'VAT'], ...d.invoices.map((i) => [i.docNo, i.saleDocNo, i.at, i.buyerName, i.buyerTaxId, i.buyerBranch, fromSatang(i.base), fromSatang(i.vat)])])}>ส่งออก (Excel)</button></div>
+            <div className="flex justify-end print:hidden"><button type="button" className="btn btn-sm" onClick={() => exportExcel(`tax-${month}`, [['เลขที่', 'บิลอ้างอิง', 'วันที่', 'ผู้ซื้อ', 'เลขผู้เสียภาษี', 'สาขา', 'มูลค่า', 'VAT'], ...d.invoices.map((i) => [i.docNo, i.saleDocNo, i.at, i.buyerName, i.buyerTaxId, i.buyerBranch, fromSatang(i.base), fromSatang(i.vat)])])}>ส่งออก (Excel)</button></div>
             <div className="overflow-x-auto"><table className="table table-sm"><thead><tr><th>เลขที่</th><th>วันที่</th><th>ผู้ซื้อ</th><th>เลขผู้เสียภาษี</th><th className="text-right">มูลค่า</th><th className="text-right">VAT</th></tr></thead><tbody>
               {d.invoices.map((i) => <tr key={i.docNo}><td className="font-medium">{i.docNo}</td><td>{dateTime(i.at)}</td><td>{i.buyerName}</td><td>{i.buyerTaxId}</td><td className="text-right">{baht(i.base)}</td><td className="text-right">{baht(i.vat)}</td></tr>)}
             </tbody></table></div>
