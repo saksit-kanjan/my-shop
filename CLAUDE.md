@@ -106,7 +106,7 @@ with owner overrides, settings, audit log, daily backup (kept 30 days). Closed d
 
 Settings that answer the spec's open questions are in `SETTING_DEFAULTS` (`src/administration/entities/settings.entity.ts`) and editable in the
 back office: negative stock allowed, refund window 7 days, points 25 baht = 1 point and 100 points = 10 baht, no expiry,
-cash variance limit 100 baht, business-day cutoff hour 0. **They are the spec's suggestions, not decisions the owner made.**
+cash variance limit 100 baht, manual discount cap 10% (above it the till asks a supervisor code, permission `discount.over_cap`), business-day cutoff hour 0. **They are the spec's suggestions, not decisions the owner made.**
 
 Demo accounts (local only, `src/database/demo.seed.ts`): back office `owner` and `manager`; production creates the owner from
 `OWNER_USERNAME`, `OWNER_PASSWORD`, `OWNER_CODE` and never seeds demo data (`SEED_DEMO=0`).
@@ -114,7 +114,7 @@ Demo accounts (local only, `src/database/demo.seed.ts`): back office `owner` and
 ## Not built yet
 
 1. Purchase orders and "ใบคืนผู้ขาย" (receiving has no PO to compare against); lot and expiry tracking; weighed items.
-2. Manual discounts at the till and the per-role cap (`discount.over_cap` exists as a permission, no screen uses it); coupons;
+2. Coupons;
    member-tier promotions; promotion priority. (Dates and weekdays per promotion are done: `Promotion.schedule`, evaluated in shop time
    by `priceCart` with `at`; a refund re-prices at the bill's own time.)
 3. Exchange screen at the till (the server takes `exchangeFor` on a sale, nothing in the POS sets it).

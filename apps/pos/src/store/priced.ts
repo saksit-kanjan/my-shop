@@ -11,11 +11,12 @@ export function usePricedCart(): { cart: PricedCart; memberSaving: number } {
   const catalog = useCatalog((s) => s.catalog);
   const lines = useCart((s) => s.lines);
   const memberPhone = useCart((s) => s.memberPhone);
+  const manual = useCart((s) => s.manualDiscount);
   return useMemo(() => {
     if (!catalog) return { cart: EMPTY, memberSaving: 0 };
     return {
-      cart: priceCart(lines, catalog, { isMember: !!memberPhone, at: new Date() }),
+      cart: priceCart(lines, catalog, { isMember: !!memberPhone, at: new Date(), manual: manual ?? undefined }),
       memberSaving: memberPhone ? 0 : memberSaving(lines, catalog),
     };
-  }, [catalog, lines, memberPhone]);
+  }, [catalog, lines, memberPhone, manual]);
 }

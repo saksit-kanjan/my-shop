@@ -523,3 +523,63 @@ describe('promotion schedule', () => {
     expect(cn.amount).toBe(2000); // 50 - the 2 left still count at the promo price (30)
   });
 });
+
+describe('manual discount', () => {
+  const pct = (value: number) => ({ type: 'percent' as const, value, reason: 'ลูกค้าประจำ' });
+  const sellWith = async (shiftId: string, employee: Employee, lines: CartLine[], manual?: { type: 'amount' | 'percent'; value: number; reason: string }, approverCode?: string) => {
+    const cart = priceCart(lines, await s.sales.catalog(), { isMember: false, at: now, manual });
+    return s.sales.closeSale(shiftId, { employeeId: employee.id, cart, change: 0, payments: [cash(cart.net)], manualDiscount: manual, approverCode });
+  };
+
+  it('lets a cashier discount up to the cap on their own', async () => {
+    const { employee, shift } = await start();
+    const sale = await sellWith(shift.id, employee, [{ productId: 'bread', qty: 1 }], { type: 'amount', value: 400, reason: 'ของใกล้หมดอายุ' }); // 4 of 45 baht, under 10%
+    expect(sale.cart.net).toBe(4100);
+    expect(sale.cart.billApplied).toMatchObject([{ kind: 'manual', discount: 400 }]);
+    const [row] = await db.query<{ manual_discount: number; manual_reason: string; manual_approved_by: string | null }>(`SELECT manual_discount, manual_reason, manual_approved_by FROM sales WHERE doc_no=$1`, [sale.docNo]);
+    expect(row).toMatchObject({ manual_discount: 400, manual_reason: 'ของใกล้หมดอายุ', manual_approved_by: null });
+  });
+
+  it('asks for a supervisor above the cap, counts a wrong code, and records who approved', async () => {
+    const { employee, shift } = await start();
+    const lines = [{ productId: 'tissue', qty: 2 }]; // 178 baht
+    await expect(sellWith(shift.id, employee, lines, pct(30))).rejects.toMatchObject({ code: 'forbidden', details: { needsApproval: 'discount.over_cap' } });
+    await expect(sellWith(shift.id, employee, lines, pct(30), '999999')).rejects.toMatchObject({ code: 'forbidden', message: 'รหัสอนุมัติไม่ถูกต้อง' });
+    await expect(sellWith(shift.id, employee, lines, pct(30), '200456')).rejects.toMatchObject({ code: 'forbidden' }); // another cashier: no right to approve
+    expect((await db.query(`SELECT 1 FROM sales`)).length).toBe(0);
+    const sale = await sellWith(shift.id, employee, lines, pct(30), SUPERVISOR);
+    expect(sale.cart.net).toBe(12460); // 30% off 178 baht, rounded down
+    const [row] = await db.query<{ manual_approved_by: string }>(`SELECT manual_approved_by FROM sales WHERE doc_no=$1`, [sale.docNo]);
+    expect(row.manual_approved_by).toBe('E003');
+    const [log] = await db.query<{ approver: string | null; after: { overCap: boolean } }>(`SELECT approver, after FROM audit_log WHERE action='sale.manual_discount'`);
+    expect(log).toMatchObject({ approver: 'E003', after: { overCap: true } });
+  });
+
+  it('lets a supervisor discount over the cap without a second code', async () => {
+    const { employee, shift } = await start(SUPERVISOR);
+    expect((await sellWith(shift.id, employee, [{ productId: 'tissue', qty: 2 }], pct(50))).cart.net).toBe(8900);
+  });
+
+  it('follows the cap in the settings', async () => {
+    const { employee, shift } = await start();
+    await db.transaction((tx) => s.settings.update(tx, { manualDiscountCapPercent: 0 }));
+    await expect(sellWith(shift.id, employee, [{ productId: 'bread', qty: 1 }], pct(1))).rejects.toMatchObject({ details: { needsApproval: 'discount.over_cap' } });
+  });
+
+  it('rejects a discount without a reason, over 100 percent, or when the client paid the wrong amount', async () => {
+    const { employee, shift } = await start(SUPERVISOR);
+    const lines = [{ productId: 'bread', qty: 1 }];
+    await expect(sellWith(shift.id, employee, lines, { type: 'amount', value: 100, reason: ' ' })).rejects.toMatchObject({ code: 'invalid' });
+    await expect(sellWith(shift.id, employee, lines, pct(101))).rejects.toMatchObject({ code: 'invalid' });
+    const cart = priceCart(lines, await s.sales.catalog(), { isMember: false, at: now });
+    await expect(s.sales.closeSale(shift.id, { employeeId: employee.id, cart, change: 0, payments: [cash(cart.net)], manualDiscount: pct(10) })).rejects.toMatchObject({ code: 'invalid' }); // paid the undiscounted price
+  });
+
+  it('keeps the discount in a refund: what is left is re-priced with the same percentage', async () => {
+    const { employee, shift } = await start(SUPERVISOR);
+    const sale = await sellWith(shift.id, employee, [{ productId: 'tissue', qty: 2 }], pct(10)); // 178 -> 160.20
+    expect(sale.cart.net).toBe(16020);
+    const cn = await s.creditNotes.credit(shift.id, 'refund', { saleDocNo: sale.docNo, lines: [{ productId: 'tissue', qty: 1 }], reason: 'คืน' }, employee, 'T01');
+    expect(cn.amount).toBe(8010); // one tissue left would cost 89 - 10% = 80.10
+  });
+});

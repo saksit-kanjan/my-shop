@@ -11,7 +11,18 @@ import { usePricedCart } from '../store/priced';
 export function SalePage() {
   const catalog = useCatalog((s) => s.catalog);
   const { cart, memberSaving } = usePricedCart();
-  const { add, setQty, clear, hold, memberPhone, attachMember, detachMember, lines } = useCart();
+  const { add, setQty, clear, hold, memberPhone, attachMember, detachMember, lines, manualDiscount, setManualDiscount } = useCart();
+  const discountDialog = useRef<HTMLDialogElement>(null);
+  const [dType, setDType] = useState<'amount' | 'percent'>('amount');
+  const [dValue, setDValue] = useState('');
+  const [dReason, setDReason] = useState('');
+  const applyDiscount = () => {
+    const n = Number(dValue);
+    if (!Number.isFinite(n) || n <= 0 || (dType === 'percent' && (n > 100 || !Number.isInteger(n))) || !dReason.trim()) return;
+    // Baht typed by the cashier become satang once, here; the domain only sees integers.
+    setManualDiscount({ type: dType, value: dType === 'amount' ? Math.round(n * 100) : n, reason: dReason.trim() });
+    discountDialog.current?.close();
+  };
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<string>('all');
@@ -213,6 +224,11 @@ export function SalePage() {
           <div className="flex justify-between text-sm opacity-70"><span>VAT 7% (รวมในราคาแล้ว)</span><span>{formatBaht(cart.vat)}</span></div>
           {!memberPhone && memberSaving > 0 && <div className="text-sm text-warning">ถามลูกค้าว่าเป็นสมาชิกไหม ลดได้อีก {formatBaht(memberSaving)}</div>}
           <div className="grid grid-cols-2 gap-2 mt-3">
+            {manualDiscount ? (
+              <button type="button" className="btn btn-soft btn-primary col-span-2" onClick={() => setManualDiscount(null)} title="เอาส่วนลดพิเศษออก">ส่วนลดพิเศษ: {manualDiscount.reason} ✕</button>
+            ) : (
+              <button type="button" className="btn btn-outline col-span-2" disabled={empty} onClick={() => { setDType('amount'); setDValue(''); setDReason(''); discountDialog.current?.showModal(); }}>ส่วนลดพิเศษ</button>
+            )}
             <button type="button" className="btn" disabled={empty} onClick={() => { setHoldNote(''); holdDialog.current?.showModal(); }}>พักบิล</button>
             <button type="button" className="btn text-error" disabled={empty} onClick={() => clearDialog.current?.showModal()}>ล้างบิล</button>
           </div>
@@ -222,6 +238,29 @@ export function SalePage() {
           </button>
         </div>
       </aside>
+
+      <dialog ref={discountDialog} className="modal" aria-labelledby="discount-title">
+        <form method="dialog" className="modal-box flex flex-col gap-3" onSubmit={(e) => { e.preventDefault(); applyDiscount(); }}>
+          <h2 id="discount-title" className="text-lg font-semibold">ส่วนลดพิเศษ</h2>
+          <div className="join" role="radiogroup" aria-label="ประเภทส่วนลด">
+            <button type="button" role="radio" aria-checked={dType === 'amount'} className={`btn join-item flex-1 ${dType === 'amount' ? 'btn-neutral' : ''}`} onClick={() => setDType('amount')}>เป็นบาท</button>
+            <button type="button" role="radio" aria-checked={dType === 'percent'} className={`btn join-item flex-1 ${dType === 'percent' ? 'btn-neutral' : ''}`} onClick={() => setDType('percent')}>เป็นเปอร์เซ็นต์</button>
+          </div>
+          <label className="flex flex-col gap-1">
+            <span className="text-sm">{dType === 'amount' ? 'ลดกี่บาท' : 'ลดกี่เปอร์เซ็นต์'}</span>
+            <input autoFocus type="number" inputMode="decimal" min={0} className="input input-lg w-full" value={dValue} onChange={(e) => setDValue(e.target.value)} />
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="text-sm">เหตุผล</span>
+            <input type="text" className="input w-full" value={dReason} onChange={(e) => setDReason(e.target.value)} placeholder="เช่น สินค้าตำหนิ ลูกค้าประจำ" />
+          </label>
+          <p className="text-sm opacity-70">ถ้าเกินเพดานของร้าน ตอนชำระเงินจะให้หัวหน้ากะกดรหัสอนุมัติ</p>
+          <div className="modal-action mt-0">
+            <button type="button" className="btn btn-ghost" onClick={() => discountDialog.current?.close()}>ยกเลิก</button>
+            <button type="submit" className="btn btn-primary">ใช้ส่วนลด</button>
+          </div>
+        </form>
+      </dialog>
 
       <dialog ref={memberDialog} className="modal" aria-labelledby="member-title" onClose={() => { setMemberStep('phone'); setMemberError(''); }}>
         <form

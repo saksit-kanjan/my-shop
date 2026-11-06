@@ -14,6 +14,12 @@ export class PaymentDto {
   @IsOptional() @IsString() reference?: string;
 }
 
+export class ManualDiscountDto {
+  @IsIn(['amount', 'percent']) type!: 'amount' | 'percent';
+  @IsInt() @Min(1) value!: number;
+  @IsString() reason!: string;
+}
+
 /** A bill to close. The server re-prices the lines, so `cart` only has to say WHAT was sold; the amounts are checked, not trusted. */
 export class SaleDto {
   @IsObject() cart!: PricedCart;
@@ -22,6 +28,8 @@ export class SaleDto {
   @IsOptional() @IsString() memberPhone?: string;
   @IsOptional() @IsInt() @Min(0) pointsRedeemed?: number;
   @IsOptional() @IsString() exchangeFor?: string;
+  @IsOptional() @ValidateNested() @Type(() => ManualDiscountDto) manualDiscount?: ManualDiscountDto;
+  @IsOptional() @IsString() approverCode?: string;
 }
 
 export class CashMoveDto {

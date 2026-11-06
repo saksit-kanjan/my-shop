@@ -1,4 +1,4 @@
-import type { CartLine } from '@my-shop/contracts';
+import type { CartLine, ManualDiscount } from '@my-shop/contracts';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { SaleRecord } from '../api/pos-api';
@@ -14,6 +14,8 @@ export interface HeldBill {
 interface CartState {
   lines: CartLine[];
   memberPhone: string | null;
+  /** A discount the cashier gave by hand; the server decides whether it needs a supervisor. */
+  manualDiscount: ManualDiscount | null;
   lastAddedProductId: string | null;
   /** Suggestions the customer declined on the offers screen, by promotion id. */
   skipped: string[];
@@ -24,6 +26,7 @@ interface CartState {
   clear: () => void;
   attachMember: (phone: string) => void;
   detachMember: () => void;
+  setManualDiscount: (discount: ManualDiscount | null) => void;
   skip: (promotionId: string) => void;
   hold: (note: string) => void;
   resume: (id: string) => boolean;
@@ -31,7 +34,7 @@ interface CartState {
   completeSale: (sale: SaleRecord) => void;
 }
 
-const emptyBill = { lines: [] as CartLine[], memberPhone: null, lastAddedProductId: null, skipped: [] as string[] };
+const emptyBill = { lines: [] as CartLine[], memberPhone: null, manualDiscount: null as ManualDiscount | null, lastAddedProductId: null, skipped: [] as string[] };
 
 export const useCart = create<CartState>()(
   persist(
@@ -54,6 +57,7 @@ export const useCart = create<CartState>()(
       clear: () => set({ ...emptyBill }),
       attachMember: (phone) => set({ memberPhone: phone }),
       detachMember: () => set({ memberPhone: null }),
+      setManualDiscount: (manualDiscount) => set({ manualDiscount }),
       skip: (promotionId) => set((s) => ({ skipped: s.skipped.includes(promotionId) ? s.skipped : [...s.skipped, promotionId] })),
       hold: (note) =>
         set((s) =>

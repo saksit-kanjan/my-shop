@@ -14,6 +14,8 @@ export const SETTING_DEFAULTS = {
   allowNegativeStock: true,
   /** Cash difference (satang) at close that needs a supervisor's acknowledgement. */
   cashVarianceLimit: 10000,
+  /** Percent of the bill (after promotions) a cashier may take off by hand without approval; more needs `discount.over_cap`. */
+  manualDiscountCapPercent: 10,
   /** Hour the business date rolls over. */
   cutoffHour: 0,
   storeName: 'My Shop',

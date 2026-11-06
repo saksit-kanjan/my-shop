@@ -10,7 +10,7 @@ export function SettingsPage() {
   useEffect(() => {
     if (!data) return;
     const s = data.settings;
-    setF({ ...s, pointsEarnSatang: fromSatang(s.pointsEarnSatang), pointsValueSatang: fromSatang(s.pointsValueSatang), cashVarianceLimit: fromSatang(s.cashVarianceLimit), pointsExpiryMonths: String(s.pointsExpiryMonths), refundDays: String(s.refundDays), cutoffHour: String(s.cutoffHour) });
+    setF({ ...s, pointsEarnSatang: fromSatang(s.pointsEarnSatang), pointsValueSatang: fromSatang(s.pointsValueSatang), cashVarianceLimit: fromSatang(s.cashVarianceLimit), pointsExpiryMonths: String(s.pointsExpiryMonths), refundDays: String(s.refundDays), manualDiscountCapPercent: String(s.manualDiscountCapPercent), cutoffHour: String(s.cutoffHour) });
   }, [data]);
   if (loading && !data) return <Loading />;
   if (!data) return <Alert>{error}</Alert>;
@@ -23,7 +23,7 @@ export function SettingsPage() {
     const earn = money('pointsEarnSatang'), val = money('pointsValueSatang'), lim = money('cashVarianceLimit');
     if (earn === null || val === null || lim === null) return setMsg('ใส่จำนวนเงินเป็นตัวเลข เช่น 25.00');
     const patch: Partial<Settings> = {
-      pointsEarnSatang: earn, pointsValueSatang: val, cashVarianceLimit: lim, pointsExpiryMonths: Number(f['pointsExpiryMonths']), refundDays: Number(f['refundDays']), cutoffHour: Number(f['cutoffHour']),
+      pointsEarnSatang: earn, pointsValueSatang: val, cashVarianceLimit: lim, pointsExpiryMonths: Number(f['pointsExpiryMonths']), refundDays: Number(f['refundDays']), manualDiscountCapPercent: Number(f['manualDiscountCapPercent']), cutoffHour: Number(f['cutoffHour']),
       allowNegativeStock: !!f['allowNegativeStock'], storeName: str('storeName'), branchName: str('branchName'), taxId: str('taxId'), address: str('address'),
     };
     try {
@@ -57,6 +57,7 @@ export function SettingsPage() {
       <Card title="การคืนสินค้า สต็อก และเงินสด" className="anim-in-3">
         <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}>
           {num('refundDays', 'คืนสินค้าได้ภายใน (วัน)', 'เกินกำหนดต้องให้ผู้จัดการอนุมัติ')}
+          {num('manualDiscountCapPercent', 'ส่วนลดพิเศษที่แคชเชียร์ให้ได้เอง (%)', 'เกินกว่านี้ต้องให้หัวหน้ากะกดรหัสอนุมัติ')}
           {num('cashVarianceLimit', 'เงินขาด/เกินที่ต้องอนุมัติ (บาท)', 'ปิดกะที่ต่างเกินนี้ต้องมีหมายเหตุและรหัสหัวหน้ากะ')}
           {num('cutoffHour', 'ตัดวันทำการตอนกี่โมง (0–23)', '0 = เที่ยงคืน ถ้าร้านปิดหลังเที่ยงคืนให้ใส่เช่น 4')}
         </div>

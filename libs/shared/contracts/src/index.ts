@@ -109,9 +109,19 @@ export interface Catalog {
 /** A promotion that is already applied to a line. */
 export interface AppliedPromo {
   promotionId: string;
-  kind: Promotion['kind'] | 'member';
+  kind: Promotion['kind'] | 'member' | 'manual';
   label: string;
   discount: Satang;
+}
+
+/**
+ * A discount the cashier gives by hand, taken off after every promotion. `value` is satang for `amount`, a whole percent (1-100)
+ * for `percent`. Above the store's cap it needs someone with the `discount.over_cap` permission (spec: ส่วนลด manual ตามเพดานของบทบาท).
+ */
+export interface ManualDiscount {
+  type: 'amount' | 'percent';
+  value: number;
+  reason: string;
 }
 
 /** A promotion the customer is close to getting. */

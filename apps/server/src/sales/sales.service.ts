@@ -1,7 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type { Catalog, Product, SaleRecord } from '@my-shop/contracts';
-import { normalizeLines, priceCart } from '@my-shop/domain';
+import { manualDiscountOf, normalizeLines, priceCart } from '@my-shop/domain';
 import { AuditService } from '../audit/audit.service';
+import { ApprovalsService } from '../auth/approvals.service';
+import { AuthService } from '../auth/auth.service';
+import { PermissionsService } from '../auth/permissions.service';
 import { CLOCK, type Clock } from '../common/clock';
 import { businessDate, docPeriod } from '../common/dates';
 import { DomainError } from '../common/domain-error';
@@ -25,6 +28,9 @@ export class SalesService {
     private readonly members: MembersService,
     private readonly settings: SettingsService,
     private readonly numbering: NumberingService,
+    private readonly auth: AuthService,
+    private readonly permissions: PermissionsService,
+    private readonly approvals: ApprovalsService,
     private readonly audit: AuditService,
     @Inject(CLOCK) private readonly clock: Clock,
   ) {}
@@ -41,6 +47,12 @@ export class SalesService {
    */
   async closeSale(shiftId: string, input: SaleInput): Promise<SaleRecord> {
     const now = this.clock();
+    const manual = input.manualDiscount;
+    if (manual && (!manual.reason?.trim() || !Number.isInteger(manual.value) || manual.value < 1 || (manual.type === 'percent' && manual.value > 100))) {
+      throw new DomainError('invalid', 'ส่วนลดพิเศษต้องมีจำนวนที่ถูกต้องและเหตุผล');
+    }
+    // Who stands behind a discount above the cap. Checked before the transaction so a wrong code is counted even when the bill fails.
+    const approver = manual ? await this.manualDiscountApprover(shiftId, input) : null;
     return this.db.transaction(async (tx) => {
       const [shift] = await tx.query<{ terminal_id: string; closed_at: Date | null }>(`SELECT terminal_id, closed_at FROM shifts WHERE id=$1`, [shiftId]);
       if (!shift) throw new DomainError('not_found', 'ไม่พบกะนี้');
@@ -59,7 +71,13 @@ export class SalesService {
       const member = input.memberPhone ? await this.members.findByPhone(input.memberPhone, tx) : null;
       if (input.memberPhone && !member) throw new DomainError('invalid', 'เบอร์นี้ยังไม่ได้สมัครสมาชิก สมัครก่อนแล้วผูกกับบิล', { needsMember: input.memberPhone });
 
-      const cart = priceCart(keyed, catalog, { isMember: !!member, at: now });
+      const cart = priceCart(keyed, catalog, { isMember: !!member, at: now, manual });
+
+      const manualAmount = manualDiscountOf(cart);
+      const overCap = manualAmount > Math.floor(((cart.net + manualAmount) * cfg.manualDiscountCapPercent) / 100);
+      if (overCap && !approver) {
+        throw new DomainError('forbidden', 'ส่วนลดเกินเพดาน ต้องให้หัวหน้ากะใส่รหัสอนุมัติ', { needsApproval: 'discount.over_cap', capPercent: cfg.manualDiscountCapPercent });
+      }
 
       const pointsRedeemed = input.pointsRedeemed ?? 0;
       if (pointsRedeemed > 0 && !member) throw new DomainError('invalid', 'ต้องผูกสมาชิกก่อนใช้แต้ม');
@@ -76,13 +94,13 @@ export class SalesService {
       if (input.exchangeFor && !(await tx.query(`SELECT 1 FROM credit_notes WHERE doc_no=$1`, [input.exchangeFor])).length) throw new DomainError('invalid', 'ไม่พบใบลดหนี้ที่อ้างอิง');
 
       const docNo = await this.numbering.next(tx, `${shift.terminal_id}-${docPeriod(now)}`);
-      const snapshot: PricingSnapshot = { products: keyed.map((l) => byId.get(l.productId) as Product), promotions: catalog.promotions, premiums: catalog.premiums.map((p) => ({ id: p.id, name: p.name })) };
+      const snapshot: PricingSnapshot = { products: keyed.map((l) => byId.get(l.productId) as Product), promotions: catalog.promotions, premiums: catalog.premiums.map((p) => ({ id: p.id, name: p.name })), ...(manual ? { manual } : {}) };
       const pointsEarned = member ? await this.members.earn(tx, member.id, due, docNo, now) : 0;
 
       await tx.query(
-        `INSERT INTO sales (doc_no, shift_id, employee_id, at, business_date, member_id, gross, discount, net, vat, change, cart, pricing, points_earned, points_redeemed, points_value, exchange_for)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)`,
-        [docNo, shiftId, input.employeeId, now, businessDate(now, cfg.cutoffHour), member?.id ?? null, cart.gross, cart.discount, cart.net, cart.vat, change, JSON.stringify(cart), JSON.stringify(snapshot), pointsEarned, pointsRedeemed, pointsValue, input.exchangeFor ?? null],
+        `INSERT INTO sales (doc_no, shift_id, employee_id, at, business_date, member_id, gross, discount, net, vat, change, cart, pricing, points_earned, points_redeemed, points_value, exchange_for, manual_discount, manual_reason, manual_approved_by)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)`,
+        [docNo, shiftId, input.employeeId, now, businessDate(now, cfg.cutoffHour), member?.id ?? null, cart.gross, cart.discount, cart.net, cart.vat, change, JSON.stringify(cart), JSON.stringify(snapshot), pointsEarned, pointsRedeemed, pointsValue, input.exchangeFor ?? null, manualAmount, manualAmount > 0 ? manual?.reason.trim() ?? null : null, manualAmount > 0 ? approver?.id ?? null : null],
       );
       if (member && pointsRedeemed > 0) await this.members.redeem(tx, member.id, pointsRedeemed, cart.net, docNo, now);
 
@@ -98,6 +116,9 @@ export class SalesService {
         ...cart.premiums.filter((p) => !p.outOfStock).map((p) => ({ premiumId: p.premiumId, qty: -p.qty, kind: 'premium' as const, docNo, at: now })),
       ]);
       for (const p of payments) await tx.query(`INSERT INTO payments (doc_no, method, amount, tendered, reference) VALUES ($1,$2,$3,$4,$5)`, [docNo, p.method, p.amount, p.tendered ?? null, p.reference ?? null]);
+      if (manualAmount > 0) {
+        await this.audit.record(tx, now, { actor: input.employeeId, approver: approver && approver.id !== input.employeeId ? approver.id : undefined, terminalId: shift.terminal_id, action: 'sale.manual_discount', entity: 'sale', entityId: docNo, after: { amount: manualAmount, type: manual?.type, value: manual?.value, reason: manual?.reason, overCap } });
+      }
       await this.audit.record(tx, now, { actor: input.employeeId, terminalId: shift.terminal_id, action: 'sale.close', entity: 'sale', entityId: docNo, after: { net: cart.net, clientNet: input.cart.net } });
 
       return {
@@ -106,5 +127,18 @@ export class SalesService {
         ...(pointsRedeemed > 0 ? { pointsRedeemed, pointsValue } : {}),
       };
     });
+  }
+
+  /**
+   * Someone who may give a discount above the cap: the cashier themself when their role allows it, otherwise the supervisor whose
+   * code came with the bill. Null when neither (the bill then fails only if the discount really is over the cap).
+   */
+  private async manualDiscountApprover(shiftId: string, input: SaleInput) {
+    const actor = await this.auth.findEmployee(input.employeeId);
+    if (!actor) return null;
+    if (await this.permissions.can(actor.role, 'discount.over_cap')) return actor;
+    if (!input.approverCode) return null;
+    const [shift] = await this.db.query<{ terminal_id: string }>(`SELECT terminal_id FROM shifts WHERE id=$1`, [shiftId]);
+    return this.approvals.resolve({ actor, permission: 'discount.over_cap', approverCode: input.approverCode, terminalId: shift?.terminal_id ?? '' });
   }
 }

@@ -109,6 +109,9 @@ const SCHEMA: string[] = [
   `CREATE TABLE IF NOT EXISTS price_history (
      id bigserial PRIMARY KEY, product_id text NOT NULL, price int NOT NULL, member_price int NOT NULL, cost int NOT NULL, at timestamptz NOT NULL, by text)`,
   `ALTER TABLE stock_movements ADD COLUMN IF NOT EXISTS unit_cost int`,
+  `ALTER TABLE sales ADD COLUMN IF NOT EXISTS manual_discount int NOT NULL DEFAULT 0`,
+  `ALTER TABLE sales ADD COLUMN IF NOT EXISTS manual_reason text`,
+  `ALTER TABLE sales ADD COLUMN IF NOT EXISTS manual_approved_by text`,
   `CREATE OR REPLACE FUNCTION forbid_change() RETURNS trigger AS $$
    BEGIN RAISE EXCEPTION 'append-only table: % is not allowed on %', TG_OP, TG_TABLE_NAME; END $$ LANGUAGE plpgsql`,
   ...APPEND_ONLY.flatMap((t) => [

@@ -152,3 +152,35 @@ describe('scheduleProblem', () => {
     expect(scheduleProblem({ weekdays: [7] })).toMatch(/วันในสัปดาห์/);
   });
 });
+
+describe('manual discount', () => {
+  const lines = [{ productId: 'chips', qty: 2 }]; // 2 x 20 = 40, promo off
+  const cat = catalog([]);
+  const price = (manual?: { type: 'amount' | 'percent'; value: number; reason: string }) => priceCart(lines, cat, { isMember: false, manual });
+
+  it('takes a fixed amount off the bill and shows it as its own line', () => {
+    const cart = price({ type: 'amount', value: b(5), reason: 'ลูกค้าประจำ' });
+    expect(cart.net).toBe(b(35));
+    expect(cart.billApplied).toEqual([{ promotionId: 'manual', kind: 'manual', label: 'ส่วนลดพิเศษ: ลูกค้าประจำ', discount: b(5) }]);
+    expect(cart.vat).toBe(vatIncluded(b(35)));
+    expect(cart.discount).toBe(b(5));
+  });
+
+  it('rounds a percent down', () => {
+    expect(price({ type: 'percent', value: 10, reason: 'x' }).net).toBe(b(36));
+    expect(priceCart([{ productId: 'milk', qty: 1 }], cat, { isMember: false, manual: { type: 'percent', value: 15, reason: 'x' } }).net).toBe(1400 - 210); // 15% of 14.00 = 2.10
+  });
+
+  it('is applied after the promotions and never goes below zero', () => {
+    const promo = priceCart([{ productId: 'chips', qty: 2 }], catalog([qty('set')]), { isMember: false, manual: { type: 'percent', value: 10, reason: 'x' } });
+    expect(promo.net).toBe(b(27)); // 30 after the promo, then 10% of 30
+    expect(price({ type: 'amount', value: b(500), reason: 'x' }).net).toBe(0);
+    expect(price({ type: 'percent', value: 250, reason: 'x' }).net).toBe(0);
+    expect(price({ type: 'amount', value: -5, reason: 'x' }).net).toBe(b(40));
+  });
+
+  it('adds nothing when there is no discount', () => {
+    expect(price().billApplied).toEqual([]);
+    expect(price({ type: 'amount', value: 0, reason: 'x' }).billApplied).toEqual([]);
+  });
+});

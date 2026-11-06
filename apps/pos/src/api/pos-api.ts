@@ -1,4 +1,4 @@
-import type { CashMove, Catalog, CreditNote, Employee, Member, Permission, SaleRecord, Satang, Shift } from '@my-shop/contracts';
+import type { CashMove, Catalog, ManualDiscount, CreditNote, Employee, Member, Permission, SaleRecord, Satang, Shift } from '@my-shop/contracts';
 
 export type { CashMove, CashMoveType, CreditNote, Member, SaleRecord, Shift, ShiftSummary } from '@my-shop/contracts';
 export { summarizeShift } from '@my-shop/domain';
@@ -44,6 +44,9 @@ export interface TaxInvoiceRequest {
  * Everything the POS needs from the back end. The local implementation keeps data in the
  * browser for now; a NestJS implementation will satisfy the same interface.
  */
+/** A bill to close. `manualDiscount` is already in `cart`; the server re-checks it and may ask for a supervisor's code. */
+export type SaleRequest = Omit<SaleRecord, 'docNo' | 'at'> & { manualDiscount?: ManualDiscount; approverCode?: string };
+
 export interface PosApi {
   getCatalog(): Promise<Catalog>;
   /** Null when the code is wrong. Throws (with a message to show) when the terminal is locked or the server is unreachable. */
@@ -52,7 +55,7 @@ export interface PosApi {
   findEmployee(id: string): Promise<Employee | null>;
   getOpenShift(terminalId: string): Promise<Shift | null>;
   openShift(terminalId: string, employeeId: string, float: Satang): Promise<Shift>;
-  recordSale(shiftId: string, sale: Omit<SaleRecord, 'docNo' | 'at'>): Promise<SaleRecord>;
+  recordSale(shiftId: string, sale: SaleRequest): Promise<SaleRecord>;
   addCashMove(shiftId: string, move: Omit<CashMove, 'at'>): Promise<Shift>;
   closeShift(shiftId: string, counted: Satang, note?: string, approverCode?: string): Promise<Shift>;
   openDrawer(shiftId: string, reason: string, approverCode?: string): Promise<void>;

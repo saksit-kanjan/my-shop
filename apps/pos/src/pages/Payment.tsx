@@ -3,6 +3,7 @@ import { formatBaht, formatBahtFull, keypadToSatang } from '@my-shop/domain';
 import { useEffect, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { api } from '../api';
+import { useApproval } from '../components/ApprovalDialog';
 import { Keypad, applyKey } from '../components/Keypad';
 import { Steps } from '../components/Steps';
 import { useDisplayExtras } from '../display/bridge';
@@ -21,7 +22,8 @@ const methodLabel = (m: PaymentMethod) => METHODS.find((x) => x.id === m)?.label
 
 export function PaymentPage() {
   const { cart } = usePricedCart();
-  const { lines, memberPhone, completeSale } = useCart();
+  const { lines, memberPhone, manualDiscount, completeSale } = useCart();
+  const { run, dialog } = useApproval();
   const { employee, shiftId } = useSession();
   const { setPay, setThanks } = useDisplayExtras();
   const navigate = useNavigate();
@@ -93,7 +95,13 @@ export function PaymentPage() {
     setSaving(true);
     try {
       const all = due === 0 ? [] : [...payments, currentPayment()];
-      const record = await api.recordSale(shiftId, { employeeId: employee.id, cart, payments: all, change, memberPhone: memberPhone ?? undefined, ...(redeemPoints > 0 ? { pointsRedeemed: redeemPoints, pointsValue: redeemPoints * pointValue } : {}) });
+      const record = await run((approverCode) =>
+        api.recordSale(shiftId, { employeeId: employee.id, cart, payments: all, change, memberPhone: memberPhone ?? undefined, ...(redeemPoints > 0 ? { pointsRedeemed: redeemPoints, pointsValue: redeemPoints * pointValue } : {}), ...(manualDiscount ? { manualDiscount, approverCode } : {}) }),
+      );
+      if (!record) {
+        setSaving(false);
+        return;
+      }
       completeSale(record);
       setThanks({ change, saved: cart.discount });
       navigate('/success');
@@ -105,6 +113,7 @@ export function PaymentPage() {
 
   return (
     <main className="flex-1 flex flex-col gap-4 p-4">
+      {dialog}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Steps items={['คีย์สินค้า', 'ตรวจโปรโมชัน', 'ชำระเงิน']} current={2} />
         <button type="button" className="btn btn-ghost" onClick={() => navigate('/offers')}>กลับไปตรวจโปร</button>

@@ -84,7 +84,8 @@ export const localPosApi: PosApi = {
     save(db);
     return shift;
   },
-  async recordSale(shiftId, sale): Promise<SaleRecord> {
+  async recordSale(shiftId, request): Promise<SaleRecord> {
+    const { manualDiscount: _manual, approverCode: _approver, ...sale } = request;
     let record!: SaleRecord;
     mutateShift(shiftId, (shift, db) => {
       if (shift.closedAt) throw new Error('กะนี้ปิดแล้ว');

@@ -65,6 +65,7 @@ export interface Settings {
   refundDays: number;
   allowNegativeStock: boolean;
   cashVarianceLimit: number;
+  manualDiscountCapPercent: number;
   cutoffHour: number;
   storeName: string;
   branchName: string;

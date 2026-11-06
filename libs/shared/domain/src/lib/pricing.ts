@@ -5,6 +5,7 @@ import type {
   CartLine,
   Catalog,
   GiftPromotion,
+  ManualDiscount,
   NearPromo,
   PremiumLine,
   PricedCart,
@@ -20,6 +21,8 @@ export interface PriceOptions {
   isMember: boolean;
   /** The moment the bill is priced, to drop promotions that are out of their dates or weekdays. Omit to apply every promotion. */
   at?: Date;
+  /** A discount given by hand; applied last, after every promotion, and never takes the bill below 0. */
+  manual?: ManualDiscount;
 }
 
 /** Merge duplicate product lines and drop empty ones, keeping first-seen order. */
@@ -277,13 +280,18 @@ export function priceCart(input: CartLine[], catalog: Catalog, options: PriceOpt
   const bill = applyBill(billPromos, itemNet);
   const billDiscount = bill.applied.reduce((s, a) => s + a.discount, 0);
 
+  const manualAmount = options.manual ? manualDiscountAmount(options.manual, itemNet - billDiscount) : 0;
+  const billApplied: AppliedPromo[] = [
+    ...bill.applied,
+    ...(manualAmount > 0 ? [{ promotionId: 'manual', kind: 'manual' as const, label: options.manual?.reason ? `ส่วนลดพิเศษ: ${options.manual.reason}` : 'ส่วนลดพิเศษ', discount: manualAmount }] : []),
+  ];
   const gross = priced.reduce((s, l) => s + l.gross, 0);
-  const net = itemNet - billDiscount;
+  const net = itemNet - billDiscount - manualAmount;
 
   return {
     lines: orderGiftsUnderSource(priced),
     premiums,
-    billApplied: bill.applied,
+    billApplied,
     billNear: bill.near,
     pieces: priced.reduce((s, l) => s + l.qty, 0),
     gross,
@@ -292,6 +300,15 @@ export function priceCart(input: CartLine[], catalog: Catalog, options: PriceOpt
     vat: vatIncluded(net),
   };
 }
+
+/** What a manual discount takes off a bill of `base` satang: a fixed amount or a rounded-down percent, never more than the bill. */
+export function manualDiscountAmount(m: ManualDiscount, base: Satang): Satang {
+  const raw = m.type === 'percent' ? Math.floor((base * Math.min(Math.max(m.value, 0), 100)) / 100) : Math.max(m.value, 0);
+  return Math.min(Math.floor(raw), Math.max(base, 0));
+}
+
+/** The manual discount a priced cart carries, in satang (0 when none). */
+export const manualDiscountOf = (cart: PricedCart): Satang => cart.billApplied.filter((a) => a.kind === 'manual').reduce((s, a) => s + a.discount, 0);
 
 /** Put each free-gift line directly under the line that earned it. */
 export function orderGiftsUnderSource(lines: PricedLine[]): PricedLine[] {
