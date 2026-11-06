@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help install dev api pos backoffice display build start test test-pg typecheck check db-create db-reset backup clean
+.PHONY: help install dev api pos backoffice display build start test test-pg typecheck check db-create db-reset backup clean docker-build up down logs
 
 # Everything goes through pnpm (see packageManager in package.json).
 # Settings for the API come from .env (copy .env.example). Override on the command line:
@@ -8,7 +8,7 @@
 PG_ADMIN_URL ?= postgres://postgres@localhost:5432/postgres
 PG_DB        ?= myshop
 PORT         ?= 3000
-API_RUN       = pnpm exec tsx --env-file-if-exists=.env --tsconfig apps/api/tsconfig.app.json apps/api/src/main.ts
+API_RUN       = SWC_NODE_PROJECT=tsconfig.base.json node --env-file-if-exists=.env -r @swc-node/register apps/api/src/main.ts
 
 help: ## Show this help
 	@awk 'BEGIN {FS = ":.*## "} /^[a-zA-Z_-]+:.*## / {printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -57,6 +57,18 @@ db-reset: ## DROP and recreate PG_DB: all data in it is lost (asks you to type t
 backup: ## Dump PG_DB with pg_dump into .data/backups (the API also backs up daily at 03:00)
 	mkdir -p .data/backups
 	pg_dump --format=custom --file=.data/backups/myshop-$$(date +%Y%m%d-%H%M%S).dump "$(PG_ADMIN_URL:%/postgres=%/$(PG_DB))"
+
+docker-build: ## Build the Docker image (my-shop:latest)
+	docker build -t my-shop:latest .
+
+up: ## Start the shop in Docker (PostgreSQL + app); needs .env with POSTGRES_PASSWORD and CODE_SECRET
+	docker compose up -d --build
+
+down: ## Stop the Docker stack (data volumes are kept)
+	docker compose down
+
+logs: ## Follow the app logs in Docker
+	docker compose logs -f app
 
 clean: ## Remove build output and caches (keeps .data and .env)
 	rm -rf dist .nx coverage

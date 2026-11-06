@@ -1,0 +1,46 @@
+# My Shop on one machine:  cp .env.example .env  (fill in the blanks)  then  docker compose up -d --build
+# The shop is then at http://localhost:3000  (POS /, customer display /display/, back office /admin/).
+name: my-shop
+
+services:
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: myshop
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env (letters and digits only, it goes into a URL)}
+      POSTGRES_DB: myshop
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U myshop -d myshop"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  app:
+    build: .
+    image: my-shop:latest
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      DATABASE_URL: postgres://myshop:${POSTGRES_PASSWORD}@db:5432/myshop
+      # Keys the employee-code hashes. Generate once and NEVER change it: changing it locks every cashier out.
+      CODE_SECRET: ${CODE_SECRET:?Set CODE_SECRET in .env (openssl rand -hex 24)}
+      # 0 = no demo data. Then create the first owner with OWNER_* below (used only while no owner exists).
+      SEED_DEMO: ${SEED_DEMO:-0}
+      OWNER_USERNAME: ${OWNER_USERNAME:-}
+      OWNER_PASSWORD: ${OWNER_PASSWORD:-}
+      OWNER_CODE: ${OWNER_CODE:-}
+      BUSINESS_DAY_CUTOFF_HOUR: ${BUSINESS_DAY_CUTOFF_HOUR:-}
+      TZ: Asia/Bangkok
+    volumes:
+      - backups:/data/backups
+
+volumes:
+  pgdata:
+  backups:

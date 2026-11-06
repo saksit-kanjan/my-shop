@@ -4,11 +4,11 @@ import { join } from 'node:path';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
-import { bootstrapOwner, seedDemo } from './bootstrap/seed';
-import { CodeHasher, PasswordHasher } from './modules/identity/domain/credential-hasher';
-import { SettingsService } from './modules/administration/application/settings.service';
-import { createPgDb } from './shared/database/pg-db';
-import { createPgliteDb } from './shared/database/pglite-db';
+import { bootstrapOwner, seedDemo } from './database/seeds/demo.seed';
+import { CodeHasher, PasswordHasher } from './identity/providers/credential-hasher';
+import { SettingsService } from './administration/settings.service';
+import { createPgDb } from './database/pg-db';
+import { createPgliteDb } from './database/pglite-db';
 
 async function bootstrap() {
   // DATABASE_URL = PostgreSQL in production. Without it the API runs on embedded Postgres kept under

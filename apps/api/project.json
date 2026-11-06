@@ -7,7 +7,7 @@
   "targets": {
     "serve": {
       "executor": "nx:run-commands",
-      "options": { "command": "tsx watch --env-file-if-exists=.env --tsconfig apps/api/tsconfig.app.json apps/api/src/main.ts", "cwd": "{workspaceRoot}" }
+      "options": { "command": "SWC_NODE_PROJECT=tsconfig.base.json node --watch --env-file-if-exists=.env -r @swc-node/register apps/api/src/main.ts", "cwd": "{workspaceRoot}" }
     },
     "typecheck": {
       "executor": "nx:run-commands",

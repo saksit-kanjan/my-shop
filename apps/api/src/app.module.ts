@@ -1,33 +1,32 @@
 import { Module, type DynamicModule } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
-import { JobsModule } from './jobs/scheduler';
-import { AdministrationModule } from './modules/administration/administration.module';
-import { CatalogModule } from './modules/catalog/catalog.module';
-import { IdentityModule } from './modules/identity/identity.module';
-import { AuthGuard } from './modules/identity/presentation/auth.guard';
-import { InventoryModule } from './modules/inventory/inventory.module';
-import { MembershipModule } from './modules/membership/membership.module';
-import { ReportingModule } from './modules/reporting/reporting.module';
-import { SalesModule } from './modules/sales/sales.module';
-import { DomainErrorFilter } from './shared/http/domain-error.filter';
-import { SharedModule, type SharedOptions } from './shared/shared.module';
+import { AdministrationModule } from './administration/administration.module';
+import { AuditModule } from './audit/audit.module';
+import { CatalogModule } from './catalog/catalog.module';
+import { CommonModule, type CommonOptions } from './common/common.module';
+import { DomainErrorFilter } from './common/filters/domain-error.filter';
+import type { Db } from './database/database';
+import { DatabaseModule } from './database/database.module';
+import { AuthGuard } from './identity/guards/auth.guard';
+import { IdentityModule } from './identity/identity.module';
+import { InventoryModule } from './inventory/inventory.module';
+import { JobsModule } from './jobs/jobs.module';
+import { MembershipModule } from './membership/membership.module';
+import { NumberingModule } from './numbering/numbering.module';
+import { ReportingModule } from './reporting/reporting.module';
+import { SalesModule } from './sales/sales.module';
 
-export interface AppOptions extends SharedOptions {
+export interface AppOptions extends CommonOptions {
+  /** The database the app owns the schema of. Closing it is the caller's job. */
+  db: Db;
   /** Run the daily backup and points-expiry timer. On for the server, off in tests. */
   schedule?: boolean;
 }
 
 /**
- * The composition root. Bounded contexts, each a Nest module with domain / application / infrastructure / presentation:
- *
- *   shared ─ kernel, database, unit of work, audit, document numbers
- *   identity ─ sign-in, approvals, staff, permissions          administration ─ settings, backup
- *   catalog ─ products, promotions                             membership ─ members, points
- *   inventory ─ stock ledger, receiving, counts                sales ─ shifts, bills, credit notes, documents, day close
- *   reporting ─ read side over all of them
- *
- * Dependencies point one way: sales -> (catalog, inventory, membership, identity, administration); inventory -> catalog;
- * identity -> administration; reporting -> (sales, inventory). Nobody depends on reporting or sales.
+ * The root module. Each feature is a Nest module in its own folder (module, controllers, services, dto, entities,
+ * repositories, policies). Features depend one way: sales -> catalog, inventory, membership, identity, administration;
+ * inventory -> catalog; identity -> administration; reporting -> sales, inventory. Nobody depends on reporting or sales.
  */
 @Module({})
 export class AppModule {
@@ -35,7 +34,10 @@ export class AppModule {
     return {
       module: AppModule,
       imports: [
-        SharedModule.forRoot(o),
+        CommonModule.forRoot(o),
+        DatabaseModule.forRoot(o.db),
+        AuditModule,
+        NumberingModule,
         AdministrationModule,
         IdentityModule,
         CatalogModule,

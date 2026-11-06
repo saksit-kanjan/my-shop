@@ -23,5 +23,5 @@ pnpm nx serve customer-display   # then open http://localhost:4200/display/ on t
 pnpm nx run-many -t test
 ```
 
-Demo till codes: 100123 (สมชาย, cashier), 200456 (วิภา, cashier), 300789 (ปรีชา, supervisor). Back-office demo accounts are in `apps/api/src/bootstrap/seed.ts` (local only).
+Demo till codes: 100123 (สมชาย, cashier), 200456 (วิภา, cashier), 300789 (ปรีชา, supervisor). Back-office demo accounts are in `apps/api/src/database/seeds/demo.seed.ts` (local only).
 Build the POS with `VITE_API_URL=local` to run it on browser-only demo data without the API.

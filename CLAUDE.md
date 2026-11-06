@@ -18,6 +18,11 @@ Read `design/README.md` first. The full written spec is `design/spec.md` (Thai).
 - `libs/ui`: daisyUI theme and shared components (`PromoChip`, `PriceStack`, `ProductThumb`).
 - `apps/backoffice`: React + Vite, served at `/admin/`. Uses the same daisyUI theme; talks only to `/api/bo/*` (each route names the permission it needs). Tag imports so apps never import each other.
 
+## Docker
+
+`docker compose up -d --build` runs PostgreSQL and the app (`Dockerfile`: build the three front ends, then run the API from source with a matching `pg_dump`).
+Needs `POSTGRES_PASSWORD` and `CODE_SECRET` in `.env`. The image has not been built on the machine this was written on (no Docker daemon was running).
+
 ## Commands
 
 ```bash
@@ -63,40 +68,39 @@ Demo employee codes: 100123, 200456, 300789.
    device config; the sale flow must work with none of them (browser print, manual approval code).
 10. UI copy: plain Thai, sentence case, name things the way the cashier says them, errors say what to do.
 
-## API architecture (`apps/api/src`)
+## API architecture (`apps/api`)
+
+Standard NestJS feature folders, with the clean-architecture rules kept by convention and checked by `test/architecture.spec.ts`.
 
 ```
-app.module.ts          composition root: AppModule.forRoot({ db, secret, clock, ... })
-main.ts                boots Nest, serves the built apps, seeds on first run
-shared/                kernel (DomainError, clock, dates, Session), database (Db port, pg and PGlite adapters, schema, UnitOfWork),
-                       audit log, document numbers, http (error filter, auth decorators), SharedModule (global)
-modules/<context>/     one Nest module per bounded context
-  domain/              pure TypeScript: entities, value objects, policies, and the repository PORTS (abstract classes)
-  application/         use cases: @Injectable services that orchestrate domain + ports in a UnitOfWork transaction
-  infrastructure/      adapters: Pg*Repository (all SQL lives here), crypto, anti-corruption adapters to other contexts
-  presentation/        controllers (thin: parse, call one use case, return)
-  <context>.module.ts  providers, and exports ONLY application services
-jobs/                  scheduler (backup + points expiry), only on the real server
-bootstrap/             demo seed and first-run owner (not part of the app graph)
-testing/               createServices(): boots the real module graph without HTTP, for tests
+src/main.ts, app.module.ts         bootstrap and the root module: AppModule.forRoot({ db, secret, clock, ... })
+src/common/                        DomainError, clock, dates, session, decorators (@Public, @Requires), filters, CommonModule
+src/database/                      Db port, pg and PGlite adapters, schema, UnitOfWork, DatabaseModule, seeds/
+src/audit/, src/numbering/         AuditService and DocumentNumbersService (global modules)
+src/<feature>/                     identity, administration, catalog, membership, inventory, sales, reporting
+  <feature>.module.ts              providers, and exports only services
+  *.controller.ts                  thin: parse, call one service, return
+  *.service.ts                     the use cases (orchestrate policies and repository ports in a UnitOfWork transaction)
+  entities/                        plain types and value objects
+  policies/                        pure business rules (login lockout, points, refund allocation, payment checks ...)
+  repositories/                    <x>.repository.ts = abstract PORT, pg-<x>.repository.ts = adapter (all SQL lives here)
+  providers/                       other ports and adapters (hashers, ProductDirectory -> catalog)
+  guards/                          identity/guards/auth.guard.ts
+src/jobs/                          scheduler (backup + points expiry), only on the real server
+test/                              *.e2e-spec.ts over the real module graph, architecture.spec.ts, helpers/
 ```
 
-Contexts: **identity** (sign-in, approvals, staff, permission matrix), **administration** (settings, backup), **catalog**
-(products, promotions, free gifts), **membership** (members, points ledger), **inventory** (stock ledger, receiving, counts),
-**sales** (shifts, bills, credit notes, documents, day close; the only context that orchestrates others) and **reporting**
-(read side). Dependencies point one way: sales -> catalog, inventory, membership, identity, administration; inventory -> catalog;
-identity -> administration; reporting -> sales, inventory. `src/architecture.spec.ts` enforces the rules: domain has no Nest or
-SQL, application never imports infrastructure or presentation, SQL stays in infrastructure (reporting's query side excepted), a
-context reaches another only through its `application/` services, the shared kernel imports no context, and there are no cycles.
+Dependencies point one way: sales -> catalog, inventory, membership, identity, administration; inventory -> catalog;
+identity -> administration; reporting -> sales, inventory. The architecture spec enforces: entities and policies have no Nest or SQL;
+services use repository ports, never the `pg-*` adapters; SQL stays in `repositories/pg-*`, `database/`, `audit/`, `numbering/` and
+reporting's read side; a feature reaches another only through its `*.service.ts` or module; no cycles.
 
-How to add things:
-- A rule -> `domain/` as a pure function with a test; the use case calls it. A table -> a method on that context's repository port,
-  implemented in `infrastructure/pg-*.repository.ts` (repositories take the open `Tx` as their first argument).
-- A new use case -> an `@Injectable()` in `application/`, injecting ports and other contexts' services; run writes in
-  `UnitOfWork.run`, call `AuditLog.record(tx, ...)` and `DocumentNumbers.format(tx, series)` inside the same transaction.
-- Every constructor parameter needs an explicit `@Inject(...)`: tests and `tsx` run through esbuild, which emits no decorator metadata.
-- Call `setGlobalPrefix` before `init()` in `main.ts`; routes are registered at init.
-- Products and stock are different contexts, so the back-office screens join `/bo/products` with `/bo/stock`, and `/bo/promotions` with `/bo/premiums/stock`.
+Runtime: the API runs from TypeScript through SWC (`@swc-node/register`, `unplugin-swc` in vitest) because Nest needs decorator
+metadata to inject by type; esbuild and `tsx` do not emit it, so do not use them for the API. Constructor parameters are injected by
+type; only the non-class tokens (`DB`, `CLOCK`, `SECRET`, `BACKUP_*`) need `@Inject(...)`. Call `setGlobalPrefix` before `init()`.
+Not done yet: `@nestjs/config`, DTO classes with class-validator and a `ValidationPipe` (request bodies are plain interfaces and are
+checked in the services), `Test.createTestingModule` unit specs.
+Products and stock are separate features, so the back-office screens join `/bo/products` with `/bo/stock`.
 
 ## What the API does now
 
@@ -109,11 +113,11 @@ with average cost, stock ledger, adjustments, stock counts (snapshot, approve), 
 products, gross profit, cash, credits, stock value, monthly tax, members and promos), users and the permission matrix
 with owner overrides, settings, audit log, daily backup (kept 30 days). Closed documents are append-only through database triggers.
 
-Settings that answer the spec's open questions are in `SETTING_DEFAULTS` (`modules/administration/domain/settings.ts`) and editable in the
+Settings that answer the spec's open questions are in `SETTING_DEFAULTS` (`src/administration/entities/settings.entity.ts`) and editable in the
 back office: negative stock allowed, refund window 7 days, points 25 baht = 1 point and 100 points = 10 baht, no expiry,
 cash variance limit 100 baht, business-day cutoff hour 0. **They are the spec's suggestions, not decisions the owner made.**
 
-Demo accounts (local only, `src/bootstrap/seed.ts`): back office `owner` and `manager`; production creates the owner from
+Demo accounts (local only, `src/database/seeds/demo.seed.ts`): back office `owner` and `manager`; production creates the owner from
 `OWNER_USERNAME`, `OWNER_PASSWORD`, `OWNER_CODE` and never seeds demo data (`SEED_DEMO=0`).
 
 ## Not built yet
