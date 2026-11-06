@@ -1,0 +1,17 @@
+{
+  "name": "server",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/server/src",
+  "projectType": "application",
+  "tags": [],
+  "targets": {
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": { "command": "SWC_NODE_PROJECT=tsconfig.base.json node --watch -r @swc-node/register apps/server/src/main.ts", "cwd": "{workspaceRoot}" }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": { "command": "tsc -p apps/server/tsconfig.app.json --noEmit", "cwd": "{workspaceRoot}" }
+    }
+  }
+}

@@ -1,5 +1,0 @@
-{
-  "extends": "./tsconfig.json",
-  "compilerOptions": { "outDir": "../../dist/out-tsc/api-spec", "noEmit": true, "rootDir": "../..", "types": ["node", "vitest/globals"] },
-  "include": ["src/**/*.ts", "test/**/*.ts"]
-}

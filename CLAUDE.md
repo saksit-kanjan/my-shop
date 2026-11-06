@@ -10,7 +10,7 @@ Read `design/README.md` first. The full written spec is `design/spec.md` (Thai).
 - `apps/pos`: React + Vite POS. Data goes through `src/api/pos-api.ts` (`PosApi`). `src/api/index.ts` picks the
   implementation: `http-pos-api.ts` (the server at `/api`, default) or `local-pos-api.ts` (browser-only demo,
   build with `VITE_API_URL=local`).
-- `apps/api`: NestJS 11, organised as bounded contexts with clean / DDD layers. See "API architecture" below.
+- `apps/server`: the API only (NestJS 11, JSON under `/api`, PostgreSQL). It serves no web pages. See "Server" below.
 - `apps/customer-display`: second screen, served at `/display/`, shows state only, no buttons.
 - `libs/shared/contracts`: shared types and the customer-display channel messages.
 - `libs/shared/domain`: money, VAT and the promotion engine. Must stay free of React and browser APIs.
@@ -20,8 +20,8 @@ Read `design/README.md` first. The full written spec is `design/spec.md` (Thai).
 
 ## Docker
 
-`docker compose up -d --build` runs PostgreSQL and the app (`Dockerfile`: build the three front ends, then run the API from source with a matching `pg_dump`).
-Needs `POSTGRES_PASSWORD` and `CODE_SECRET` in `.env`. The image has not been built on the machine this was written on (no Docker daemon was running).
+`docker compose up -d --build` runs three containers: PostgreSQL, the server (`--target server`) and nginx (`--target web`) which serves the three web apps and proxies `/api`.
+Needs `POSTGRES_PASSWORD` and `CODE_SECRET` in `.env`. The images have not been built on the machine this was written on (no Docker daemon was running).
 
 ## Commands
 
@@ -30,12 +30,11 @@ pnpm install                     # pnpm only: do not use npm or yarn (package.js
 pnpm nx serve pos                  # :4200
 pnpm nx serve customer-display     # open :4200/display/ on the second screen
 pnpm nx run-many -t build test
-pnpm nx serve api                  # :3000, embedded Postgres in .data/pglite, demo data seeded when empty
+pnpm nx serve server               # :3000, JSON API only; uses DATABASE_URL from .env, else embedded PGlite in .data/ with demo data
 pnpm nx serve pos                  # :4200, proxies /api to :3000
 pnpm nx serve backoffice           # :4202/admin/, proxies /api to :3000
-PORT=8080 pnpm exec tsx --tsconfig apps/api/tsconfig.app.json apps/api/src/main.ts   # after nx run-many -t build:
-                                  # the shop setup: POS (/), display (/display/), back office (/admin/) and API all on :8080
-python3 tools/e2e-smoke.py        # Playwright run of a full shift against :8080 (needs the line above)
+docker compose up -d --build       # the shop: nginx (POS /, display /display/, back office /admin/) + server + PostgreSQL
+python3 tools/e2e-smoke.py        # Playwright run of a full shift against :8080 (point it at the nginx address)
 ```
 
 Demo employee codes: 100123, 200456, 300789.
@@ -68,39 +67,31 @@ Demo employee codes: 100123, 200456, 300789.
    device config; the sale flow must work with none of them (browser print, manual approval code).
 10. UI copy: plain Thai, sentence case, name things the way the cashier says them, errors say what to do.
 
-## API architecture (`apps/api`)
+## Server (`apps/server`)
 
-Standard NestJS feature folders, with the clean-architecture rules kept by convention and checked by `test/architecture.spec.ts`.
+A plain NestJS API. One folder per feature, each with the usual files; no repository layer, services write SQL through
+`DatabaseService` (`query` outside a transaction, `transaction(tx => ...)` for a whole use case).
 
 ```
-src/main.ts, app.module.ts         bootstrap and the root module: AppModule.forRoot({ db, secret, clock, ... })
-src/common/                        DomainError, clock, dates, session, decorators (@Public, @Requires), filters, CommonModule
-src/database/                      Db port, pg and PGlite adapters, schema, UnitOfWork, DatabaseModule, seeds/
-src/audit/, src/numbering/         AuditService and DocumentNumbersService (global modules)
-src/<feature>/                     identity, administration, catalog, membership, inventory, sales, reporting
-  <feature>.module.ts              providers, and exports only services
-  *.controller.ts                  thin: parse, call one service, return
-  *.service.ts                     the use cases (orchestrate policies and repository ports in a UnitOfWork transaction)
-  entities/                        plain types and value objects
-  policies/                        pure business rules (login lockout, points, refund allocation, payment checks ...)
-  repositories/                    <x>.repository.ts = abstract PORT, pg-<x>.repository.ts = adapter (all SQL lives here)
-  providers/                       other ports and adapters (hashers, ProductDirectory -> catalog)
-  guards/                          identity/guards/auth.guard.ts
-src/jobs/                          scheduler (backup + points expiry), only on the real server
-test/                              *.e2e-spec.ts over the real module graph, architecture.spec.ts, helpers/
+src/main.ts, app.module.ts   boot (ConfigModule, validation pipe, error filter) and the root module
+src/config/                  env validation (@nestjs/config); .env is read from the repo root
+src/common/                  DomainError + filter, @Public/@Requires, session, clock, dates, app-setup (prefix, ValidationPipe)
+src/database/                DatabaseService (pg or embedded PGlite), schema/migrations, NumberingService, demo seed
+src/audit/                   AuditService (every feature writes who did what, inside its transaction)
+src/<feature>/               auth, users, settings, backup, products, members, stock, sales, reports, jobs
+  <feature>.module.ts, .controller.ts, .service.ts, dto/    plus small pure helpers like points-policy.ts, refund-rules.ts
+test/                        *.e2e-spec.ts over the real module graph (Test.createTestingModule), structure.spec.ts, helpers/
 ```
 
-Dependencies point one way: sales -> catalog, inventory, membership, identity, administration; inventory -> catalog;
-identity -> administration; reporting -> sales, inventory. The architecture spec enforces: entities and policies have no Nest or SQL;
-services use repository ports, never the `pg-*` adapters; SQL stays in `repositories/pg-*`, `database/`, `audit/`, `numbering/` and
-reporting's read side; a feature reaches another only through its `*.service.ts` or module; no cycles.
+Features depend one way: sales -> products, stock, members, auth, settings; stock -> products; reports -> sales, stock. Nothing
+depends on sales or reports (`test/structure.spec.ts` checks cycles, thin controllers, and that the server serves no web pages).
+Request bodies are DTO classes (class-validator) behind a global `ValidationPipe`; business rules throw `DomainError`.
 
-Runtime: the API runs from TypeScript through SWC (`@swc-node/register`, `unplugin-swc` in vitest) because Nest needs decorator
-metadata to inject by type; esbuild and `tsx` do not emit it, so do not use them for the API. Constructor parameters are injected by
-type; only the non-class tokens (`DB`, `CLOCK`, `SECRET`, `BACKUP_*`) need `@Inject(...)`. Call `setGlobalPrefix` before `init()`.
-Not done yet: `@nestjs/config`, DTO classes with class-validator and a `ValidationPipe` (request bodies are plain interfaces and are
-checked in the services), `Test.createTestingModule` unit specs.
-Products and stock are separate features, so the back-office screens join `/bo/products` with `/bo/stock`.
+Runtime: TypeScript runs through SWC (`@swc-node/register`, `unplugin-swc` in vitest) because Nest injects by constructor type and needs
+decorator metadata; esbuild and `tsx` do not emit it, so do not use them for the server. Only non-class tokens (`CLOCK`, `DB_CONNECTION`)
+need `@Inject`. Call `setGlobalPrefix` before `init()` (`configureApp` does). Tests replace the database and the clock with
+`overrideProvider(DB_CONNECTION)` / `overrideProvider(CLOCK)`.
+Products and stock are different features, so the back-office screens join `/bo/products` with `/bo/stock`, and `/bo/promotions` with `/bo/premiums/stock`.
 
 ## What the API does now
 
@@ -117,7 +108,7 @@ Settings that answer the spec's open questions are in `SETTING_DEFAULTS` (`src/a
 back office: negative stock allowed, refund window 7 days, points 25 baht = 1 point and 100 points = 10 baht, no expiry,
 cash variance limit 100 baht, business-day cutoff hour 0. **They are the spec's suggestions, not decisions the owner made.**
 
-Demo accounts (local only, `src/database/seeds/demo.seed.ts`): back office `owner` and `manager`; production creates the owner from
+Demo accounts (local only, `src/database/demo.seed.ts`): back office `owner` and `manager`; production creates the owner from
 `OWNER_USERNAME`, `OWNER_PASSWORD`, `OWNER_CODE` and never seeds demo data (`SEED_DEMO=0`).
 
 ## Not built yet
@@ -136,6 +127,6 @@ Demo accounts (local only, `src/database/seeds/demo.seed.ts`): back office `owne
 ## Testing
 
 Set `TEST_DATABASE_URL=postgres://postgres@localhost:5432/postgres` to run the same API suite on a real PostgreSQL (each test gets a throwaway database, dropped after); the default is in-memory PGlite. All pass on both.
-The API is covered by `apps/api/src/*.spec.ts` (56 cases: rules, rollbacks, approvals, refunds, reports, permissions over HTTP, and the architecture rules).
+The API is covered by `apps/server/test/*.e2e-spec.ts` (49 cases: rules, rollbacks, approvals, refunds, reports, permissions over HTTP) plus `structure.spec.ts`.
 Pricing is covered in `libs/shared/domain/src/lib/pricing.spec.ts` (all three promo kinds, set vs all, gifts,
 premiums, bill threshold, member). Add a test there before changing pricing behaviour.

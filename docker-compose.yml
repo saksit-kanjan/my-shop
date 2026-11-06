@@ -1,5 +1,6 @@
 # My Shop on one machine:  cp .env.example .env  (fill in the blanks)  then  docker compose up -d --build
-# The shop is then at http://localhost:3000  (POS /, customer display /display/, back office /admin/).
+# Open http://localhost:3000  (POS /, customer display /display/, back office /admin/). Only nginx is published; the server and
+# the database are reachable from inside the compose network only.
 name: my-shop
 
 services:
@@ -18,15 +19,15 @@ services:
       timeout: 3s
       retries: 20
 
-  app:
-    build: .
-    image: my-shop:latest
+  server:
+    build:
+      context: .
+      target: server
+    image: my-shop-server:latest
     restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
-    ports:
-      - "${PORT:-3000}:3000"
     environment:
       DATABASE_URL: postgres://myshop:${POSTGRES_PASSWORD}@db:5432/myshop
       # Keys the employee-code hashes. Generate once and NEVER change it: changing it locks every cashier out.
@@ -40,6 +41,17 @@ services:
       TZ: Asia/Bangkok
     volumes:
       - backups:/data/backups
+
+  web:
+    build:
+      context: .
+      target: web
+    image: my-shop-web:latest
+    restart: unless-stopped
+    depends_on:
+      - server
+    ports:
+      - "${PORT:-3000}:80"
 
 volumes:
   pgdata:
