@@ -4,9 +4,10 @@ export function validateEnv(env: Record<string, unknown>): Record<string, unknow
   if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('PORT must be a number from 1 to 65535.');
   const url = env['DATABASE_URL'];
   const secret = env['CODE_SECRET'];
-  // With a real PostgreSQL the employee-code hashes must be keyed by a secret that never changes.
-  if (url && !secret) throw new Error('Set CODE_SECRET when DATABASE_URL is set: it keys the employee code hashes and must never change.');
+  if (!url) throw new Error('Set DATABASE_URL (postgres://user:password@host:5432/dbname): the server needs a PostgreSQL database.');
+  // The employee-code hashes are keyed by a secret that never changes.
+  if (!secret) throw new Error('Set CODE_SECRET: it keys the employee code hashes and must never change.');
   const cutoff = env['BUSINESS_DAY_CUTOFF_HOUR'];
   if (cutoff !== undefined && cutoff !== '' && !(Number.isInteger(Number(cutoff)) && Number(cutoff) >= 0 && Number(cutoff) <= 23)) throw new Error('BUSINESS_DAY_CUTOFF_HOUR must be 0 to 23.');
-  return { ...env, PORT: port, CODE_SECRET: secret ?? 'dev-only-secret-change-me' };
+  return { ...env, PORT: port, CODE_SECRET: secret };
 }

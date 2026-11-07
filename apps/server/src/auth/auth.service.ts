@@ -7,6 +7,7 @@ import { DomainError } from '../common/domain-error';
 import { BACK_OFFICE_TERMINAL, type Session } from '../common/session';
 import { DatabaseService } from '../database/database.service';
 import type { Tx } from '../database/database.types';
+import { EmployeeEntity, LoginAttempt, SessionEntity } from './entities/auth.entities';
 import { CredentialsService } from './credentials.service';
 import { LOCK_SECONDS, afterFailure, lockedFor, type AttemptState } from './login-attempts';
 
@@ -35,26 +36,25 @@ export class AuthService {
 
   /** Wrong-code counter for a key (a terminal, an approval dialog, a username). */
   async attempt(tx: Tx, key: string, lockRow = false): Promise<AttemptState | null> {
-    const [r] = await tx.query<{ fails: number; locked_until: Date | null }>(`SELECT fails, locked_until FROM login_attempts WHERE terminal_id=$1${lockRow ? ' FOR UPDATE' : ''}`, [key]);
-    return r ? { fails: r.fails, lockedUntil: r.locked_until } : null;
+    const r = await tx.findOne(LoginAttempt, { where: { terminalId: key }, ...(lockRow ? { lock: { mode: 'pessimistic_write' as const } } : {}) });
+    return r ? { fails: r.fails, lockedUntil: r.lockedUntil } : null;
   }
 
   async saveAttempt(tx: Tx, key: string, s: AttemptState) {
-    await tx.query(`INSERT INTO login_attempts (terminal_id, fails, locked_until) VALUES ($1,$2,$3) ON CONFLICT (terminal_id) DO UPDATE SET fails=EXCLUDED.fails, locked_until=EXCLUDED.locked_until`, [key, s.fails, s.lockedUntil]);
+    await tx.save(LoginAttempt, { terminalId: key, fails: s.fails, lockedUntil: s.lockedUntil });
   }
 
   async clearAttempt(tx: Tx, key: string) {
-    await tx.query(`DELETE FROM login_attempts WHERE terminal_id=$1`, [key]);
+    await tx.delete(LoginAttempt, { terminalId: key });
   }
 
   async employeeByCode(tx: Tx, code: string): Promise<EmployeeRow | null> {
-    const [r] = await tx.query<EmployeeRow>(`SELECT id, name, initials, role FROM employees WHERE code_hash=$1 AND active`, [this.credentials.hashCode(code)]);
-    return r ?? null;
+    return tx.findOne(EmployeeEntity, { where: { codeHash: this.credentials.hashCode(code), active: true }, select: { id: true, name: true, initials: true, role: true } });
   }
 
   private async createSession(tx: Tx, employeeId: string, terminalId: string, now: Date): Promise<string> {
     const token = randomBytes(24).toString('hex');
-    await tx.query(`INSERT INTO sessions (token, employee_id, terminal_id, created_at, last_seen) VALUES ($1,$2,$3,$4,$4)`, [token, employeeId, terminalId, now]);
+    await tx.insert(SessionEntity, { token, employeeId, terminalId, createdAt: now, lastSeen: now });
     return token;
   }
 
@@ -88,11 +88,11 @@ export class AuthService {
   async loginBackOffice(username: string, password: string): Promise<Session> {
     const now = this.clock();
     const key = `bo:${String(username).toLowerCase()}`;
-    const state = await this.attempt(this.db, key);
+    const state = await this.attempt(this.db.manager, key);
     const wait = lockedFor(state, now);
     if (wait > 0) throw new DomainError('locked', `ใส่รหัสผิดหลายครั้ง รออีก ${wait} วินาที`, { retryAfterSeconds: wait });
-    const [staff] = await this.db.query<EmployeeRow & { password_hash: string | null }>(`SELECT id, name, initials, role, password_hash FROM employees WHERE lower(username)=lower($1) AND active`, [String(username)]);
-    const ok = staff?.password_hash ? await this.credentials.verifyPassword(String(password), staff.password_hash) : false;
+    const staff = await this.db.manager.createQueryBuilder(EmployeeEntity, 'e').where('lower(e.username) = lower(:username)', { username: String(username) }).andWhere('e.active').getOne();
+    const ok = staff?.passwordHash ? await this.credentials.verifyPassword(String(password), staff.passwordHash) : false;
     if (!ok || !staff) {
       await this.db.transaction(async (tx) => {
         await this.saveAttempt(tx, key, afterFailure(state, now));
@@ -113,25 +113,23 @@ export class AuthService {
   async authenticate(token: string | undefined): Promise<Session | null> {
     if (!token) return null;
     const now = this.clock();
-    const [s] = await this.db.query<EmployeeRow & { terminal_id: string; last_seen: Date }>(
-      `SELECT e.id, e.name, e.initials, e.role, s.terminal_id, s.last_seen FROM sessions s JOIN employees e ON e.id=s.employee_id WHERE s.token=$1 AND e.active`,
-      [token],
-    );
-    if (!s || now.getTime() - s.last_seen.getTime() > IDLE_LOGOUT_MS) return null;
-    await this.db.query(`UPDATE sessions SET last_seen=$2 WHERE token=$1`, [token, now]);
-    return { token, terminalId: s.terminal_id, employee: toEmployee(s) };
+    const s = await this.db.manager.findOneBy(SessionEntity, { token });
+    const e = s ? await this.db.manager.findOneBy(EmployeeEntity, { id: s.employeeId, active: true }) : null;
+    if (!s || !e || now.getTime() - s.lastSeen.getTime() > IDLE_LOGOUT_MS) return null;
+    await this.db.manager.update(SessionEntity, { token }, { lastSeen: now });
+    return { token, terminalId: s.terminalId, employee: toEmployee(e) };
   }
 
   async logout(token: string): Promise<void> {
     const s = await this.authenticate(token);
     await this.db.transaction(async (tx) => {
-      await tx.query(`DELETE FROM sessions WHERE token=$1`, [token]);
+      await tx.delete(SessionEntity, { token });
       if (s) await this.audit.record(tx, this.clock(), { actor: s.employee.id, terminalId: s.terminalId, action: 'logout' });
     });
   }
 
   async findEmployee(id: string): Promise<Employee | null> {
-    const [r] = await this.db.query<EmployeeRow>(`SELECT id, name, initials, role FROM employees WHERE id=$1`, [id]);
+    const r = await this.db.manager.findOneBy(EmployeeEntity, { id });
     return r ? toEmployee(r) : null;
   }
 

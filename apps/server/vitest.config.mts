@@ -19,6 +19,7 @@ export default defineConfig(() => ({
     globals: true,
     environment: 'node',
     testTimeout: 30000,
+    setupFiles: ['test/helpers/env.ts'],
     include: ['src/**/*.spec.ts', 'test/**/*.{spec,e2e-spec}.ts'],
     reporters: ['default'],
   },

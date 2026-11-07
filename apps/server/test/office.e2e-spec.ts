@@ -7,20 +7,24 @@ import { summarizeShift } from '@my-shop/domain';
 import { demoCatalog } from '@my-shop/seed';
 import { priceCart } from '@my-shop/domain';
 import { createServices, type Services } from './helpers/services';
-import type { Db } from '../src/database/database.types';
+import type { DatabaseService } from '../src/database/database.service';
 import { openTestDb } from './helpers/test-db';
 import { seedDemo } from '../src/bootstrap/demo.seed';
 
 let now: Date;
-let db: Db;
+let db: DatabaseService;
 let drop: () => Promise<void>;
+let databaseUrl: string;
 let s: Services;
 const advance = (ms: number) => (now = new Date(now.getTime() + ms));
 
 beforeEach(async () => {
   now = new Date('2026-11-06T03:00:00Z'); // 10:00 Bangkok, business date 2026-11-06
-  ({ db, drop } = await openTestDb());
-  s = await createServices(db, { clock: () => now, backupDir: await mkdtemp(join(tmpdir(), 'myshop-bk-')) });
+  const opened = await openTestDb();
+  drop = opened.drop;
+  s = await createServices(opened.url, { clock: () => now, backupDir: await mkdtemp(join(tmpdir(), 'myshop-bk-')) });
+  db = s.db;
+  databaseUrl = opened.url;
   await seedDemo(s.db, s.credentials);
 });
 afterEach(() => drop());

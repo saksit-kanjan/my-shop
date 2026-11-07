@@ -5,7 +5,7 @@ Nx monorepo for the shop's on-prem POS.
 | Path | What |
 | --- | --- |
 | `apps/pos` | POS for cashiers (React + Vite + daisyUI) |
-| `apps/server` | The API only (NestJS, JSON under `/api`) on PostgreSQL, or embedded PGlite for dev |
+| `apps/server` | The API only (NestJS, JSON under `/api`) on PostgreSQL through TypeORM |
 | `apps/backoffice` | Back office at `/admin/`: catalog, promotions, receiving, stock count, day close, reports, users |
 | `apps/customer-display` | Customer-facing second screen, served under `/display/` |
 | `libs/shared/contracts` | Shared types and the display channel messages |

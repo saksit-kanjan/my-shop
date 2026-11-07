@@ -30,7 +30,7 @@ pnpm install                     # pnpm only: do not use npm or yarn (package.js
 pnpm nx serve pos                  # :4200
 pnpm nx serve customer-display     # open :4200/display/ on the second screen
 pnpm nx run-many -t build test
-pnpm nx serve server               # :3000, JSON API only; uses DATABASE_URL from .env, else embedded PGlite in .data/ with demo data
+pnpm nx serve server               # :3000, JSON API only; needs DATABASE_URL in .env (PostgreSQL); migrations run at start, demo data loads into an empty database
 pnpm nx serve pos                  # :4200, proxies /api to :3000
 pnpm nx serve backoffice           # :4202/admin/, proxies /api to :3000
 docker compose up -d --build       # the shop: nginx (POS /, display /display/, back office /admin/) + server + PostgreSQL
@@ -69,14 +69,17 @@ Demo employee codes: 100123, 200456, 300789.
 
 ## Server (`apps/server`)
 
-A plain NestJS API. One folder per feature, each with the usual files; no repository layer, services write SQL through
-`DatabaseService` (`query` outside a transaction, `transaction(tx => ...)` for a whole use case).
+A plain NestJS API on PostgreSQL through TypeORM. One folder per feature, each with the usual files plus `entities/`
+(registered with `TypeOrmModule.forFeature` in the feature's module). Services use the `EntityManager`: `DatabaseService.manager`
+outside a transaction, `DatabaseService.transaction(tx => ...)` for a whole use case (`tx` is the transaction's manager, so
+`tx.find`, `tx.insert`, `tx.createQueryBuilder` ...). Hand-written SQL stays only in `reports/` (aggregates) and the
+`doc_counters` upsert in `NumberingService`, through the `rows()` helper in `database/sql.ts`.
 
 ```
 src/main.ts, app.module.ts   boot (ConfigModule, validation pipe, error filter) and the root module
 src/config/                  env validation (@nestjs/config); .env is read from the repo root
 src/common/                  DomainError + filter, @Public/@Requires, session, clock, dates, app-setup (prefix, ValidationPipe)
-src/database/                DatabaseService (pg or embedded PGlite), schema/migrations, NumberingService, demo seed
+src/database/                DatabaseService, TypeORM setup, migrations (`migrations/`, run at start; the triggers that make closed documents append-only live there), NumberingService
 src/audit/                   AuditService (every feature writes who did what, inside its transaction)
 src/<feature>/               auth, users, settings, backup, products, members, stock, sales, reports, jobs
   <feature>.module.ts, .controller.ts, .service.ts, dto/    plus small pure helpers like points-policy.ts, refund-rules.ts
@@ -129,7 +132,7 @@ Demo accounts (local only, `src/database/demo.seed.ts`): back office `owner` and
 
 ## Testing
 
-Set `TEST_DATABASE_URL=postgres://postgres@localhost:5432/postgres` to run the same API suite on a real PostgreSQL (each test gets a throwaway database, dropped after); the default is in-memory PGlite. All pass on both.
+Set `TEST_DATABASE_URL=postgres://postgres@localhost:5432/postgres` to run the same API suite on a real PostgreSQL (each test gets a throwaway database, dropped after); the default is that same address. A PostgreSQL server is required (there is no embedded database).
 The API is covered by `apps/server/test/*.e2e-spec.ts` (49 cases: rules, rollbacks, approvals, refunds, reports, permissions over HTTP) plus `structure.spec.ts`.
 Pricing is covered in `libs/shared/domain/src/lib/pricing.spec.ts` (all three promo kinds, set vs all, gifts,
 premiums, bill threshold, member). Add a test there before changing pricing behaviour.

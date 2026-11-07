@@ -1,8 +1,10 @@
-import type { Queryable } from './database.types';
+import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 /**
  * Closed documents are append-only (CLAUDE.md rule 3): the triggers below make UPDATE and DELETE on
  * them fail in the database itself, not just in application code.
+ *
+ * Every statement is idempotent, so this also adopts a database created before TypeORM was used.
  */
 const APPEND_ONLY = [
   'sales', 'sale_lines', 'payments', 'stock_movements', 'audit_log',
@@ -120,6 +122,15 @@ const SCHEMA: string[] = [
   ]),
 ];
 
-export async function migrate(db: Queryable): Promise<void> {
-  for (const stmt of SCHEMA) await db.query(stmt);
+
+export class InitialSchema1700000000000 implements MigrationInterface {
+  name = 'InitialSchema1700000000000';
+
+  async up(queryRunner: QueryRunner): Promise<void> {
+    for (const stmt of SCHEMA) await queryRunner.query(stmt);
+  }
+
+  async down(): Promise<void> {
+    throw new Error('The initial schema is not reversible.');
+  }
 }

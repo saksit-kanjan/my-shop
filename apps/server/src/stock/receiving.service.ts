@@ -4,6 +4,7 @@ import { AuditService } from '../audit/audit.service';
 import { CLOCK, type Clock } from '../common/clock';
 import { docPeriod, iso } from '../common/dates';
 import { DomainError } from '../common/domain-error';
+import { ReceiptEntity, ReceiptLine, SupplierEntity } from './entities/stock.entities';
 import { DatabaseService } from '../database/database.service';
 import { NumberingService } from '../database/numbering.service';
 import { ProductsService } from '../products/products.service';
@@ -30,14 +31,14 @@ export class ReceivingService {
   ) {}
 
   suppliers() {
-    return this.db.query<{ id: string; name: string; contact: string | null; terms: string | null; active: boolean }>(`SELECT id, name, contact, terms, active FROM suppliers ORDER BY name`);
+    return this.db.manager.find(SupplierEntity, { order: { name: 'ASC' } });
   }
 
   async saveSupplier(s: { name: string; contact?: string; terms?: string }, actor: Employee): Promise<string> {
     if (!s.name?.trim()) throw new DomainError('invalid', 'ใส่ชื่อผู้ขาย');
     const id = `S${Date.now().toString(36)}`;
     await this.db.transaction(async (tx) => {
-      await tx.query(`INSERT INTO suppliers (id, name, contact, terms, active) VALUES ($1,$2,$3,$4,true)`, [id, s.name.trim(), s.contact ?? null, s.terms ?? null]);
+      await tx.insert(SupplierEntity, { id, name: s.name.trim(), contact: s.contact ?? null, terms: s.terms ?? null, active: true });
       await this.audit.record(tx, this.clock(), { actor: actor.id, action: 'supplier.save', entity: 'supplier', entityId: id, after: s });
     });
     return id;
@@ -48,16 +49,16 @@ export class ReceivingService {
     for (const l of input.lines) if (!Number.isInteger(l.qty) || l.qty <= 0 || !Number.isInteger(l.unitCost) || l.unitCost < 0) throw new DomainError('invalid', 'จำนวนและต้นทุนต่อหน่วยไม่ถูกต้อง');
     const now = this.clock();
     return this.db.transaction(async (tx) => {
-      if (!(await tx.query(`SELECT 1 FROM suppliers WHERE id=$1`, [input.supplierId])).length) throw new DomainError('invalid', 'เลือกผู้ขาย');
+      if (!(await tx.existsBy(SupplierEntity, { id: input.supplierId }))) throw new DomainError('invalid', 'เลือกผู้ขาย');
       const known = new Map((await this.products.directory(tx)).map((p) => [p.id, p]));
       const docNo = await this.numbering.next(tx, `GR-${docPeriod(now)}`);
-      await tx.query(`INSERT INTO receipts (doc_no, supplier_id, at, ref, note, employee_id) VALUES ($1,$2,$3,$4,$5,$6)`, [docNo, input.supplierId, now, input.ref ?? null, input.note ?? null, actor.id]);
+      await tx.insert(ReceiptEntity, { docNo, supplierId: input.supplierId, at: now, ref: input.ref ?? null, note: input.note ?? null, employeeId: actor.id });
       for (const l of input.lines) {
         const product = known.get(l.productId);
         if (!product) throw new DomainError('invalid', 'มีสินค้าที่ไม่อยู่ในระบบ', { productId: l.productId });
         const onHand = await this.stock.balanceOf(tx, l.productId);
         const cost = weightedAverageCost(onHand, product.cost, l.qty, l.unitCost);
-        await tx.query(`INSERT INTO receipt_lines (doc_no, product_id, qty, unit_cost) VALUES ($1,$2,$3,$4)`, [docNo, l.productId, l.qty, l.unitCost]);
+        await tx.insert(ReceiptLine, { docNo, productId: l.productId, qty: l.qty, unitCost: l.unitCost });
         await this.stock.record(tx, [{ productId: l.productId, qty: l.qty, kind: 'receive', docNo, unitCost: l.unitCost, at: now }]);
         await this.products.updateCost(tx, l.productId, cost);
         // A product received twice in one document sees the first line's cost.
@@ -69,10 +70,13 @@ export class ReceivingService {
   }
 
   async receipts(limit = 50) {
-    const rows = await this.db.query<{ docNo: string; at: Date; supplier: string; ref: string | null; qty: number }>(
-      `SELECT r.doc_no AS "docNo", r.at, s.name AS supplier, r.ref, COALESCE((SELECT SUM(qty) FROM receipt_lines l WHERE l.doc_no=r.doc_no),0)::int AS qty FROM receipts r JOIN suppliers s ON s.id=r.supplier_id ORDER BY r.at DESC LIMIT $1`,
-      [limit],
-    );
-    return rows.map((r) => ({ ...r, at: iso(r.at) }));
+    const rows = await this.db.manager
+      .createQueryBuilder(ReceiptEntity, 'r')
+      .innerJoin(SupplierEntity, 's', 's.id = r.supplier_id')
+      .select('r.doc_no', 'docNo').addSelect('r.at', 'at').addSelect('s.name', 'supplier').addSelect('r.ref', 'ref')
+      .addSelect((qb) => qb.subQuery().select('COALESCE(SUM(l.qty), 0)').from(ReceiptLine, 'l').where('l.doc_no = r.doc_no'), 'qty')
+      .orderBy('r.at', 'DESC').limit(limit)
+      .getRawMany<{ docNo: string; at: Date; supplier: string; ref: string | null; qty: number }>();
+    return rows.map((r) => ({ ...r, qty: Number(r.qty), at: iso(r.at) }));
   }
 }

@@ -36,7 +36,7 @@ build: ## Build POS, display and back office into dist/apps/
 start: ## Run the API server once, without watch (it serves JSON only; web files are served by nginx, see make up)
 	PORT=$(PORT) $(API_RUN)
 
-test: ## Run every test (the API suite runs on embedded PGlite)
+test: ## Run every test (the API suite needs PostgreSQL: TEST_DATABASE_URL, default postgres://postgres@localhost:5432/postgres)
 	pnpm nx run-many -t test
 
 test-pg: ## Run the API tests on a real PostgreSQL (each test gets a throwaway database)

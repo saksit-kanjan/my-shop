@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Setting } from './entities/setting.entity';
 import { AuditService } from '../audit/audit.service';
 import { CLOCK, type Clock } from '../common/clock';
 import type { Tx } from '../database/database.types';
@@ -15,14 +16,14 @@ export class SettingsService {
     @Inject(CLOCK) private readonly clock: Clock,
   ) {}
 
-  async getAll(tx: Tx = this.db): Promise<Settings> {
-    return withOverrides(await tx.query<{ key: string; value: unknown }>(`SELECT key, value FROM settings`));
+  async getAll(tx: Tx = this.db.manager): Promise<Settings> {
+    return withOverrides(await tx.find(Setting));
   }
 
   /** Writes the changed keys inside the caller's transaction and returns what changed. */
   async update(tx: Tx, patch: Record<string, unknown>): Promise<SettingChange[]> {
     const changes = changesFor(await this.getAll(tx), patch);
-    for (const c of changes) await tx.query(`INSERT INTO settings (key, value) VALUES ($1,$2) ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value`, [c.key, JSON.stringify(c.after)]);
+    for (const c of changes) await tx.save(Setting, { key: c.key, value: c.after as Setting['value'] });
     return changes;
   }
 

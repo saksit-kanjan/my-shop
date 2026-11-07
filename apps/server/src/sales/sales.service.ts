@@ -15,6 +15,7 @@ import { MembersService } from '../members/members.service';
 import { ProductsService } from '../products/products.service';
 import { SettingsService } from '../settings/settings.service';
 import { StockService } from '../stock/stock.service';
+import { CreditNoteEntity, PaymentEntity, SaleEntity, SaleLineEntity, ShiftEntity } from './entities/sales.entities';
 import { changeFor, checkPayments } from './payment-rules';
 import type { PricingSnapshot, SaleInput } from './sales.types';
 
@@ -36,7 +37,7 @@ export class SalesService {
   ) {}
 
   /** The catalog as the till sees it: products and promotions, plus the stock left of each free gift. */
-  async catalog(tx: Tx = this.db): Promise<Catalog> {
+  async catalog(tx: Tx = this.db.manager): Promise<Catalog> {
     const [snap, left] = await Promise.all([this.products.snapshot(tx), this.stock.premiumBalances(tx)]);
     return { categories: snap.categories, products: snap.products, promotions: snap.promotions, premiums: snap.premiums.map((p) => ({ id: p.id, name: p.name, stock: left.get(p.id) ?? 0 })) };
   }
@@ -54,9 +55,9 @@ export class SalesService {
     // Who stands behind a discount above the cap. Checked before the transaction so a wrong code is counted even when the bill fails.
     const approver = manual ? await this.manualDiscountApprover(shiftId, input) : null;
     return this.db.transaction(async (tx) => {
-      const [shift] = await tx.query<{ terminal_id: string; closed_at: Date | null }>(`SELECT terminal_id, closed_at FROM shifts WHERE id=$1`, [shiftId]);
+      const shift = await tx.findOneBy(ShiftEntity, { id: shiftId });
       if (!shift) throw new DomainError('not_found', 'ไม่พบกะนี้');
-      if (shift.closed_at) throw new DomainError('conflict', 'กะนี้ปิดแล้ว');
+      if (shift.closedAt) throw new DomainError('conflict', 'กะนี้ปิดแล้ว');
       const cfg = await this.settings.getAll(tx);
 
       // priceCart only marks an existing line as a gift (it never invents one), so every line is something the cashier keyed.
@@ -91,35 +92,37 @@ export class SalesService {
           if ((await this.stock.balanceOf(tx, l.productId)) < l.qty) throw new DomainError('conflict', `${l.name} ในระบบเหลือไม่พอ ตรวจสต็อกก่อนขาย`, { productId: l.productId });
         }
       }
-      if (input.exchangeFor && !(await tx.query(`SELECT 1 FROM credit_notes WHERE doc_no=$1`, [input.exchangeFor])).length) throw new DomainError('invalid', 'ไม่พบใบลดหนี้ที่อ้างอิง');
+      if (input.exchangeFor && !(await tx.existsBy(CreditNoteEntity, { docNo: input.exchangeFor }))) throw new DomainError('invalid', 'ไม่พบใบลดหนี้ที่อ้างอิง');
 
-      const docNo = await this.numbering.next(tx, `${shift.terminal_id}-${docPeriod(now)}`);
+      const docNo = await this.numbering.next(tx, `${shift.terminalId}-${docPeriod(now)}`);
       const snapshot: PricingSnapshot = { products: keyed.map((l) => byId.get(l.productId) as Product), promotions: catalog.promotions, premiums: catalog.premiums.map((p) => ({ id: p.id, name: p.name })), ...(manual ? { manual } : {}) };
       const pointsEarned = member ? await this.members.earn(tx, member.id, due, docNo, now) : 0;
 
-      await tx.query(
-        `INSERT INTO sales (doc_no, shift_id, employee_id, at, business_date, member_id, gross, discount, net, vat, change, cart, pricing, points_earned, points_redeemed, points_value, exchange_for, manual_discount, manual_reason, manual_approved_by)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)`,
-        [docNo, shiftId, input.employeeId, now, businessDate(now, cfg.cutoffHour), member?.id ?? null, cart.gross, cart.discount, cart.net, cart.vat, change, JSON.stringify(cart), JSON.stringify(snapshot), pointsEarned, pointsRedeemed, pointsValue, input.exchangeFor ?? null, manualAmount, manualAmount > 0 ? manual?.reason.trim() ?? null : null, manualAmount > 0 && overCap ? approver?.id ?? null : null],
-      );
+      await tx.insert(SaleEntity, {
+        docNo, shiftId, employeeId: input.employeeId, at: now, businessDate: businessDate(now, cfg.cutoffHour), memberId: member?.id ?? null,
+        gross: cart.gross, discount: cart.discount, net: cart.net, vat: cart.vat, change, cart, pricing: snapshot as object,
+        pointsEarned, pointsRedeemed, pointsValue, exchangeFor: input.exchangeFor ?? null,
+        manualDiscount: manualAmount, manualReason: manualAmount > 0 ? manual?.reason.trim() ?? null : null, manualApprovedBy: manualAmount > 0 && overCap ? approver?.id ?? null : null,
+      });
       if (member && pointsRedeemed > 0) await this.members.redeem(tx, member.id, pointsRedeemed, cart.net, docNo, now);
 
       const costs = await this.products.costs(tx, cart.lines.map((l) => l.productId));
-      for (const l of cart.lines) {
-        await tx.query(`INSERT INTO sale_lines (doc_no, product_id, name, qty, unit_price, gross, discount, net, applied, gift_of_product_id, cost) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`, [
-          docNo, l.productId, l.name, l.qty, l.unitPrice, l.gross, l.discount, l.net, JSON.stringify(l.applied), l.giftOfProductId ?? null, costs.get(l.productId) ?? 0,
-        ]);
+      if (cart.lines.length) {
+        await tx.insert(SaleLineEntity, cart.lines.map((l) => ({
+          docNo, productId: l.productId, name: l.name, qty: l.qty, unitPrice: l.unitPrice, gross: l.gross, discount: l.discount, net: l.net,
+          applied: l.applied, giftOfProductId: l.giftOfProductId ?? null, cost: costs.get(l.productId) ?? 0,
+        })));
       }
       // Gift products leave the shelf too, and so do the free gifts the promotions handed out (unless they ran out).
       await this.stock.record(tx, [
         ...cart.lines.map((l) => ({ productId: l.productId, qty: -l.qty, kind: 'sale' as const, docNo, at: now })),
         ...cart.premiums.filter((p) => !p.outOfStock).map((p) => ({ premiumId: p.premiumId, qty: -p.qty, kind: 'premium' as const, docNo, at: now })),
       ]);
-      for (const p of payments) await tx.query(`INSERT INTO payments (doc_no, method, amount, tendered, reference) VALUES ($1,$2,$3,$4,$5)`, [docNo, p.method, p.amount, p.tendered ?? null, p.reference ?? null]);
+      if (payments.length) await tx.insert(PaymentEntity, payments.map((p) => ({ docNo, method: p.method, amount: p.amount, tendered: p.tendered ?? null, reference: p.reference ?? null })));
       if (manualAmount > 0) {
-        await this.audit.record(tx, now, { actor: input.employeeId, approver: overCap && approver && approver.id !== input.employeeId ? approver.id : undefined, terminalId: shift.terminal_id, action: 'sale.manual_discount', entity: 'sale', entityId: docNo, after: { amount: manualAmount, type: manual?.type, value: manual?.value, reason: manual?.reason, overCap } });
+        await this.audit.record(tx, now, { actor: input.employeeId, approver: overCap && approver && approver.id !== input.employeeId ? approver.id : undefined, terminalId: shift.terminalId, action: 'sale.manual_discount', entity: 'sale', entityId: docNo, after: { amount: manualAmount, type: manual?.type, value: manual?.value, reason: manual?.reason, overCap } });
       }
-      await this.audit.record(tx, now, { actor: input.employeeId, terminalId: shift.terminal_id, action: 'sale.close', entity: 'sale', entityId: docNo, after: { net: cart.net, clientNet: input.cart.net } });
+      await this.audit.record(tx, now, { actor: input.employeeId, terminalId: shift.terminalId, action: 'sale.close', entity: 'sale', entityId: docNo, after: { net: cart.net, clientNet: input.cart.net } });
 
       return {
         docNo, at: now.toISOString(), employeeId: input.employeeId, cart, payments, change,
@@ -138,7 +141,7 @@ export class SalesService {
     if (!actor) return null;
     if (await this.permissions.can(actor.role, 'discount.over_cap')) return actor;
     if (!input.approverCode) return null;
-    const [shift] = await this.db.query<{ terminal_id: string }>(`SELECT terminal_id FROM shifts WHERE id=$1`, [shiftId]);
-    return this.approvals.resolve({ actor, permission: 'discount.over_cap', approverCode: input.approverCode, terminalId: shift?.terminal_id ?? '' });
+    const shift = await this.db.manager.findOneBy(ShiftEntity, { id: shiftId });
+    return this.approvals.resolve({ actor, permission: 'discount.over_cap', approverCode: input.approverCode, terminalId: shift?.terminalId ?? '' });
   }
 }

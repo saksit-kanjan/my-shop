@@ -6,6 +6,7 @@ import { AuthService } from '../auth/auth.service';
 import { CLOCK, type Clock } from '../common/clock';
 import { businessDate, iso } from '../common/dates';
 import { DomainError } from '../common/domain-error';
+import { DayClose, ShiftEntity } from './entities/sales.entities';
 import { DatabaseService } from '../database/database.service';
 import { SettingsService } from '../settings/settings.service';
 import { ShiftsService } from './shifts.service';
@@ -27,8 +28,8 @@ export class DayCloseService {
   }
 
   async dayShifts(date: string) {
-    const ids = await this.db.query<{ id: string }>(`SELECT id FROM shifts WHERE business_date=$1::date ORDER BY opened_at`, [date]);
-    const [closed] = await this.db.query<{ closed_at: Date; closed_by: string }>(`SELECT closed_at, closed_by FROM day_closes WHERE business_date=$1::date`, [date]);
+    const ids = await this.db.manager.find(ShiftEntity, { where: { businessDate: date }, order: { openedAt: 'ASC' }, select: { id: true } });
+    const closed = await this.db.manager.findOneBy(DayClose, { businessDate: date });
     const names = new Map<string, string>();
     const shifts = [];
     for (const { id } of ids) {
@@ -41,7 +42,7 @@ export class DayCloseService {
         expected: s.expectedCash, counted: shift.counted ?? null, variance: shift.counted != null ? shift.counted - s.expectedCash : null, note: shift.note ?? null,
       });
     }
-    return { date, closed: closed ? { at: iso(closed.closed_at), by: closed.closed_by } : null, shifts };
+    return { date, closed: closed ? { at: iso(closed.closedAt), by: closed.closedBy } : null, shifts };
   }
 
   /** The manager closes the day; the figures are frozen for reports and the books. */
@@ -54,7 +55,7 @@ export class DayCloseService {
     if (open.length) throw new DomainError('conflict', `ยังมี ${open.length} กะที่ไม่ได้ปิด (${open.map((s) => s.terminalId).join(', ')})`);
     const summary = { net: day.shifts.reduce((a, s) => a + s.net, 0), bills: day.shifts.reduce((a, s) => a + s.bills, 0), variance: day.shifts.reduce((a, s) => a + (s.variance ?? 0), 0), shifts: day.shifts.length };
     await this.db.transaction(async (tx) => {
-      await tx.query(`INSERT INTO day_closes (business_date, closed_at, closed_by, summary) VALUES ($1,$2,$3,$4)`, [date, now, actor.id, JSON.stringify(summary)]);
+      await tx.insert(DayClose, { businessDate: date, closedAt: now, closedBy: actor.id, summary });
       await this.audit.record(tx, now, { actor: actor.id, action: 'day.close', entity: 'day', entityId: date, after: summary });
     });
     return { date, net: summary.net, bills: summary.bills };

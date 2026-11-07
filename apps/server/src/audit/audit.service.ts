@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { AuditLog } from './entities/audit-log.entity';
 import type { Tx } from '../database/database.types';
 
 export interface AuditEntry {
@@ -16,9 +17,9 @@ export interface AuditEntry {
 @Injectable()
 export class AuditService {
   async record(tx: Tx, at: Date, e: AuditEntry): Promise<void> {
-    await tx.query(
-      `INSERT INTO audit_log (at, actor, approver, terminal_id, action, entity, entity_id, before, after) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
-      [at, e.actor ?? null, e.approver ?? null, e.terminalId ?? null, e.action, e.entity ?? null, e.entityId ?? null, e.before === undefined ? null : JSON.stringify(e.before), e.after === undefined ? null : JSON.stringify(e.after)],
-    );
+    await tx.insert(AuditLog, {
+      at, actor: e.actor ?? null, approver: e.approver ?? null, terminalId: e.terminalId ?? null, action: e.action, entity: e.entity ?? null, entityId: e.entityId ?? null,
+      before: (e.before ?? null) as object | null, after: (e.after ?? null) as object | null,
+    });
   }
 }

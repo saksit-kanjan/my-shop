@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { In } from 'typeorm';
 import type { CreditNote, Employee, PaymentMethod } from '@my-shop/contracts';
 import { manualDiscountOf, priceCart } from '@my-shop/domain';
 import { AuditService } from '../audit/audit.service';
@@ -13,6 +14,7 @@ import { MembersService } from '../members/members.service';
 import { ProductsService } from '../products/products.service';
 import { SettingsService } from '../settings/settings.service';
 import { StockService } from '../stock/stock.service';
+import { CreditNoteEntity, CreditNoteLine, CreditNotePayment, ShiftEntity } from './entities/sales.entities';
 import { findSale, saleLines, salePayments } from './sale-queries';
 import { allocateOverLines, allocateOverPayments, isLateReturn, moneyShare } from './refund-rules';
 import type { PricingSnapshot } from './sales.types';
@@ -51,11 +53,11 @@ export class CreditNotesService {
 
   /** Credit notes for one bill, or for every bill of a shift. */
   forSale(tx: Tx, saleDocNo: string): Promise<CreditNote[]> {
-    return this.load(tx, `WHERE sale_doc_no=$1`, saleDocNo);
+    return this.load(tx, { saleDocNo });
   }
 
   ofShift(tx: Tx, shiftId: string): Promise<CreditNote[]> {
-    return this.load(tx, `WHERE shift_id=$1`, shiftId);
+    return this.load(tx, { shiftId });
   }
 
   /** Void: whole bill, same shift, shift still open. A refund: any time, part or all, back through the current shift's drawer. */
@@ -65,15 +67,15 @@ export class CreditNotesService {
     const cfg = await this.settings.getAll();
     // Approval first, in its own transaction, so a wrong code is counted even when the rest aborts.
     const approver = input.preview ? actor : await this.approvals.resolve({ actor, permission: kind === 'void' ? 'void' : 'refund', approverCode: input.approverCode, terminalId });
-    const soldAt = (await findSale(this.db, input.saleDocNo))?.at;
+    const soldAt = (await findSale(this.db.manager, input.saleDocNo))?.at;
     if (!soldAt) throw new DomainError('not_found', 'ไม่พบบิลเลขที่นี้');
     const late = kind === 'refund' && isLateReturn(soldAt, now, cfg.refundDays);
     const finalApprover = late && !input.preview ? await this.approvals.resolve({ actor: approver, permission: 'refund.late', approverCode: input.approverCode, terminalId }) : approver;
 
     return this.db.transaction(async (tx) => {
-      const [shift] = await tx.query<{ closed_at: Date | null }>(`SELECT closed_at FROM shifts WHERE id=$1`, [shiftId]);
+      const shift = await tx.findOneBy(ShiftEntity, { id: shiftId });
       if (!shift) throw new DomainError('not_found', 'ไม่พบกะนี้');
-      if (shift.closed_at) throw new DomainError('conflict', 'กะนี้ปิดแล้ว');
+      if (shift.closedAt) throw new DomainError('conflict', 'กะนี้ปิดแล้ว');
       const sale = await findSale(tx, input.saleDocNo);
       if (!sale) throw new DomainError('not_found', 'ไม่พบบิลเลขที่นี้');
       if (kind === 'void' && sale.shiftId !== shiftId) throw new DomainError('conflict', 'ยกเลิกบิลได้เฉพาะบิลที่ขายในกะนี้ บิลของกะอื่นให้ใช้คืนสินค้า');
@@ -132,11 +134,9 @@ export class CreditNotesService {
       if (input.preview) return view('(preview)', actor.id);
 
       const docNo = kind === 'void' ? `${sale.docNo}-V` : await this.numbering.next(tx, `CN-${docPeriod(now)}`);
-      await tx.query(`INSERT INTO credit_notes (doc_no, sale_doc_no, shift_id, type, at, business_date, amount, reason, restock, employee_id, approved_by) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`, [
-        docNo, sale.docNo, shiftId, kind, now, businessDate(now, cfg.cutoffHour), amount, input.reason.trim(), restock, actor.id, finalApprover.id,
-      ]);
-      for (const [i, r] of returning.entries()) await tx.query(`INSERT INTO credit_note_lines (doc_no, product_id, name, qty, amount, cost) VALUES ($1,$2,$3,$4,$5,$6)`, [docNo, r.pid, r.line.name, r.qty, amounts[i], r.line.cost]);
-      for (const p of payments) await tx.query(`INSERT INTO credit_note_payments (doc_no, method, amount) VALUES ($1,$2,$3)`, [docNo, p.method, p.amount]);
+      await tx.insert(CreditNoteEntity, { docNo, saleDocNo: sale.docNo, shiftId, type: kind, at: now, businessDate: businessDate(now, cfg.cutoffHour), amount, reason: input.reason.trim(), restock, employeeId: actor.id, approvedBy: finalApprover.id });
+      if (returning.length) await tx.insert(CreditNoteLine, returning.map((r, i) => ({ docNo, productId: r.pid, name: r.line.name, qty: r.qty, amount: amounts[i], cost: r.line.cost })));
+      if (payments.length) await tx.insert(CreditNotePayment, payments.map((p) => ({ docNo, method: p.method, amount: p.amount })));
 
       await this.stock.record(tx, [
         // Goods that come back; written off = it came back, then left again as waste, so the ledger shows both.
@@ -159,21 +159,18 @@ export class CreditNotesService {
     return { products: snap.products.filter((p) => wanted.has(p.id)), promotions: snap.promotions, premiums: [] };
   }
 
-  private async load(tx: Tx, where: string, param: string): Promise<CreditNote[]> {
-    const heads = await tx.query<{ doc_no: string; sale_doc_no: string; at: Date; type: 'void' | 'refund'; amount: number; reason: string; restock: boolean; employee_id: string; approved_by: string }>(
-      `SELECT doc_no, sale_doc_no, at, type, amount, reason, restock, employee_id, approved_by FROM credit_notes ${where} ORDER BY at, doc_no`,
-      [param],
-    );
+  private async load(tx: Tx, where: { saleDocNo: string } | { shiftId: string }): Promise<CreditNote[]> {
+    const heads = await tx.find(CreditNoteEntity, { where, order: { at: 'ASC', docNo: 'ASC' } });
     if (heads.length === 0) return [];
-    const docs = heads.map((h) => h.doc_no);
+    const docs = heads.map((h) => h.docNo);
     const [lines, pays] = await Promise.all([
-      tx.query<{ doc_no: string; product_id: string; name: string; qty: number; amount: number }>(`SELECT doc_no, product_id, name, qty, amount FROM credit_note_lines WHERE doc_no = ANY($1) ORDER BY id`, [docs]),
-      tx.query<{ doc_no: string; method: PaymentMethod; amount: number }>(`SELECT doc_no, method, amount FROM credit_note_payments WHERE doc_no = ANY($1) ORDER BY id`, [docs]),
+      tx.find(CreditNoteLine, { where: { docNo: In(docs) }, order: { id: 'ASC' } }),
+      tx.find(CreditNotePayment, { where: { docNo: In(docs) }, order: { id: 'ASC' } }),
     ]);
     return heads.map((h) => ({
-      docNo: h.doc_no, at: iso(h.at), type: h.type, saleDocNo: h.sale_doc_no, amount: h.amount, reason: h.reason, employeeId: h.employee_id, approvedBy: h.approved_by, restock: h.restock,
-      payments: pays.filter((p) => p.doc_no === h.doc_no).map((p) => ({ method: p.method, amount: p.amount })),
-      lines: lines.filter((l) => l.doc_no === h.doc_no).map((l) => ({ productId: l.product_id, name: l.name, qty: l.qty, amount: l.amount })),
+      docNo: h.docNo, at: iso(h.at), type: h.type, saleDocNo: h.saleDocNo, amount: h.amount, reason: h.reason, employeeId: h.employeeId, approvedBy: h.approvedBy, restock: h.restock,
+      payments: pays.filter((p) => p.docNo === h.docNo).map((p) => ({ method: p.method as PaymentMethod, amount: p.amount })),
+      lines: lines.filter((l) => l.docNo === h.docNo).map((l) => ({ productId: l.productId, name: l.name, qty: l.qty, amount: l.amount })),
     }));
   }
 }

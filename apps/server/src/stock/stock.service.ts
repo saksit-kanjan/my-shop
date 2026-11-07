@@ -5,6 +5,7 @@ import { CLOCK, type Clock } from '../common/clock';
 import { docPeriod, iso } from '../common/dates';
 import { DomainError } from '../common/domain-error';
 import { DatabaseService } from '../database/database.service';
+import { StockMovement } from './entities/stock.entities';
 import type { Tx } from '../database/database.types';
 import { NumberingService } from '../database/numbering.service';
 import { ProductsService } from '../products/products.service';
@@ -51,24 +52,24 @@ export class StockService {
 
   async record(tx: Tx, movements: Movement[]): Promise<void> {
     for (const m of movements) {
-      await tx.query(`INSERT INTO stock_movements (product_id, premium_id, qty, kind, doc_no, unit_cost, at) VALUES ($1,$2,$3,$4,$5,$6,$7)`, [m.productId ?? null, m.premiumId ?? null, m.qty, m.kind, m.docNo ?? null, m.unitCost ?? null, m.at]);
+      await tx.insert(StockMovement, { productId: m.productId ?? null, premiumId: m.premiumId ?? null, qty: m.qty, kind: m.kind, docNo: m.docNo ?? null, unitCost: m.unitCost ?? null, at: m.at });
     }
   }
 
   async balanceOf(tx: Tx, productId: string): Promise<number> {
-    const [r] = await tx.query<{ q: number }>(`SELECT COALESCE(SUM(qty),0)::int AS q FROM stock_movements WHERE product_id=$1`, [productId]);
-    return r?.q ?? 0;
+    const r = await tx.createQueryBuilder(StockMovement, 'm').select('COALESCE(SUM(m.qty), 0)', 'q').where('m.product_id = :productId', { productId }).getRawOne<{ q: number }>();
+    return Number(r?.q ?? 0);
   }
 
-  async balances(tx: Tx = this.db): Promise<Map<string, number>> {
-    const rows = await tx.query<{ product_id: string; q: number }>(`SELECT product_id, SUM(qty)::int AS q FROM stock_movements WHERE product_id IS NOT NULL GROUP BY product_id`);
-    return new Map(rows.map((r) => [r.product_id, r.q]));
+  async balances(tx: Tx = this.db.manager): Promise<Map<string, number>> {
+    const rows = await tx.createQueryBuilder(StockMovement, 'm').select('m.product_id', 'productId').addSelect('SUM(m.qty)', 'q').where('m.product_id IS NOT NULL').groupBy('m.product_id').getRawMany<{ productId: string; q: number }>();
+    return new Map(rows.map((r) => [r.productId, Number(r.q)]));
   }
 
   /** How many of each free gift (premium) is left. */
-  async premiumBalances(tx: Tx = this.db): Promise<Map<string, number>> {
-    const rows = await tx.query<{ premium_id: string; q: number }>(`SELECT premium_id, COALESCE(SUM(qty),0)::int AS q FROM stock_movements WHERE premium_id IS NOT NULL GROUP BY premium_id`);
-    return new Map(rows.map((r) => [r.premium_id, Number(r.q)]));
+  async premiumBalances(tx: Tx = this.db.manager): Promise<Map<string, number>> {
+    const rows = await tx.createQueryBuilder(StockMovement, 'm').select('m.premium_id', 'premiumId').addSelect('SUM(m.qty)', 'q').where('m.premium_id IS NOT NULL').groupBy('m.premium_id').getRawMany<{ premiumId: string; q: number }>();
+    return new Map(rows.map((r) => [r.premiumId, Number(r.q)]));
   }
 
   /* ---------- back office ---------- */
@@ -86,8 +87,8 @@ export class StockService {
   }
 
   async movements(productId: string, limit = 200) {
-    const rows = await this.db.query<{ at: Date; qty: number; kind: string; doc_no: string | null }>(`SELECT at, qty, kind, doc_no FROM stock_movements WHERE product_id=$1 ORDER BY id DESC LIMIT $2`, [productId, limit]);
-    return rows.map((r) => ({ at: iso(r.at), qty: r.qty, kind: r.kind, docNo: r.doc_no }));
+    const rows = await this.db.manager.find(StockMovement, { where: { productId }, order: { id: 'DESC' }, take: limit });
+    return rows.map((r) => ({ at: iso(r.at), qty: r.qty, kind: r.kind, docNo: r.docNo }));
   }
 
   /** Waste, loss, expiry: each needs a reason and leaves a ledger row (spec: "ตัดของเสีย หาย หมดอายุ"). */

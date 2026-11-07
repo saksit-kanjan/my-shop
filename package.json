@@ -41,11 +41,11 @@
     "vitest": "~5.0.1"
   },
   "dependencies": {
-    "@electric-sql/pglite": "^0.5.15",
     "@fontsource/ibm-plex-sans-thai": "^5.3.0",
     "@nestjs/common": "^11.2.8",
     "@nestjs/core": "^11.2.8",
     "@nestjs/platform-express": "^11.2.8",
+    "@nestjs/typeorm": "^12.0.2",
     "@tailwindcss/vite": "^4.3.3",
     "daisyui": "^5.7.50",
     "pg": "^8.23.1",
@@ -55,6 +55,7 @@
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
     "tailwindcss": "^4.3.3",
+    "typeorm": "^1.1.2",
     "write-excel-file": "^4.1.1",
     "zustand": "^5.0.15"
   },

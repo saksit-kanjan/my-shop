@@ -3,20 +3,24 @@ import type { CartLine, Catalog, Payment, PricedCart } from '@my-shop/contracts'
 import { priceCart } from '@my-shop/domain';
 import { demoCatalog } from '@my-shop/seed';
 import { createServices, type Services } from './helpers/services';
-import type { Db } from '../src/database/database.types';
+import type { DatabaseService } from '../src/database/database.service';
 import { openTestDb } from './helpers/test-db';
 import { seedDemo } from '../src/bootstrap/demo.seed';
 import { LOCK_SECONDS, MAX_FAILS } from '../src/auth/login-attempts';
 
 let now = new Date('2026-11-06T03:00:00Z'); // 10:00 in Bangkok
-let db: Db;
+let db: DatabaseService;
 let drop: () => Promise<void>;
+let databaseUrl: string;
 let s: Services;
 
 beforeEach(async () => {
   now = new Date('2026-11-06T03:00:00Z');
-  ({ db, drop } = await openTestDb());
-  s = await createServices(db, { clock: () => now });
+  const opened = await openTestDb();
+  drop = opened.drop;
+  s = await createServices(opened.url, { clock: () => now });
+  db = s.db;
+  databaseUrl = opened.url;
   await seedDemo(s.db, s.credentials);
 });
 afterEach(() => drop());
@@ -61,7 +65,7 @@ describe('shifts', () => {
 
   it('keeps the business date on the previous day before the cutoff hour', async () => {
     await db.transaction((tx) => s.settings.update(tx, { cutoffHour: 4 }));
-    const late = await createServices(db, { clock: () => new Date('2026-11-06T18:30:00Z') }); // 01:30 on the 7th
+    const late = await createServices(databaseUrl, { clock: () => new Date('2026-11-06T18:30:00Z') }); // 01:30 on the 7th
     const { employee } = await late.auth.login('100123', 'T02');
     const shift = await late.shifts.openShift('T02', employee.id, 0);
     const [row] = await db.query<{ business_date: Date | string }>(`SELECT business_date::text AS business_date FROM shifts WHERE id=$1`, [shift.id]);

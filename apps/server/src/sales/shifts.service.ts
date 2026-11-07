@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { In, IsNull } from 'typeorm';
 import type { CashMove, CashMoveType, Employee, Satang, SaleRecord, Shift } from '@my-shop/contracts';
 import { summarizeShift } from '@my-shop/domain';
 import { AuditService } from '../audit/audit.service';
@@ -11,22 +12,10 @@ import type { Tx } from '../database/database.types';
 import { MembersService } from '../members/members.service';
 import { SettingsService } from '../settings/settings.service';
 import { CreditNotesService } from './credit-notes.service';
-import { SALE_COLUMNS, toSaleRow, type PaymentRow, type SaleDbRow } from './sale-queries';
+import { CashMoveEntity, CreditNoteEntity, DayClose, PaymentEntity, SaleEntity, ShiftEntity } from './entities/sales.entities';
+import { toSaleRow } from './sale-queries';
 
 const MOVE_TYPES: CashMoveType[] = ['drop', 'out', 'in'];
-
-interface ShiftRow {
-  id: string;
-  terminal_id: string;
-  employee_id: string;
-  opened_at: Date;
-  float: number;
-  closed_at: Date | null;
-  counted: number | null;
-  note: string | null;
-}
-
-const SHIFT_COLUMNS = `id, terminal_id, employee_id, opened_at, float, closed_at, counted, note`;
 
 /** A shift: one cashier, one drawer, one terminal at a time. Open, record cash moves, close with a blind count. */
 @Injectable()
@@ -42,13 +31,13 @@ export class ShiftsService {
   ) {}
 
   async getOpenShift(terminalId: string): Promise<Shift | null> {
-    const [row] = await this.db.query<ShiftRow>(`SELECT ${SHIFT_COLUMNS} FROM shifts WHERE terminal_id=$1 AND closed_at IS NULL`, [terminalId]);
-    return row ? this.hydrate(this.db, row) : null;
+    const row = await this.db.manager.findOneBy(ShiftEntity, { terminalId, closedAt: IsNull() });
+    return row ? this.hydrate(this.db.manager, row) : null;
   }
 
   async getShift(id: string): Promise<Shift | null> {
-    const [row] = await this.db.query<ShiftRow>(`SELECT ${SHIFT_COLUMNS} FROM shifts WHERE id=$1`, [id]);
-    return row ? this.hydrate(this.db, row) : null;
+    const row = await this.db.manager.findOneBy(ShiftEntity, { id });
+    return row ? this.hydrate(this.db.manager, row) : null;
   }
 
   async openShift(terminalId: string, employeeId: string, float: Satang): Promise<Shift> {
@@ -56,10 +45,10 @@ export class ShiftsService {
     const now = this.clock();
     const date = businessDate(now, (await this.settings.getAll()).cutoffHour);
     return this.db.transaction(async (tx) => {
-      if ((await tx.query(`SELECT 1 FROM shifts WHERE terminal_id=$1 AND closed_at IS NULL`, [terminalId])).length) throw new DomainError('conflict', 'เครื่องนี้มีกะเปิดอยู่แล้ว');
-      if ((await tx.query(`SELECT 1 FROM day_closes WHERE business_date=$1::date`, [date])).length) throw new DomainError('conflict', 'ปิดวันนี้ไปแล้ว เปิดกะใหม่ไม่ได้ ให้ผู้จัดการตรวจสอบ');
+      if (await tx.existsBy(ShiftEntity, { terminalId, closedAt: IsNull() })) throw new DomainError('conflict', 'เครื่องนี้มีกะเปิดอยู่แล้ว');
+      if (await tx.existsBy(DayClose, { businessDate: date })) throw new DomainError('conflict', 'ปิดวันนี้ไปแล้ว เปิดกะใหม่ไม่ได้ ให้ผู้จัดการตรวจสอบ');
       const id = crypto.randomUUID();
-      await tx.query(`INSERT INTO shifts (id, terminal_id, employee_id, business_date, opened_at, float) VALUES ($1,$2,$3,$4,$5,$6)`, [id, terminalId, employeeId, date, now, float]);
+      await tx.insert(ShiftEntity, { id, terminalId, employeeId, businessDate: date, openedAt: now, float });
       await this.audit.record(tx, now, { actor: employeeId, terminalId, action: 'shift.open', entity: 'shift', entityId: id, after: { float } });
       return this.must(tx, id);
     });
@@ -72,8 +61,8 @@ export class ShiftsService {
     const now = this.clock();
     return this.db.transaction(async (tx) => {
       const shift = await this.openOrThrow(tx, shiftId);
-      await tx.query(`INSERT INTO cash_moves (shift_id, at, type, amount, reason, employee_id, approved_by) VALUES ($1,$2,$3,$4,$5,$6,$7)`, [shiftId, now, move.type, move.amount, move.reason.trim(), move.employeeId, move.approvedBy ?? null]);
-      await this.audit.record(tx, now, { actor: move.employeeId, approver: move.approvedBy, terminalId: shift.terminal_id, action: `cash.${move.type}`, entity: 'shift', entityId: shiftId, after: { amount: move.amount, reason: move.reason } });
+      await tx.insert(CashMoveEntity, { shiftId, at: now, type: move.type, amount: move.amount, reason: move.reason.trim(), employeeId: move.employeeId, approvedBy: move.approvedBy ?? null });
+      await this.audit.record(tx, now, { actor: move.employeeId, approver: move.approvedBy, terminalId: shift.terminalId, action: `cash.${move.type}`, entity: 'shift', entityId: shiftId, after: { amount: move.amount, reason: move.reason } });
       return this.must(tx, shiftId);
     });
   }
@@ -97,8 +86,8 @@ export class ShiftsService {
     }
     return this.db.transaction(async (tx) => {
       const shift = await this.openOrThrow(tx, shiftId);
-      await tx.query(`UPDATE shifts SET closed_at=$2, counted=$3, note=$4 WHERE id=$1`, [shiftId, now, counted, note ?? null]);
-      await this.audit.record(tx, now, { actor: actor?.id ?? shift.employee_id, approver: approver && approver.id !== actor?.id ? approver.id : undefined, terminalId: shift.terminal_id, action: 'shift.close', entity: 'shift', entityId: shiftId, after: { counted, variance, note } });
+      await tx.update(ShiftEntity, { id: shiftId }, { closedAt: now, counted, note: note ?? null });
+      await this.audit.record(tx, now, { actor: actor?.id ?? shift.employeeId, approver: approver && approver.id !== actor?.id ? approver.id : undefined, terminalId: shift.terminalId, action: 'shift.close', entity: 'shift', entityId: shiftId, after: { counted, variance, note } });
       return this.must(tx, shiftId);
     });
   }
@@ -106,39 +95,39 @@ export class ShiftsService {
   /** "เปิดลิ้นชักโดยไม่มีการขาย": allowed for supervisors and up, a cashier needs one's code. The reason is logged. */
   async openDrawer(shiftId: string, reason: string, actor: Employee, approverCode?: string): Promise<void> {
     if (!reason?.trim()) throw new DomainError('invalid', 'ใส่เหตุผลที่เปิดลิ้นชัก');
-    const [shift] = await this.db.query<ShiftRow>(`SELECT ${SHIFT_COLUMNS} FROM shifts WHERE id=$1`, [shiftId]);
+    const shift = await this.db.manager.findOneBy(ShiftEntity, { id: shiftId });
     if (!shift) throw new DomainError('not_found', 'ไม่พบกะนี้');
-    if (shift.closed_at) throw new DomainError('conflict', 'กะนี้ปิดแล้ว');
-    const approver = await this.approvals.resolve({ actor, permission: 'drawer.nosale', approverCode, terminalId: shift.terminal_id });
-    await this.db.transaction((tx) => this.audit.record(tx, this.clock(), { actor: actor.id, approver: approver.id === actor.id ? undefined : approver.id, terminalId: shift.terminal_id, action: 'drawer.nosale', entity: 'shift', entityId: shiftId, after: { reason } }));
+    if (shift.closedAt) throw new DomainError('conflict', 'กะนี้ปิดแล้ว');
+    const approver = await this.approvals.resolve({ actor, permission: 'drawer.nosale', approverCode, terminalId: shift.terminalId });
+    await this.db.transaction((tx) => this.audit.record(tx, this.clock(), { actor: actor.id, approver: approver.id === actor.id ? undefined : approver.id, terminalId: shift.terminalId, action: 'drawer.nosale', entity: 'shift', entityId: shiftId, after: { reason } }));
   }
 
-  private async openOrThrow(tx: Tx, id: string): Promise<ShiftRow> {
-    const [shift] = await tx.query<ShiftRow>(`SELECT ${SHIFT_COLUMNS} FROM shifts WHERE id=$1`, [id]);
+  private async openOrThrow(tx: Tx, id: string): Promise<ShiftEntity> {
+    const shift = await tx.findOneBy(ShiftEntity, { id });
     if (!shift) throw new DomainError('not_found', 'ไม่พบกะนี้');
-    if (shift.closed_at) throw new DomainError('conflict', 'กะนี้ปิดแล้ว');
+    if (shift.closedAt) throw new DomainError('conflict', 'กะนี้ปิดแล้ว');
     return shift;
   }
 
   private async must(tx: Tx, id: string): Promise<Shift> {
-    const [row] = await tx.query<ShiftRow>(`SELECT ${SHIFT_COLUMNS} FROM shifts WHERE id=$1`, [id]);
+    const row = await tx.findOneBy(ShiftEntity, { id });
     if (!row) throw new DomainError('not_found', 'ไม่พบกะนี้');
     return this.hydrate(tx, row);
   }
 
   /** The shift as the till and the Z report read it: the shift, its bills with payments, drawer moves and credit notes. */
-  private async hydrate(tx: Tx, r: ShiftRow): Promise<Shift> {
-    const [sales, payments, moves, notes] = await Promise.all([
-      tx.query<SaleDbRow & { voided: boolean }>(
-        `SELECT ${SALE_COLUMNS}, EXISTS (SELECT 1 FROM credit_notes c WHERE c.sale_doc_no=s.doc_no AND c.type='void') AS voided FROM sales s WHERE s.shift_id=$1 ORDER BY s.at, s.doc_no`,
-        [r.id],
-      ),
-      tx.query<PaymentRow>(`SELECT p.doc_no AS "docNo", p.method, p.amount, p.tendered, p.reference FROM payments p JOIN sales s ON s.doc_no=p.doc_no WHERE s.shift_id=$1 ORDER BY p.id`, [r.id]),
-      tx.query<{ at: Date; type: CashMoveType; amount: number; reason: string; employee_id: string; approved_by: string | null }>(`SELECT at, type, amount, reason, employee_id, approved_by FROM cash_moves WHERE shift_id=$1 ORDER BY id`, [r.id]),
+  private async hydrate(tx: Tx, r: ShiftEntity): Promise<Shift> {
+    const sales = await tx.find(SaleEntity, { where: { shiftId: r.id }, order: { at: 'ASC', docNo: 'ASC' } });
+    const docNos = sales.map((s) => s.docNo);
+    const [payments, voids, moves, notes] = await Promise.all([
+      docNos.length ? tx.find(PaymentEntity, { where: { docNo: In(docNos) }, order: { id: 'ASC' } }) : [],
+      docNos.length ? tx.find(CreditNoteEntity, { where: { saleDocNo: In(docNos), type: 'void' }, select: { saleDocNo: true } }) : [],
+      tx.find(CashMoveEntity, { where: { shiftId: r.id }, order: { id: 'ASC' } }),
       this.creditNotes.ofShift(tx, r.id),
     ]);
+    const voided = new Set(voids.map((v) => v.saleDocNo));
     const phones = new Map<string, string | null>();
-    for (const id of new Set(sales.map((s) => s.member_id).filter((x): x is string => !!x))) phones.set(id, await this.members.phoneOf(id, tx));
+    for (const id of new Set(sales.map((s) => s.memberId).filter((x): x is string => !!x))) phones.set(id, await this.members.phoneOf(id, tx));
     const records: SaleRecord[] = sales.map((row) => {
       const s = toSaleRow(row);
       const phone = s.memberId ? phones.get(s.memberId) : null;
@@ -146,17 +135,17 @@ export class ShiftsService {
         docNo: s.docNo, at: iso(s.at), employeeId: s.employeeId, cart: s.cart, change: s.change,
         ...(phone ? { memberPhone: phone, pointsEarned: s.pointsEarned } : {}),
         ...(s.pointsRedeemed > 0 ? { pointsRedeemed: s.pointsRedeemed, pointsValue: s.pointsValue } : {}),
-        ...(row.voided ? { voided: true } : {}),
+        ...(voided.has(s.docNo) ? { voided: true } : {}),
         payments: payments.filter((p) => p.docNo === s.docNo).map((p) => ({ method: p.method, amount: p.amount, ...(p.tendered != null ? { tendered: p.tendered } : {}), ...(p.reference ? { reference: p.reference } : {}) })),
       };
     });
     return {
-      id: r.id, terminalId: r.terminal_id, employeeId: r.employee_id, openedAt: iso(r.opened_at), float: r.float,
-      ...(r.closed_at ? { closedAt: iso(r.closed_at) } : {}),
+      id: r.id, terminalId: r.terminalId, employeeId: r.employeeId, openedAt: iso(r.openedAt), float: r.float,
+      ...(r.closedAt ? { closedAt: iso(r.closedAt) } : {}),
       ...(r.counted != null ? { counted: r.counted } : {}),
       ...(r.note ? { note: r.note } : {}),
       sales: records,
-      cashMoves: moves.map((m) => ({ at: iso(m.at), type: m.type, amount: m.amount, reason: m.reason, employeeId: m.employee_id, ...(m.approved_by ? { approvedBy: m.approved_by } : {}) })),
+      cashMoves: moves.map((m) => ({ at: iso(m.at), type: m.type, amount: m.amount, reason: m.reason, employeeId: m.employeeId, ...(m.approvedBy ? { approvedBy: m.approvedBy } : {}) })),
       creditNotes: notes,
     };
   }
