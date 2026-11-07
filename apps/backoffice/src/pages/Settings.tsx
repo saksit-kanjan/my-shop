@@ -22,6 +22,16 @@ export function SettingsPage() {
     const money = (k: string) => toSatang(str(k));
     const earn = money('pointsEarnSatang'), val = money('pointsValueSatang'), lim = money('cashVarianceLimit');
     if (earn === null || val === null || lim === null) return setMsg('ใส่จำนวนเงินเป็นตัวเลข เช่น 25.00');
+    const whole: [string, string, number][] = [
+      ['pointsExpiryMonths', 'แต้มหมดอายุ (เดือน)', 1200],
+      ['refundDays', 'คืนสินค้าได้ภายใน (วัน)', 3650],
+      ['manualDiscountCapPercent', 'ส่วนลดพิเศษที่แคชเชียร์ให้ได้เอง (%)', 100],
+      ['cutoffHour', 'ชั่วโมงตัดวันขาย', 23],
+    ];
+    for (const [k, label, max] of whole) {
+      const v = str(k).trim();
+      if (!/^\d+$/.test(v) || Number(v) > max) return setMsg(`${label} ต้องเป็นเลขจำนวนเต็ม 0 ถึง ${max}`);
+    }
     const patch: Partial<Settings> = {
       pointsEarnSatang: earn, pointsValueSatang: val, cashVarianceLimit: lim, pointsExpiryMonths: Number(f['pointsExpiryMonths']), refundDays: Number(f['refundDays']), manualDiscountCapPercent: Number(f['manualDiscountCapPercent']), cutoffHour: Number(f['cutoffHour']),
       allowNegativeStock: !!f['allowNegativeStock'], storeName: str('storeName'), branchName: str('branchName'), taxId: str('taxId'), address: str('address'),

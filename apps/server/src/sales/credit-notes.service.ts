@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type { CreditNote, Employee, PaymentMethod } from '@my-shop/contracts';
-import { priceCart } from '@my-shop/domain';
+import { manualDiscountOf, priceCart } from '@my-shop/domain';
 import { AuditService } from '../audit/audit.service';
 import { ApprovalsService } from '../auth/approvals.service';
 import { CLOCK, type Clock } from '../common/clock';
@@ -103,7 +103,16 @@ export class CreditNotesService {
       const remaining = lines.map((l) => ({ productId: l.productId, qty: l.qty - (returned.get(l.productId) ?? 0) - (wanted.get(l.productId) ?? 0) })).filter((l) => l.qty > 0);
       const snap = sale.pricing ?? (await this.fallbackSnapshot(tx, lines.map((l) => l.productId)));
       const catalog = { categories: [], products: snap.products, premiums: snap.premiums.map((p) => ({ ...p, stock: 1_000_000 })), promotions: snap.promotions };
-      const remainingNet = remaining.length ? priceCart(remaining, catalog, { isMember: !!sale.memberId, at: sale.at, manual: snap.manual }).net : 0;
+      const priceAt = (ls: { productId: string; qty: number }[], manual?: typeof snap.manual) => priceCart(ls, catalog, { isMember: !!sale.memberId, at: sale.at, manual }).net;
+      let remainingNet = 0;
+      if (remaining.length && snap.manual?.type === 'amount') {
+        // A fixed discount belongs to the whole bill: what is kept carries its share of it, not all of it.
+        // The discount actually given is on the stored bill, so gift rows in sale_lines cannot skew it.
+        const given = manualDiscountOf(sale.cart);
+        const full = sale.net + given;
+        const kept = priceAt(remaining);
+        remainingNet = full > 0 ? kept - Math.round((given * kept) / full) : kept;
+      } else if (remaining.length) remainingNet = priceAt(remaining, snap.manual);
       const refundedAfter = sale.net - remainingNet;
       const amount = Math.max(0, refundedAfter - sum(prior.map((c) => c.amount)));
 

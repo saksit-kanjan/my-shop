@@ -1,4 +1,5 @@
 import type { Catalog, Employee, Satang } from '@my-shop/contracts';
+import { DEFAULT_MANUAL_DISCOUNT_CAP_PERCENT, overManualCap } from '@my-shop/domain';
 import { demoCatalog, demoEmployees } from '../data/demo-catalog';
 import type { CashMove, PosApi, SaleRecord, Shift } from './pos-api';
 
@@ -85,7 +86,9 @@ export const localPosApi: PosApi = {
     return shift;
   },
   async recordSale(shiftId, request): Promise<SaleRecord> {
-    const { manualDiscount: _manual, approverCode: _approver, ...sale } = request;
+    const { manualDiscount, approverCode: _approver, ...sale } = request;
+    // The demo has no supervisor to approve, so it holds the line at the default cap.
+    if (manualDiscount && overManualCap(sale.cart, DEFAULT_MANUAL_DISCOUNT_CAP_PERCENT)) throw new Error(`ส่วนลดพิเศษเกิน ${DEFAULT_MANUAL_DISCOUNT_CAP_PERCENT}% ต้องให้หัวหน้ากะอนุมัติ ใช้ได้เมื่อต่อกับเซิร์ฟเวอร์`);
     let record!: SaleRecord;
     mutateShift(shiftId, (shift, db) => {
       if (shift.closedAt) throw new Error('กะนี้ปิดแล้ว');

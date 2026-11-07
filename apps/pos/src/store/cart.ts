@@ -8,6 +8,7 @@ export interface HeldBill {
   at: string;
   lines: CartLine[];
   memberPhone: string | null;
+  manualDiscount?: ManualDiscount | null;
   note: string;
 }
 
@@ -51,9 +52,11 @@ export const useCart = create<CartState>()(
           return { lines, lastAddedProductId: productId };
         }),
       setQty: (productId, qty) =>
-        set((s) => ({
-          lines: qty <= 0 ? s.lines.filter((l) => l.productId !== productId) : s.lines.map((l) => (l.productId === productId ? { ...l, qty } : l)),
-        })),
+        set((s) => {
+          const lines = qty <= 0 ? s.lines.filter((l) => l.productId !== productId) : s.lines.map((l) => (l.productId === productId ? { ...l, qty } : l));
+          // An empty bill starts over: a discount given to the last customer must not follow the next one.
+          return lines.length === 0 ? { lines, manualDiscount: null } : { lines };
+        }),
       clear: () => set({ ...emptyBill }),
       attachMember: (phone) => set({ memberPhone: phone }),
       detachMember: () => set({ memberPhone: null }),
@@ -65,14 +68,14 @@ export const useCart = create<CartState>()(
             ? s
             : {
                 ...emptyBill,
-                held: [...s.held, { id: crypto.randomUUID(), at: new Date().toISOString(), lines: s.lines, memberPhone: s.memberPhone, note }],
+                held: [...s.held, { id: crypto.randomUUID(), at: new Date().toISOString(), lines: s.lines, memberPhone: s.memberPhone, manualDiscount: s.manualDiscount, note }],
               },
         ),
       resume: (id) => {
         const s = get();
         const bill = s.held.find((h) => h.id === id);
         if (!bill || s.lines.length > 0) return false;
-        set({ ...emptyBill, lines: bill.lines, memberPhone: bill.memberPhone, held: s.held.filter((h) => h.id !== id) });
+        set({ ...emptyBill, lines: bill.lines, memberPhone: bill.memberPhone, manualDiscount: bill.manualDiscount ?? null, held: s.held.filter((h) => h.id !== id) });
         return true;
       },
       deleteHeld: (id) => set((s) => ({ held: s.held.filter((h) => h.id !== id) })),

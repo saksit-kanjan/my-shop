@@ -1,6 +1,6 @@
 import type { Catalog, Promotion } from '@my-shop/contracts';
 import { formatBaht, formatBahtFull, vatIncluded } from './money';
-import { memberSaving, priceCart } from './pricing';
+import { memberSaving, overManualCap, priceCart } from './pricing';
 
 const b = (n: number) => n * 100;
 
@@ -157,6 +157,12 @@ describe('manual discount', () => {
   const lines = [{ productId: 'chips', qty: 2 }]; // 2 x 20 = 40, promo off
   const cat = catalog([]);
   const price = (manual?: { type: 'amount' | 'percent'; value: number; reason: string }) => priceCart(lines, cat, { isMember: false, manual });
+
+  it('knows when a manual discount is over the cap', () => {
+    expect(overManualCap(price({ type: 'percent', value: 10, reason: 'x' }), 10)).toBe(false);
+    expect(overManualCap(price({ type: 'percent', value: 11, reason: 'x' }), 10)).toBe(true);
+    expect(overManualCap(price(), 0)).toBe(false);
+  });
 
   it('takes a fixed amount off the bill and shows it as its own line', () => {
     const cart = price({ type: 'amount', value: b(5), reason: 'ลูกค้าประจำ' });

@@ -582,4 +582,35 @@ describe('manual discount', () => {
     const cn = await s.creditNotes.credit(shift.id, 'refund', { saleDocNo: sale.docNo, lines: [{ productId: 'tissue', qty: 1 }], reason: 'คืน' }, employee, 'T01');
     expect(cn.amount).toBe(8010); // one tissue left would cost 89 - 10% = 80.10
   });
+
+  it('refunds a fixed discount pro rata: the part kept carries its share of it', async () => {
+    const { employee, shift } = await start(SUPERVISOR);
+    const sale = await sellWith(shift.id, employee, [{ productId: 'tissue', qty: 2 }], { type: 'amount', value: 1000, reason: 'ตำหนิ' }); // 178 - 10 = 168
+    expect(sale.cart.net).toBe(16800);
+    const cn = await s.creditNotes.credit(shift.id, 'refund', { saleDocNo: sale.docNo, lines: [{ productId: 'tissue', qty: 1 }], reason: 'คืน' }, employee, 'T01');
+    expect(cn.amount).toBe(8400); // 89 minus half of the 10 baht, not the whole 89
+  });
+
+  it('splits a fixed discount over what is kept when the bill has a gift', async () => {
+    const { employee, shift } = await start();
+    const sale = await sellWith(shift.id, employee, [{ productId: 'bread', qty: 1 }, { productId: 'milk', qty: 1 }], { type: 'amount', value: 400, reason: 'ตำหนิ' }); // milk is free: 45 - 4
+    expect(sale.cart.net).toBe(4100);
+    const cn = await s.creditNotes.credit(shift.id, 'refund', { saleDocNo: sale.docNo, lines: [{ productId: 'bread', qty: 1 }], reason: 'คืน', approverCode: SUPERVISOR }, employee, 'T01');
+    expect(cn.amount).toBe(2824); // the milk kept costs 14 and carries round(4 x 14 / 45) of the discount
+  });
+
+  it('refuses an hour of the day above 23', async () => {
+    await expect(db.transaction((tx) => s.settings.update(tx, { cutoffHour: 24 }))).rejects.toMatchObject({ code: 'invalid' });
+  });
+
+  it('records an approver only when the discount went over the cap', async () => {
+    const { employee, shift } = await start(SUPERVISOR);
+    const sale = await sellWith(shift.id, employee, [{ productId: 'tissue', qty: 2 }], pct(2));
+    const [row] = await db.query<{ manual_approved_by: string | null }>(`SELECT manual_approved_by FROM sales WHERE doc_no=$1`, [sale.docNo]);
+    expect(row.manual_approved_by).toBeNull();
+  });
+
+  it('refuses a cap above 100 percent', async () => {
+    await expect(db.transaction((tx) => s.settings.update(tx, { manualDiscountCapPercent: 101 }))).rejects.toMatchObject({ code: 'invalid' });
+  });
 });

@@ -307,6 +307,15 @@ export function manualDiscountAmount(m: ManualDiscount, base: Satang): Satang {
   return Math.min(Math.floor(raw), Math.max(base, 0));
 }
 
+/** The store's default for how much of a bill a cashier may discount by hand, in percent. */
+export const DEFAULT_MANUAL_DISCOUNT_CAP_PERCENT = 10;
+
+/** True when the manual discount on a priced cart is more than `capPercent` of the bill before that discount. */
+export function overManualCap(cart: PricedCart, capPercent: number): boolean {
+  const manual = manualDiscountOf(cart);
+  return manual > Math.floor(((cart.net + manual) * capPercent) / 100);
+}
+
 /** The manual discount a priced cart carries, in satang (0 when none). */
 export const manualDiscountOf = (cart: PricedCart): Satang => cart.billApplied.filter((a) => a.kind === 'manual').reduce((s, a) => s + a.discount, 0);
 
