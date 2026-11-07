@@ -23,6 +23,14 @@ describe('server structure', () => {
     expect(bad.map((i) => `${i.from} -> ${i.to}`)).toEqual([]);
   });
 
+  it('keeps every domain/ folder free of Nest, TypeORM and the database', () => {
+    const offenders = files(SRC)
+      .filter((f) => relative(SRC, f).split('/').includes('domain'))
+      .flatMap((f) => [...readFileSync(f, 'utf8').matchAll(/from\s+['"]([^'"]+)['"]/g)].map((m) => ({ f: relative(SRC, f), to: m[1] })))
+      .filter(({ to }) => to.startsWith('@nestjs') || to === 'typeorm' || to.startsWith('typeorm/') || to === 'pg' || /(^|\/)(database|entities|infrastructure)(\/|$)/.test(to));
+    expect(offenders.map((o) => `${o.f} -> ${o.to}`)).toEqual([]);
+  });
+
   it('has a module, a controller and a service in every feature', () => {
     for (const f of features) {
       const names = readdirSync(join(SRC, f));

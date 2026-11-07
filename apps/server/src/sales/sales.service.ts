@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type { Catalog, Product, SaleRecord } from '@my-shop/contracts';
-import { manualDiscountOf, normalizeLines, overManualCap, priceCart } from '@my-shop/domain';
+import { normalizeLines, priceCart } from '@my-shop/domain';
 import { AuditService } from '../audit/audit.service';
 import { ApprovalsService } from '../auth/approvals.service';
 import { AuthService } from '../auth/auth.service';
@@ -15,9 +15,11 @@ import { MembersService } from '../members/members.service';
 import { ProductsService } from '../products/products.service';
 import { SettingsService } from '../settings/settings.service';
 import { StockService } from '../stock/stock.service';
-import { CreditNoteEntity, PaymentEntity, SaleEntity, SaleLineEntity, ShiftEntity } from './entities/sales.entities';
-import { changeFor, checkPayments } from './payment-rules';
-import type { PricingSnapshot, SaleInput } from './sales.types';
+import { CreditNoteEntity, ShiftEntity } from './entities/sales.entities';
+import { Sale } from './domain/sale';
+import { SaleRepository } from './domain/sale.repository';
+import { ShiftRepository } from './domain/shift.repository';
+import type { SaleInput } from './sales.types';
 
 /** Closing a bill: the one use case that touches sales, stock, points and numbering together, in one transaction (CLAUDE.md rule 3). */
 @Injectable()
@@ -33,6 +35,8 @@ export class SalesService {
     private readonly permissions: PermissionsService,
     private readonly approvals: ApprovalsService,
     private readonly audit: AuditService,
+    private readonly shifts: ShiftRepository,
+    private readonly sales: SaleRepository,
     @Inject(CLOCK) private readonly clock: Clock,
   ) {}
 
@@ -49,15 +53,13 @@ export class SalesService {
   async closeSale(shiftId: string, input: SaleInput): Promise<SaleRecord> {
     const now = this.clock();
     const manual = input.manualDiscount;
-    if (manual && (!manual.reason?.trim() || !Number.isInteger(manual.value) || manual.value < 1 || (manual.type === 'percent' && manual.value > 100))) {
-      throw new DomainError('invalid', 'ส่วนลดพิเศษต้องมีจำนวนที่ถูกต้องและเหตุผล');
-    }
+    Sale.assertManualDiscountValid(manual);
     // Who stands behind a discount above the cap. Checked before the transaction so a wrong code is counted even when the bill fails.
     const approver = manual ? await this.manualDiscountApprover(shiftId, input) : null;
     return this.db.transaction(async (tx) => {
-      const shift = await tx.findOneBy(ShiftEntity, { id: shiftId });
+      const shift = await this.shifts.findById(shiftId);
       if (!shift) throw new DomainError('not_found', 'ไม่พบกะนี้');
-      if (shift.closedAt) throw new DomainError('conflict', 'กะนี้ปิดแล้ว');
+      if (shift.isClosed) throw new DomainError('conflict', 'กะนี้ปิดแล้ว');
       const cfg = await this.settings.getAll(tx);
 
       // priceCart only marks an existing line as a gift (it never invents one), so every line is something the cashier keyed.
@@ -73,19 +75,11 @@ export class SalesService {
       if (input.memberPhone && !member) throw new DomainError('invalid', 'เบอร์นี้ยังไม่ได้สมัครสมาชิก สมัครก่อนแล้วผูกกับบิล', { needsMember: input.memberPhone });
 
       const cart = priceCart(keyed, catalog, { isMember: !!member, at: now, manual });
-
-      const manualAmount = manualDiscountOf(cart);
-      const overCap = overManualCap(cart, cfg.manualDiscountCapPercent);
-      if (overCap && !approver) {
-        throw new DomainError('forbidden', 'ส่วนลดเกินเพดาน ต้องให้หัวหน้ากะใส่รหัสอนุมัติ', { needsApproval: 'discount.over_cap', capPercent: cfg.manualDiscountCapPercent });
-      }
+      const overCap = Sale.assertManualDiscountApproved(cart, cfg.manualDiscountCapPercent, !!approver);
 
       const pointsRedeemed = input.pointsRedeemed ?? 0;
       if (pointsRedeemed > 0 && !member) throw new DomainError('invalid', 'ต้องผูกสมาชิกก่อนใช้แต้ม');
       const pointsValue = member ? await this.members.quoteRedemption(tx, member.id, pointsRedeemed, cart.net) : 0;
-      const due = cart.net - pointsValue;
-      const payments = checkPayments(input.payments ?? [], due);
-      const change = changeFor(payments);
 
       if (!cfg.allowNegativeStock) {
         for (const l of cart.lines) {
@@ -95,32 +89,24 @@ export class SalesService {
       if (input.exchangeFor && !(await tx.existsBy(CreditNoteEntity, { docNo: input.exchangeFor }))) throw new DomainError('invalid', 'ไม่พบใบลดหนี้ที่อ้างอิง');
 
       const docNo = await this.numbering.next(tx, `${shift.terminalId}-${docPeriod(now)}`);
-      const snapshot: PricingSnapshot = { products: keyed.map((l) => byId.get(l.productId) as Product), promotions: catalog.promotions, premiums: catalog.premiums.map((p) => ({ id: p.id, name: p.name })), ...(manual ? { manual } : {}) };
-      const pointsEarned = member ? await this.members.earn(tx, member.id, due, docNo, now) : 0;
-
-      await tx.insert(SaleEntity, {
-        docNo, shiftId, employeeId: input.employeeId, at: now, businessDate: businessDate(now, cfg.cutoffHour), memberId: member?.id ?? null,
-        gross: cart.gross, discount: cart.discount, net: cart.net, vat: cart.vat, change, cart, pricing: snapshot as object,
-        pointsEarned, pointsRedeemed, pointsValue, exchangeFor: input.exchangeFor ?? null,
-        manualDiscount: manualAmount, manualReason: manualAmount > 0 ? manual?.reason.trim() ?? null : null, manualApprovedBy: manualAmount > 0 && overCap ? approver?.id ?? null : null,
+      const pointsEarned = member ? await this.members.earn(tx, member.id, cart.net - pointsValue, docNo, now) : 0;
+      const costs = await this.products.costs(tx, cart.lines.map((l) => l.productId));
+      const sale = Sale.close({
+        docNo, shiftId, employeeId: input.employeeId, now, businessDate: businessDate(now, cfg.cutoffHour), memberId: member?.id ?? null, cart,
+        pricing: { products: keyed.map((l) => byId.get(l.productId) as Product), promotions: catalog.promotions, premiums: catalog.premiums.map((p) => ({ id: p.id, name: p.name })), ...(manual ? { manual } : {}) },
+        costs, payments: input.payments ?? [], pointsRedeemed, pointsValue, pointsEarned, exchangeFor: input.exchangeFor, manual, capPercent: cfg.manualDiscountCapPercent, discountApprover: approver?.id ?? null,
       });
+      await this.sales.add(sale);
       if (member && pointsRedeemed > 0) await this.members.redeem(tx, member.id, pointsRedeemed, cart.net, docNo, now);
 
-      const costs = await this.products.costs(tx, cart.lines.map((l) => l.productId));
-      if (cart.lines.length) {
-        await tx.insert(SaleLineEntity, cart.lines.map((l) => ({
-          docNo, productId: l.productId, name: l.name, qty: l.qty, unitPrice: l.unitPrice, gross: l.gross, discount: l.discount, net: l.net,
-          applied: l.applied, giftOfProductId: l.giftOfProductId ?? null, cost: costs.get(l.productId) ?? 0,
-        })));
-      }
       // Gift products leave the shelf too, and so do the free gifts the promotions handed out (unless they ran out).
       await this.stock.record(tx, [
         ...cart.lines.map((l) => ({ productId: l.productId, qty: -l.qty, kind: 'sale' as const, docNo, at: now })),
         ...cart.premiums.filter((p) => !p.outOfStock).map((p) => ({ premiumId: p.premiumId, qty: -p.qty, kind: 'premium' as const, docNo, at: now })),
       ]);
-      if (payments.length) await tx.insert(PaymentEntity, payments.map((p) => ({ docNo, method: p.method, amount: p.amount, tendered: p.tendered ?? null, reference: p.reference ?? null })));
-      if (manualAmount > 0) {
-        await this.audit.record(tx, now, { actor: input.employeeId, approver: overCap && approver && approver.id !== input.employeeId ? approver.id : undefined, terminalId: shift.terminalId, action: 'sale.manual_discount', entity: 'sale', entityId: docNo, after: { amount: manualAmount, type: manual?.type, value: manual?.value, reason: manual?.reason, overCap } });
+      const { payments, change } = sale.snapshot();
+      if (sale.manualDiscount > 0) {
+        await this.audit.record(tx, now, { actor: input.employeeId, approver: overCap && approver && approver.id !== input.employeeId ? approver.id : undefined, terminalId: shift.terminalId, action: 'sale.manual_discount', entity: 'sale', entityId: docNo, after: { amount: sale.manualDiscount, type: manual?.type, value: manual?.value, reason: manual?.reason, overCap } });
       }
       await this.audit.record(tx, now, { actor: input.employeeId, terminalId: shift.terminalId, action: 'sale.close', entity: 'sale', entityId: docNo, after: { net: cart.net, clientNet: input.cart.net } });
 

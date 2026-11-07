@@ -69,10 +69,22 @@ Demo employee codes: 100123, 200456, 300789.
 
 ## Server (`apps/server`)
 
-A plain NestJS API on PostgreSQL through TypeORM. One folder per feature, each with the usual files plus `entities/`
-(registered with `TypeOrmModule.forFeature` in the feature's module). Services use the `EntityManager`: `DatabaseService.manager`
-outside a transaction, `DatabaseService.transaction(tx => ...)` for a whole use case (`tx` is the transaction's manager, so
-`tx.find`, `tx.insert`, `tx.createQueryBuilder` ...). Hand-written SQL stays only in `reports/` (aggregates) and the
+A NestJS API on PostgreSQL through TypeORM, with the business rules in a domain layer. One folder per feature:
+
+```
+<feature>/domain/            aggregate roots (plain classes: no Nest, no TypeORM, checked by structure.spec.ts) and repository
+                             interfaces (abstract classes, used as Nest tokens)
+<feature>/infrastructure/    TypeORM repositories: map between an aggregate and its entities
+<feature>/entities/          TypeORM entities = table mapping only
+<feature>/*.service.ts       application services: load an aggregate, call it, save it, write ledger/audit rows, one transaction
+```
+
+Aggregate roots: `Shift` (cash moves, closing count), `Sale` (a CLOSED bill: payments must match, discount cap), `CreditNote` (void/refund
+plan from the bill and earlier notes), `Member` (points ledger, PDPA erasure), `StockCount` (snapshot, count, approve/cancel), `Product`
+(prices, barcodes, price-change record). Rules go in the aggregate, not in the service; read models (till shift view, reports, lists)
+may query entities directly. `DatabaseService.transaction(tx => ...)` puts the transaction's manager in an AsyncLocalStorage, so
+repositories join it without being handed `tx`; `tx` is still passed to audit, numbering and ledger writes. Supporting features
+(auth, users, settings, audit, backup) stay plain services over entities. Hand-written SQL stays only in `reports/` (aggregates) and the
 `doc_counters` upsert in `NumberingService`, through the `rows()` helper in `database/sql.ts`.
 
 ```
@@ -83,7 +95,7 @@ src/database/                DatabaseService, TypeORM setup, migrations (`migrat
 src/audit/                   AuditService (every feature writes who did what, inside its transaction)
 src/<feature>/               auth, users, settings, backup, products, members, stock, sales, reports, jobs
   <feature>.module.ts, .controller.ts, .service.ts, dto/    plus small pure helpers like points-policy.ts, refund-rules.ts
-test/                        *.e2e-spec.ts over the real module graph (Test.createTestingModule), structure.spec.ts, helpers/
+test/                        *.e2e-spec.ts over the real module graph (Test.createTestingModule), domain/ (aggregate unit tests, no database), structure.spec.ts, helpers/
 ```
 
 Features depend one way: sales -> products, stock, members, auth, settings; stock -> products; reports -> sales, stock. Nothing

@@ -1,19 +1,21 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { In, Not } from 'typeorm';
-import type { Category, Employee, Product, Promotion, Satang } from '@my-shop/contracts';
+import { In } from 'typeorm';
+import type { Category, Employee, Product as ShelfProduct, Promotion, Satang } from '@my-shop/contracts';
 import { AuditService } from '../audit/audit.service';
 import { CLOCK, type Clock } from '../common/clock';
 import { DomainError } from '../common/domain-error';
 import { DatabaseService } from '../database/database.service';
 import type { Tx } from '../database/database.types';
-import { BarcodeEntity, CategoryEntity, PremiumEntity, PriceHistory, ProductEntity, PromotionEntity } from './entities/products.entities';
-import { assertValidProduct, cleanBarcodes, costToStore, type ProductInput, type ProductRecord } from './product-rules';
+import { BarcodeEntity, CategoryEntity, PremiumEntity, ProductEntity, PromotionEntity } from './entities/products.entities';
+import { Product } from './domain/product';
+import { ProductRepository } from './domain/product.repository';
+import type { ProductInput, ProductRecord } from './product-rules';
 import { checkPromotion } from './promotion-rules';
 
 /** What the till prices against: active products and promotions, with the gift names but not their stock (that is the stock feature's). */
 export interface CatalogSnapshot {
   categories: Category[];
-  products: Product[];
+  products: ShelfProduct[];
   premiums: { id: string; name: string }[];
   promotions: Promotion[];
 }
@@ -24,6 +26,7 @@ export class ProductsService {
   constructor(
     private readonly db: DatabaseService,
     private readonly audit: AuditService,
+    private readonly productRepo: ProductRepository,
     @Inject(CLOCK) private readonly clock: Clock,
   ) {}
 
@@ -33,7 +36,7 @@ export class ProductsService {
     const [categories, products, premiums, promotions] = await Promise.all([this.categories(tx), this.products(tx, true), this.premiums(tx), this.promotions(tx, true)]);
     return {
       categories,
-      products: products.map((p): Product => ({ id: p.id, sku: p.sku, name: p.name, categoryId: p.categoryId, price: p.price, memberPrice: p.memberPrice, barcodes: p.barcodes, ...(p.imageKey ? { imageKey: p.imageKey } : {}) })),
+      products: products.map((p): ShelfProduct => ({ id: p.id, sku: p.sku, name: p.name, categoryId: p.categoryId, price: p.price, memberPrice: p.memberPrice, barcodes: p.barcodes, ...(p.imageKey ? { imageKey: p.imageKey } : {}) })),
       premiums,
       promotions: promotions.map(({ active: _active, ...p }) => p as Promotion),
     };
@@ -70,42 +73,33 @@ export class ProductsService {
   }
 
   async saveProduct(id: string | null, input: ProductInput, actor: Employee, canSeeCost: boolean): Promise<ProductRecord> {
-    assertValidProduct(input);
     const now = this.clock();
     const productId = await this.db.transaction(async (tx) => {
-      if (!(await tx.existsBy(CategoryEntity, { id: input.categoryId }))) throw new DomainError('invalid', 'ไม่พบหมวดหมู่นี้');
-      const row = id ? await tx.findOne(ProductEntity, { where: { id }, lock: { mode: 'pessimistic_write' } }) : null;
-      if (id && !row) throw new DomainError('not_found', 'ไม่พบสินค้า');
-      const before = row ? { price: row.price, memberPrice: row.memberPrice, cost: row.cost } : null;
-      const sku = input.sku.trim();
-      if (await tx.existsBy(ProductEntity, id ? { sku, id: Not(id) } : { sku })) throw new DomainError('conflict', 'รหัสสินค้านี้มีอยู่แล้ว');
-      const cost = costToStore(input, before?.cost, canSeeCost);
-      const fields = { sku, name: input.name.trim(), categoryId: input.categoryId, price: input.price, memberPrice: input.memberPrice, imageKey: input.imageKey ?? null, cost, reorderPoint: input.reorderPoint ?? 0, active: input.active ?? true };
-      let pid = id;
-      if (!pid) {
-        pid = `P${Date.now().toString(36)}${Math.floor(Math.random() * 1296).toString(36)}`;
-        await tx.insert(ProductEntity, { id: pid, ...fields, sort: await tx.count(ProductEntity) });
+      if (!(await this.productRepo.categoryExists(input.categoryId))) throw new DomainError('invalid', 'ไม่พบหมวดหมู่นี้');
+      const ctx = { canSeeCost, now, by: actor.id };
+      let product: Product;
+      if (id) {
+        const found = await this.productRepo.lockById(id);
+        if (!found) throw new DomainError('not_found', 'ไม่พบสินค้า');
+        product = found;
+        product.edit(input, ctx);
       } else {
-        await tx.update(ProductEntity, { id: pid }, fields);
+        product = Product.create({ id: `P${Date.now().toString(36)}${Math.floor(Math.random() * 1296).toString(36)}`, sort: await this.productRepo.count(), data: input, canSeeCost, now, by: actor.id });
       }
-      if (input.barcodes) {
-        const codes = cleanBarcodes(input.barcodes);
-        if (codes.length) {
-          const taken = await tx.findOne(BarcodeEntity, { where: { code: In(codes), productId: Not(pid) } });
-          if (taken) throw new DomainError('conflict', `บาร์โค้ด ${taken.code} ใช้กับสินค้าอื่นอยู่`);
-        }
-        await tx.delete(BarcodeEntity, { productId: pid });
-        if (codes.length) await tx.insert(BarcodeEntity, codes.map((code) => ({ code, productId: pid as string })));
-      }
-      if (!before || before.price !== input.price || before.memberPrice !== input.memberPrice || before.cost !== cost) {
-        await tx.insert(PriceHistory, { productId: pid, price: input.price, memberPrice: input.memberPrice, cost, at: now, by: actor.id });
+      if (await this.productRepo.skuTaken(product.sku, id ?? undefined)) throw new DomainError('conflict', 'รหัสสินค้านี้มีอยู่แล้ว');
+      const taken = await this.productRepo.barcodeTakenByOther(product.barcodes, product.id);
+      if (taken) throw new DomainError('conflict', `บาร์โค้ด ${taken} ใช้กับสินค้าอื่นอยู่`);
+      const change = product.pendingPriceChange;
+      if (id) await this.productRepo.save(product);
+      else await this.productRepo.add(product);
+      if (change) {
         await this.audit.record(tx, now, {
-          actor: actor.id, action: before ? 'product.price' : 'product.create', entity: 'product', entityId: pid,
-          before: before && { price: before.price, memberPrice: before.memberPrice, ...(canSeeCost ? { cost: before.cost } : {}) },
-          after: { price: input.price, memberPrice: input.memberPrice, ...(canSeeCost ? { cost } : {}) },
+          actor: actor.id, action: change.before ? 'product.price' : 'product.create', entity: 'product', entityId: product.id,
+          before: change.before && { price: change.before.price, memberPrice: change.before.memberPrice, ...(canSeeCost ? { cost: change.before.cost } : {}) },
+          after: { price: change.after.price, memberPrice: change.after.memberPrice, ...(canSeeCost ? { cost: change.after.cost } : {}) },
         });
       }
-      return pid;
+      return product.id;
     });
     return (await this.listProducts(canSeeCost)).find((p) => p.id === productId) as ProductRecord;
   }

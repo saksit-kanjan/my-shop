@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { In, IsNull } from 'typeorm';
-import type { CashMove, CashMoveType, Employee, Satang, SaleRecord, Shift } from '@my-shop/contracts';
+import type { CashMove, Employee, Satang, SaleRecord, Shift } from '@my-shop/contracts';
 import { summarizeShift } from '@my-shop/domain';
 import { AuditService } from '../audit/audit.service';
 import { ApprovalsService } from '../auth/approvals.service';
@@ -13,9 +13,9 @@ import { MembersService } from '../members/members.service';
 import { SettingsService } from '../settings/settings.service';
 import { CreditNotesService } from './credit-notes.service';
 import { CashMoveEntity, CreditNoteEntity, DayClose, PaymentEntity, SaleEntity, ShiftEntity } from './entities/sales.entities';
+import { Shift as ShiftAggregate } from './domain/shift';
+import { ShiftRepository } from './domain/shift.repository';
 import { toSaleRow } from './sale-queries';
-
-const MOVE_TYPES: CashMoveType[] = ['drop', 'out', 'in'];
 
 /** A shift: one cashier, one drawer, one terminal at a time. Open, record cash moves, close with a blind count. */
 @Injectable()
@@ -27,6 +27,7 @@ export class ShiftsService {
     private readonly approvals: ApprovalsService,
     private readonly members: MembersService,
     private readonly audit: AuditService,
+    private readonly shiftRepo: ShiftRepository,
     @Inject(CLOCK) private readonly clock: Clock,
   ) {}
 
@@ -41,27 +42,25 @@ export class ShiftsService {
   }
 
   async openShift(terminalId: string, employeeId: string, float: Satang): Promise<Shift> {
-    if (!Number.isInteger(float) || float < 0) throw new DomainError('invalid', 'เงินตั้งต้นต้องเป็นจำนวนเงินที่ไม่ติดลบ');
     const now = this.clock();
     const date = businessDate(now, (await this.settings.getAll()).cutoffHour);
     return this.db.transaction(async (tx) => {
-      if (await tx.existsBy(ShiftEntity, { terminalId, closedAt: IsNull() })) throw new DomainError('conflict', 'เครื่องนี้มีกะเปิดอยู่แล้ว');
+      if (await this.shiftRepo.findOpenByTerminal(terminalId)) throw new DomainError('conflict', 'เครื่องนี้มีกะเปิดอยู่แล้ว');
       if (await tx.existsBy(DayClose, { businessDate: date })) throw new DomainError('conflict', 'ปิดวันนี้ไปแล้ว เปิดกะใหม่ไม่ได้ ให้ผู้จัดการตรวจสอบ');
       const id = crypto.randomUUID();
-      await tx.insert(ShiftEntity, { id, terminalId, employeeId, businessDate: date, openedAt: now, float });
+      await this.shiftRepo.add(ShiftAggregate.open({ id, terminalId, employeeId, businessDate: date, float, now }));
       await this.audit.record(tx, now, { actor: employeeId, terminalId, action: 'shift.open', entity: 'shift', entityId: id, after: { float } });
       return this.must(tx, id);
     });
   }
 
   async addCashMove(shiftId: string, move: Omit<CashMove, 'at'>): Promise<Shift> {
-    if (!MOVE_TYPES.includes(move.type)) throw new DomainError('invalid', 'ประเภทรายการไม่ถูกต้อง');
-    if (!Number.isInteger(move.amount) || move.amount <= 0) throw new DomainError('invalid', 'ใส่จำนวนเงินมากกว่า 0');
-    if (!move.reason?.trim()) throw new DomainError('invalid', 'ใส่เหตุผลของรายการนี้');
     const now = this.clock();
     return this.db.transaction(async (tx) => {
-      const shift = await this.openOrThrow(tx, shiftId);
-      await tx.insert(CashMoveEntity, { shiftId, at: now, type: move.type, amount: move.amount, reason: move.reason.trim(), employeeId: move.employeeId, approvedBy: move.approvedBy ?? null });
+      const shift = await this.shiftRepo.lockById(shiftId);
+      if (!shift) throw new DomainError('not_found', 'ไม่พบกะนี้');
+      shift.addCashMove(move, now);
+      await this.shiftRepo.save(shift);
       await this.audit.record(tx, now, { actor: move.employeeId, approver: move.approvedBy, terminalId: shift.terminalId, action: `cash.${move.type}`, entity: 'shift', entityId: shiftId, after: { amount: move.amount, reason: move.reason } });
       return this.must(tx, shiftId);
     });
@@ -72,21 +71,22 @@ export class ShiftsService {
    * (spec: "ผลต่างเกินเกณฑ์").
    */
   async closeShift(shiftId: string, counted: Satang, note?: string, actor?: Employee, approverCode?: string): Promise<Shift> {
-    if (!Number.isInteger(counted) || counted < 0) throw new DomainError('invalid', 'ใส่ยอดเงินที่นับได้');
     const now = this.clock();
     const current = await this.getShift(shiftId);
     if (!current) throw new DomainError('not_found', 'ไม่พบกะนี้');
     if (current.closedAt) throw new DomainError('conflict', 'กะนี้ปิดแล้ว');
-    const variance = counted - summarizeShift(current).expectedCash;
+    const variance = ShiftAggregate.variance(counted, summarizeShift(current).expectedCash);
     let approver: Employee | null = null;
-    if (Math.abs(variance) > (await this.settings.getAll()).cashVarianceLimit) {
+    if (ShiftAggregate.needsApproval(variance, (await this.settings.getAll()).cashVarianceLimit)) {
       if (!note?.trim()) throw new DomainError('invalid', 'เงินขาดหรือเกินเกินเกณฑ์ ใส่หมายเหตุก่อนปิดกะ', { variance });
       if (!actor) throw new DomainError('unauthorized', 'ต้องเข้าสู่ระบบ');
       approver = await this.approvals.resolve({ actor, permission: 'shift.expected', approverCode, terminalId: current.terminalId });
     }
     return this.db.transaction(async (tx) => {
-      const shift = await this.openOrThrow(tx, shiftId);
-      await tx.update(ShiftEntity, { id: shiftId }, { closedAt: now, counted, note: note ?? null });
+      const shift = await this.shiftRepo.lockById(shiftId);
+      if (!shift) throw new DomainError('not_found', 'ไม่พบกะนี้');
+      shift.close(counted, note, now);
+      await this.shiftRepo.save(shift);
       await this.audit.record(tx, now, { actor: actor?.id ?? shift.employeeId, approver: approver && approver.id !== actor?.id ? approver.id : undefined, terminalId: shift.terminalId, action: 'shift.close', entity: 'shift', entityId: shiftId, after: { counted, variance, note } });
       return this.must(tx, shiftId);
     });
@@ -95,18 +95,11 @@ export class ShiftsService {
   /** "เปิดลิ้นชักโดยไม่มีการขาย": allowed for supervisors and up, a cashier needs one's code. The reason is logged. */
   async openDrawer(shiftId: string, reason: string, actor: Employee, approverCode?: string): Promise<void> {
     if (!reason?.trim()) throw new DomainError('invalid', 'ใส่เหตุผลที่เปิดลิ้นชัก');
-    const shift = await this.db.manager.findOneBy(ShiftEntity, { id: shiftId });
+    const shift = await this.shiftRepo.findById(shiftId);
     if (!shift) throw new DomainError('not_found', 'ไม่พบกะนี้');
-    if (shift.closedAt) throw new DomainError('conflict', 'กะนี้ปิดแล้ว');
+    if (shift.isClosed) throw new DomainError('conflict', 'กะนี้ปิดแล้ว');
     const approver = await this.approvals.resolve({ actor, permission: 'drawer.nosale', approverCode, terminalId: shift.terminalId });
     await this.db.transaction((tx) => this.audit.record(tx, this.clock(), { actor: actor.id, approver: approver.id === actor.id ? undefined : approver.id, terminalId: shift.terminalId, action: 'drawer.nosale', entity: 'shift', entityId: shiftId, after: { reason } }));
-  }
-
-  private async openOrThrow(tx: Tx, id: string): Promise<ShiftEntity> {
-    const shift = await tx.findOneBy(ShiftEntity, { id });
-    if (!shift) throw new DomainError('not_found', 'ไม่พบกะนี้');
-    if (shift.closedAt) throw new DomainError('conflict', 'กะนี้ปิดแล้ว');
-    return shift;
   }
 
   private async must(tx: Tx, id: string): Promise<Shift> {
